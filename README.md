@@ -1,7 +1,5 @@
 # TAF Scalability test
 
-Just adding some text to see if pushing works.
-
 ## Getting started
 
 To make it easy for you to get started with GitLab, here's a list of recommended next steps.
