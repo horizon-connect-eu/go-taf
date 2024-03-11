@@ -1,7 +1,8 @@
 package tam
 
 import (
-	"fmt"
+	"context"
+	"log"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 )
@@ -16,9 +17,11 @@ func updateState(state map[int][]int, msg message.Message) {
 		state[msg.ID] = state[msg.ID][1:]
 	}
 
-	fmt.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
+	log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
 }
 
+// Gets the slice stored in `states` under the key `id`, computes its sum,
+// and inserts this sum into `results` at key `id`.
 func updateResults(results map[int]int, id int, states map[int][]int) {
 	sum := 0
 	for _, x := range states[id] {
@@ -26,23 +29,34 @@ func updateResults(results map[int]int, id int, states map[int][]int) {
 	}
 
 	results[id] = sum
-	fmt.Printf("Current sum for ID %d: %d\n", id, sum)
+	log.Printf("Current sum for ID %d: %d\n", id, sum)
 }
 
-func Run(inputTMM chan message.Message, inputTSM chan message.Message) {
+// Runs the trust assessment manager
+func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan message.Message) {
+	defer func() {
+		log.Println("TAM: shutting down")
+	}()
+
 	states := make(map[int][]int)
 	results := make(map[int]int)
 	for {
+		// Each iteration, check whether we've been cancelled.
+		if err := context.Cause(ctx); err != nil {
+			return
+		}
 		select {
+		case <-ctx.Done():
+			return
 		case msgFromTMM := <-inputTMM:
-			fmt.Printf("I am TAM, received %+v from TMM\n", msgFromTMM)
+			log.Printf("I am TAM, received %+v from TMM\n", msgFromTMM)
 			updateState(states, msgFromTMM)
 			updateResults(results, msgFromTMM.ID, states)
 		case msgFromTSM := <-inputTSM:
-			fmt.Printf("I am TAM, received %+v from TSM\n", msgFromTSM)
+			log.Printf("I am TAM, received %+v from TSM\n", msgFromTSM)
 			updateState(states, msgFromTSM)
 			updateResults(results, msgFromTSM.ID, states)
+
 		}
 	}
-
 }

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
@@ -12,6 +13,13 @@ import (
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tsm"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/v2xlistener"
 )
+
+// Blocks until the process receives SIGTERM (or equivalent).
+func waitForCtrlC() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+}
 
 func main() {
 	c1 := make(chan message.Message, 1_000)
@@ -22,15 +30,15 @@ func main() {
 
 	ctx := context.Background()
 	ctx, cancelFunc := context.WithCancel(ctx)
-	defer time.Sleep(1 * time.Second)
+	defer time.Sleep(1 * time.Second) // TODO replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
 	go v2xlistener.Run(ctx, []chan message.Message{c1, c2})
-	go tam.Run(c3, c4)
+	go tam.Run(ctx, c3, c4)
 
-	go tmm.Run(c1, c3)
-	go tsm.Run(c2, c4)
+	go tmm.Run(ctx, c1, c3)
+	go tsm.Run(ctx, c2, c4)
 
-	bufio.NewReader(os.Stdin).ReadString('\n')
+	waitForCtrlC()
 
 }
