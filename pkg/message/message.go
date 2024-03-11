@@ -1,22 +1,21 @@
 // Produces messages that contain an ID (an integer from 0 to 10), a value (an integer from 100 to 999), and a string (either "TSM" or "TMM").
 // The messages are in form of a struct of type message.
 
-package msgGenerator
+package message
 
 import (
-	"fmt"
 	"math/rand/v2"
 )
 
-type message struct {
+type Message struct {
 	ID    int
-	value int
+	Value int
 	Rx    string
 }
 
-func msg_Tx(Tx_ID int, Tx_value int, Tx_Rx string) message {
+func New(Tx_ID int, Tx_value int, Tx_Rx string) Message {
 
-	msg1 := message{
+	msg1 := Message{
 		Tx_ID,
 		Tx_value,
 		Tx_Rx,
@@ -25,8 +24,7 @@ func msg_Tx(Tx_ID int, Tx_value int, Tx_Rx string) message {
 	return msg1
 }
 
-func msgGenerator() {
-
+func Generate() Message {
 	var Tx_Rx string
 	Tx_ID := rand.IntN(10)
 	Tx_value := 100 + rand.IntN(899)
@@ -36,6 +34,7 @@ func msgGenerator() {
 		Tx_Rx = "TSM"
 	}
 
-	msg := msg_Tx(Tx_ID, Tx_value, Tx_Rx)
-	fmt.Println("Message: ", msg)
+	msg := New(Tx_ID, Tx_value, Tx_Rx)
+
+	return msg
 }
