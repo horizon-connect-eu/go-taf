@@ -43,15 +43,13 @@ The TAM replacement has several jobs:
 
 Create an event source component that generates 5 random events per second.
 The range of IDs should include 0-99 as values.
-Create them as structs first, and then turn them into proper structs.
+Create them as strings first, and then turn them into proper structs.
 Also create the A and B components, that will print out the values upon arrival.
-
 
 ### 2. State Updates
 
 Change the A and B components so that will forward matching event to the TAM replacement.
 In turn, the TAM replacement should do the update operation of the states map according to the description above.
-
 
 ### 3. Computations
 
@@ -62,6 +60,10 @@ Store the output in the result map.
 
 Add yet another component that uses the command line interface. Here, the user can enter numbers between 0 and 99. When submitted, this component gets the latest result for the entry with this number as ID from the TAM replacement.
 
-#### 5. Sharding
+### 5. Sharding
 
 Change the TAM replacement functionality so that state handling is parallelized to a configurable amount of shards.
+
+### 6. Kafka
+
+Change the event source so it does become a separate go process and it uses a dedicated topic to transmit values. Inside the demonstrator, we replace the old event source now with a Kafka consumer that takes new entries from the Kafka topic instead of generating them randomly.
