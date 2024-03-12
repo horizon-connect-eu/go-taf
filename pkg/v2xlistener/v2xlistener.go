@@ -5,11 +5,12 @@ import (
 	"log"
 	"time"
 
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 )
 
-func Run(ctx context.Context, outputs []chan message.Message) {
-	ticker := time.NewTicker(2000 * time.Millisecond)
+func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan message.Message) {
+	ticker := time.NewTicker(time.Duration(v2xconfig.SendIntervalMs) * time.Millisecond)
 
 	defer func() {
 		log.Println("V2XListener: shutting down")
