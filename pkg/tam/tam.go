@@ -33,7 +33,7 @@ func updateResults(results map[int]int, id int, states map[int][]int) {
 }
 
 // Runs the trust assessment manager
-func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan message.Message) {
+func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan message.Message, inputTAS chan message.TasQuery, outputTAS chan message.TasResponse) {
 	defer func() {
 		log.Println("TAM: shutting down")
 	}()
@@ -47,6 +47,9 @@ func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan messa
 		}
 		select {
 		case <-ctx.Done():
+			/*if len(inputTMM) != 0 || len(inputTSM) != 0 {
+				continue
+			}*/
 			return
 		case msgFromTMM := <-inputTMM:
 			log.Printf("I am TAM, received %+v from TMM\n", msgFromTMM)
@@ -56,6 +59,10 @@ func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan messa
 			log.Printf("I am TAM, received %+v from TSM\n", msgFromTSM)
 			updateState(states, msgFromTSM)
 			updateResults(results, msgFromTSM.ID, states)
+		case tasQuery := <-inputTAS:
+			log.Printf("I am TAM, received %+v from TAS\n", tasQuery)
+			response := message.TasResponse{ResponseID: tasQuery.QueryID, ResponseValue: results[tasQuery.RequestedID]}
+			outputTAS <- response
 
 		}
 	}

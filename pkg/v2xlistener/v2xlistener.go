@@ -9,7 +9,7 @@ import (
 )
 
 func Run(ctx context.Context, outputs []chan message.Message) {
-	ticker := time.NewTicker(200 * time.Millisecond)
+	ticker := time.NewTicker(2000 * time.Millisecond)
 
 	defer func() {
 		log.Println("V2XListener: shutting down")
