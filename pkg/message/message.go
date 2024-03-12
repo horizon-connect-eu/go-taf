@@ -1,6 +1,3 @@
-// Produces messages that contain an ID (an integer from 0 to 10), a value (an integer from 100 to 999), and a string (either "TSM" or "TMM").
-// The messages are in form of a struct of type message.
-
 package message
 
 import (
@@ -14,6 +11,7 @@ type Message struct {
 	Type  string
 }
 
+// Creates a new message with the given parameters
 func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
 
 	msg1 := Message{
@@ -26,6 +24,9 @@ func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
 	return msg1
 }
 
+// Generates a new message with random values
+//
+// Produces messages that contain an ID (an integer from 0 to 10), a value (an integer from 100 to 999), and a string (either "TSM" or "TMM").
 func Generate() Message {
 	var Tx_Rx string
 	Tx_ID := rand.IntN(10)

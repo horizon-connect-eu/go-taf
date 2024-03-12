@@ -1,3 +1,7 @@
+// # main package
+//
+// The main package is the entry point of the application. It is responsible for starting and stopping the application.
+// Hello world
 package main
 
 import (
@@ -22,6 +26,8 @@ func waitForCtrlC() {
 	<-c
 }
 
+// main is the entry point of the application.
+// It starts all the components of the application and waits for a signal to stop the application.
 func main() {
 
 	c1 := make(chan message.Message, 1_000)
