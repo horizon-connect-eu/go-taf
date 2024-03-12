@@ -1,0 +1,6 @@
+{
+    "ChanBufSize": 10000,
+    "V2XConfig": {
+        "SendIntervalMs": 1000
+    }
+}
