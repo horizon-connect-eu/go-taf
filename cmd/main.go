@@ -6,7 +6,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,10 +38,10 @@ func main() {
 		var err error
 		tafConfig, err = config.LoadJson(filepath)
 		if err != nil {
-			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			//log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 		}
 	}
-	log.Printf("Running with configuration: %+v\n", tafConfig)
+	//log.Printf("Running with configuration: %+v\n", tafConfig)
 
 	c1 := make(chan message.Message, tafConfig.ChanBufSize)
 	c2 := make(chan message.Message, tafConfig.ChanBufSize)
@@ -61,12 +61,21 @@ func main() {
 	defer cancelFunc()
 
 	go v2xlistener.Run(ctx, tafConfig.V2XConfig, []chan message.Message{c1, c2})
-	go tam.Run(ctx, tmts, c3, c4, c6, c5)
+	//go tam.Run(ctx, tmts, tafConfig.TAMConfig, c1, c2, c6, c5)
+	go tam.Run(ctx, tmts, tafConfig.TAMConfig, c3, c4, c6, c5)
 
 	go tmm.Run(ctx, c1, c3)
 	go tsm.Run(ctx, c2, c4)
 
 	go tas.Run(ctx, c5, c6)
+
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
+		}
+	}
 
 	waitForCtrlC()
 

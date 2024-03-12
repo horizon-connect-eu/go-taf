@@ -3,7 +3,6 @@ package tas
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
@@ -12,7 +11,7 @@ import (
 func Run(ctx context.Context, input chan message.TasResponse, output chan message.TasQuery) {
 
 	defer func() {
-		log.Println("TAS: shutting down")
+		//log.Println("TAS: shutting down")
 	}()
 
 	for counter := 0; ; counter++ {
@@ -23,12 +22,12 @@ func Run(ctx context.Context, input chan message.TasResponse, output chan messag
 		_, error := fmt.Fscanln(os.Stdin, &userInput)
 
 		if error != nil {
-			log.Println("Error reading user input")
+			//log.Println("Error reading user input")
 			return
 		}
 
 		if userInput < 0 || userInput > 9 {
-			log.Println("Invalid user input")
+			//log.Println("Invalid user input")
 			return
 		}
 
@@ -38,7 +37,8 @@ func Run(ctx context.Context, input chan message.TasResponse, output chan messag
 		case <-ctx.Done():
 			return
 		case response := <-input:
-			log.Printf("I am TAS, Received response: %+v\n", response)
+			response = response //TODO
+			//log.Printf("I am TAS, Received response: %+v\n", response)
 		}
 	}
 }

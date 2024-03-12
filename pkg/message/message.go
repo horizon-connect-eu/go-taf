@@ -29,7 +29,7 @@ func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
 // Produces messages that contain an ID (an integer from 0 to 10), a value (an integer from 100 to 999), and a string (either "TSM" or "TMM").
 func Generate() Message {
 	var Tx_Rx string
-	Tx_ID := rand.IntN(10)
+	Tx_ID := rand.IntN(100000)
 	Tx_value := 100 + rand.IntN(899)
 	if rand.IntN(99)%2 == 0 {
 		Tx_Rx = "TMM"
