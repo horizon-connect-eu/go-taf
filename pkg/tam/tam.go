@@ -7,13 +7,21 @@ import (
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 )
 
+var tmt map[string]int
+
 func updateState(state map[int][]int, msg message.Message) {
-	_, ok := state[msg.ID]
+	value, ok := tmt[msg.Type]
 	if !ok {
-		state[msg.ID] = make([]int, 0, 11)
+		log.Println("Error")
+		return
+	}
+
+	_, ok = state[msg.ID]
+	if !ok {
+		state[msg.ID] = make([]int, 0, value+1)
 	}
 	state[msg.ID] = append(state[msg.ID], msg.Value)
-	if len(state[msg.ID]) > 10 {
+	if len(state[msg.ID]) > value {
 		state[msg.ID] = state[msg.ID][1:]
 	}
 
@@ -33,10 +41,12 @@ func updateResults(results map[int]int, id int, states map[int][]int) {
 }
 
 // Runs the trust assessment manager
-func Run(ctx context.Context, inputTMM chan message.Message, inputTSM chan message.Message, inputTAS chan message.TasQuery, outputTAS chan message.TasResponse) {
+func Run(ctx context.Context, tmts map[string]int, inputTMM chan message.Message, inputTSM chan message.Message, inputTAS chan message.TasQuery, outputTAS chan message.TasResponse) {
 	defer func() {
 		log.Println("TAM: shutting down")
 	}()
+
+	tmt = tmts
 
 	states := make(map[int][]int)
 	results := make(map[int]int)

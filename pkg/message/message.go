@@ -11,14 +11,16 @@ type Message struct {
 	ID    int
 	Value int
 	Rx    string
+	Type  string
 }
 
-func New(Tx_ID int, Tx_value int, Tx_Rx string) Message {
+func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
 
 	msg1 := Message{
 		Tx_ID,
 		Tx_value,
 		Tx_Rx,
+		Type,
 	}
 
 	return msg1
@@ -34,7 +36,11 @@ func Generate() Message {
 		Tx_Rx = "TSM"
 	}
 
-	msg := New(Tx_ID, Tx_value, Tx_Rx)
+	var typeType string
+	mod := Tx_ID % 2
+	typeType = string('A' + mod)
+
+	msg := New(Tx_ID, Tx_value, Tx_Rx, typeType)
 
 	return msg
 }

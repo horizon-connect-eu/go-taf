@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tam"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tas"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tmm"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tmt"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tsm"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/v2xlistener"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 // Blocks until the process receives SIGTERM (or equivalent).
@@ -33,13 +33,16 @@ func main() {
 	c5 := make(chan message.TasResponse, 1_000)
 	c6 := make(chan message.TasQuery, 1_000)
 
+	tmts := map[string]int{}
+	tmt.ParseXmlFiles("tmt/", tmts)
+
 	ctx := context.Background()
 	ctx, cancelFunc := context.WithCancel(ctx)
 	defer time.Sleep(1 * time.Second) // TODO replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
 	go v2xlistener.Run(ctx, []chan message.Message{c1, c2})
-	go tam.Run(ctx, c3, c4, c6, c5)
+	go tam.Run(ctx, tmts, c3, c4, c6, c5)
 
 	go tmm.Run(ctx, c1, c3)
 	go tsm.Run(ctx, c2, c4)
