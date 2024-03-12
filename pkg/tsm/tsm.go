@@ -2,6 +2,7 @@ package tsm
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
@@ -24,6 +25,7 @@ func Run(ctx context.Context, input chan message.Message, output chan message.Me
 		case received := <-input:
 			if received.Rx == "TSM" {
 				log.Printf("I am TSM, received %+v\n", received)
+				fmt.Print("test")
 				output <- received
 			}
 		}
