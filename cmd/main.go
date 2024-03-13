@@ -37,7 +37,7 @@ func main() {
 	// First, see whether or not a config file path has been specified
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
 		var err error
-		tafConfig, err = config.LoadJson(filepath)
+		tafConfig, err = config.LoadJSON(filepath)
 		if err != nil {
 			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 		}

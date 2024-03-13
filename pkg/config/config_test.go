@@ -5,12 +5,12 @@ import (
 )
 
 func TestLoadJson(t *testing.T) {
-	_, err := LoadJson("../../test/invalidjson.json")
+	_, err := LoadJSON("../../test/invalidjson.json")
 	if err == nil {
 		t.Error("No error on malformed JSON config")
 	}
 
-	conf, err := LoadJson("../../test/valid.json")
+	conf, err := LoadJSON("../../test/valid.json")
 	if err != nil {
 		t.Error("Error on existing and valid JSON config file")
 	}

@@ -12,11 +12,12 @@ type Configuration struct {
 	TAMConfig   TAMConfiguration
 }
 
-// Configuration of the [v2xlistener].
+// V2XConfiguration stores the config of the [v2xlistener].
 type V2XConfiguration struct {
 	SendIntervalMs int
 }
 
+// TAMConfiguration stores the config of the [tam.tam].
 type TAMConfiguration struct {
 	TrustModelInstanceShards int
 	UpdateStateOp            string
@@ -38,12 +39,13 @@ var (
 		TAMConfig: TAMConfiguration{
 			TrustModelInstanceShards: 1,
 			UpdateResultsOp:          "Add",
+			UpdateStateOp:            "TODO", //TODO
 		},
 	}
 )
 
 // Load a configuration from a JSON file.
-func LoadJson(filepath string) (Configuration, error) {
+func LoadJSON(filepath string) (Configuration, error) {
 	// TODO figure out whether deep-copy is necessary here.
 	config := DefaultConfig
 	raw, err := os.ReadFile(filepath)
