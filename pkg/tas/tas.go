@@ -3,6 +3,7 @@ package tas
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
@@ -37,8 +38,7 @@ func Run(ctx context.Context, input chan message.TasResponse, output chan messag
 		case <-ctx.Done():
 			return
 		case response := <-input:
-			response = response //TODO
-			//log.Printf("I am TAS, Received response: %+v\n", response)
+			log.Printf("I am TAS, Received response: %+v\n", response)
 		}
 	}
 }

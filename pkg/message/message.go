@@ -37,8 +37,11 @@ func Generate() Message {
 	}
 
 	var typeType string
-	mod := Tx_ID % 2
-	typeType = string('A' + mod)
+	if Tx_ID%2 == 0 {
+		typeType = "A"
+	} else {
+		typeType = "B"
+	}
 
 	msg := New(Tx_ID, Tx_value, Tx_Rx, typeType)
 

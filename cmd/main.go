@@ -24,7 +24,7 @@ import (
 )
 
 // Blocks until the process receives SIGTERM (or equivalent).
-func waitForCtrlC() {
+func WaitForCtrlC() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
@@ -75,13 +75,10 @@ func main() {
 	go tas.Run(ctx, c5, c6)
 
 	ticker := time.NewTicker(1 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
-		}
+	for range ticker.C {
+		fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
 	}
 
-	waitForCtrlC()
+	//waitForCtrlC()
 
 }
