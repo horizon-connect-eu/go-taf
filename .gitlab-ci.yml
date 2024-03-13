@@ -26,6 +26,7 @@ compile:
   artifacts:
     paths:
       - out
+      - plugins/bin
 
 .deploy:
   stage: deploy

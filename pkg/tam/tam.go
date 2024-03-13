@@ -3,50 +3,12 @@ package tam
 import (
 	"context"
 	"fmt"
+	"plugin"
 	"time"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 )
-
-func updateWorkerState(state State, tmt TMTs, msg message.Message) {
-	value, ok := tmt[msg.Type]
-	if !ok {
-		//log.Println("Error")
-		return
-	}
-
-	_, ok = state[msg.ID]
-	if !ok {
-		state[msg.ID] = make([]int, 0, value+1)
-	}
-	state[msg.ID] = append(state[msg.ID], msg.Value)
-	if len(state[msg.ID]) > value {
-		state[msg.ID] = state[msg.ID][1:]
-	}
-}
-
-// Gets the slice stored in `states` under the key `id`, computes its sum,
-// and inserts this sum into `results` at key `id`.
-func updateWorkerResultsAdd(results Results, states State, tmts TMTs, id int) {
-	sum := 0
-	for _, x := range states[id] {
-		sum += x
-	}
-	results[id] = sum
-	//log.Printf("Current sum for ID %d: %d\n", id, sum)
-}
-
-// Gets the slice stored in `states` under the key `id`, computes its product,
-// and inserts this sum into `results` at key `id`.
-func updateWorkerResultsMult(results Results, states State, tmts TMTs, id int) {
-	prod := 1
-	for _, x := range states[id] {
-		prod *= x
-	}
-	results[id] = prod
-	//log.Printf("Current sum for ID %d: %d\n", id, sum)
-}
 
 // What are our states and results?
 type State = map[int][]int
@@ -66,12 +28,11 @@ type tam struct {
 	conf              config.TAMConfiguration
 }
 
-func NewDefault(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
+func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	retTam := tam{
 		mkStateDatabase:   func() State { return make(map[int][]int) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
-		updateResults:     updateWorkerResultsAdd,
 		tmts:              tmts,
 		conf:              conf,
 	}
@@ -85,23 +46,25 @@ func NewDefault(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	return retTam, nil
 }
 
-func (t *tam) SetUpdateResults(f func(Results, State, TMTs, int)) {
-	t.updateResults = f
-}
-
-func (t *tam) SetUpdateState(f func(State, TMTs, message.Message)) {
-	t.updateState = f
-}
+type X interface{}
 
 func getUpdateResultsOpByName(name string) (func(Results, State, TMTs, int), error) {
-	switch name {
-	case "Add":
-		return updateWorkerResultsAdd, nil
-	case "Mult":
-		return updateWorkerResultsMult, nil
-	default:
-		return nil, fmt.Errorf("tam: no update results function of name \"%s\"", name)
+	// TODO open questions:
+	// What should be "pluginable"? only the functions or also the types? (not sure if types are even possible)
+	// should we load all available plugins at startup or only the ones specified?
+	// maybe load at init time using an init function would be best.
+	// what are naming conventions? -> path of the .so files, names of the functions and so on.
+	// Do we want to provide default functions in our own codebase?
+	path := "plugins/bin/tam.so"
+	p, err := plugin.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not find plugin file %s", path)
 	}
+	updateResultsFunc, err := p.Lookup(name)
+	if err != nil {
+		return nil, fmt.Errorf("could not find symbol %s in plugin file %s", name, path)
+	}
+	return updateResultsFunc.(func(Results, State, TMTs, int)), nil
 }
 
 // Processes the messages received via the specified channel as fast as possible.
@@ -113,6 +76,23 @@ func (t tam) tamWorker(inputs <-chan message.Message) {
 		t.updateState(states, t.tmts, msg)
 		t.updateResults(results, states, t.tmts, msg.ID)
 		//time.Sleep(1 * time.Millisecond)
+	}
+}
+
+func updateWorkerState(state State, tmt TMTs, msg message.Message) {
+	value, ok := tmt[msg.Type]
+	if !ok {
+		//log.Println("Error")
+		return
+	}
+
+	_, ok = state[msg.ID]
+	if !ok {
+		state[msg.ID] = make([]int, 0, value+1)
+	}
+	state[msg.ID] = append(state[msg.ID], msg.Value)
+	if len(state[msg.ID]) > value {
+		state[msg.ID] = state[msg.ID][1:]
 	}
 }
 

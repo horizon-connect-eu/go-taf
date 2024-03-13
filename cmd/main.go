@@ -63,7 +63,7 @@ func main() {
 
 	go v2xlistener.Run(ctx, tafConfig.V2XConfig, []chan message.Message{c1, c2})
 
-	tamInst, err := tam.NewDefault(tafConfig.TAMConfig, tmts)
+	tamInst, err := tam.New(tafConfig.TAMConfig, tmts)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -64,7 +64,7 @@ func BenchmarkUpdateWorkerResults(b *testing.B) {
 		b.StartTimer()
 		b.Run(benchName, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				updateWorkerResultsAdd(results, state, tmt, 0)
+				func(a, b, c, d any) {}(results, state, tmt, 0) // TODO remove placeholder func
 			}
 		})
 	}

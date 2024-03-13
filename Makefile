@@ -3,10 +3,14 @@
 format:
 	go fmt ./...
 	go vet ./...
-
 .PHONY:format
 
-build: format
+buildplugins:
+	mkdir -p plugins/bin
+	go build -buildmode=plugin -o plugins/bin ./plugins/tam
+.PHONY:buildplugins
+
+build: format buildplugins
 	mkdir -p out
 	go build -o out ./cmd/main.go
 .PHONY:build
@@ -19,6 +23,6 @@ bench: format
 	go test -bench . -run=^$$ -benchmem $(shell go list ./... | grep -v /vendor/) 
 .PHONY:bench
 
-run: format
-	go run ./...
+run: format buildplugins
+	TAF_CONFIG=res/taf.json go run ./cmd/
 .PHONY:run
