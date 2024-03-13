@@ -19,6 +19,8 @@ type V2XConfiguration struct {
 
 type TAMConfiguration struct {
 	TrustModelInstanceShards int
+	UpdateStateOp            string
+	UpdateResultsOp          string
 }
 
 var (
@@ -29,12 +31,13 @@ var (
 	// misses values, this struct defines the corresponding
 	// default values.
 	DefaultConfig Configuration = Configuration{
-		ChanBufSize: 1000000,
+		ChanBufSize: 1_000_000,
 		V2XConfig: V2XConfiguration{
 			SendIntervalMs: 1,
 		},
 		TAMConfig: TAMConfiguration{
 			TrustModelInstanceShards: 1,
+			UpdateResultsOp:          "Add",
 		},
 	}
 )

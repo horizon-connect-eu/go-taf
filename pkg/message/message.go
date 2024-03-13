@@ -13,7 +13,6 @@ type Message struct {
 
 // Creates a new message with the given parameters
 func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
-
 	msg1 := Message{
 		Tx_ID,
 		Tx_value,
