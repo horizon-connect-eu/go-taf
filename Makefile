@@ -8,7 +8,8 @@ format:
 .PHONY:format
 
 build: format
-	go build ./cmd/main.go
+	mkdir -p out
+	go build -o out ./cmd/main.go
 .PHONY:build
 
 check: format

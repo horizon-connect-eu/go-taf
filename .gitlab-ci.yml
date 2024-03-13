@@ -16,15 +16,12 @@ stages:
 format:
   stage: test
   script:
-    - go fmt $(go list ./... | grep -v /vendor/)
-    - go vet $(go list ./... | grep -v /vendor/)
-    - go test -race $(go list ./... | grep -v /vendor/)
+    - make check
 
 compile:
   stage: build
   script:
-    - mkdir -p out
-    - go build -o out ./...
+    - make build
   artifacts:
     paths:
       - out
