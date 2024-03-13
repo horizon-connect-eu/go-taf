@@ -1,6 +1,9 @@
 {
     "ChanBufSize": 10000,
     "V2XConfig": {
-        "SendIntervalMs": 1000
-    }
+        "SendIntervalNs": 1000
+    },
+    "TAMConfig": {
+        "TrustModelInstanceShards": 128
+    } 
 }

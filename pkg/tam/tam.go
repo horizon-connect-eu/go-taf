@@ -42,14 +42,27 @@ func updateResults(results map[int]int, id int, states map[int][]int) {
 	//log.Printf("Current sum for ID %d: %d\n", id, sum)
 }
 
-func worker(inputs <-chan message.Message) {
+func worker(id int, inputs <-chan message.Message) {
 	states := make(map[int][]int)
 	results := make(map[int]int)
+
+	// Ticker for latency benchmark
+	latTicker := time.NewTicker(1 * time.Second)
+	latMeasurePending := false
+
 	for {
-		msg := <-inputs
-		updateState(states, msg)
-		updateResults(results, msg.ID, states)
-		//time.Sleep(1 * time.Millisecond)
+		select {
+		case msg := <-inputs:
+			updateState(states, msg)
+			updateResults(results, msg.ID, states)
+			time.Sleep(1 * time.Millisecond)
+			if latMeasurePending && id == 0 {
+				fmt.Printf("TAM: latency of %d µs\n", time.Since(msg.Timestamp).Microseconds())
+				latMeasurePending = false
+			}
+		case <-latTicker.C:
+			latMeasurePending = true
+		}
 	}
 }
 
@@ -64,15 +77,16 @@ func Run(ctx context.Context, tmts map[string]int, tamConfig config.TAMConfigura
 	//states := make(map[int][]int)
 	//results := make(map[int]int)
 
-	ticker := time.NewTicker(1 * time.Second)
+	// Ticker for throughput benchmark
+	throughputTicker := time.NewTicker(1 * time.Second)
 	lastTime := time.Now()
 	msgCtr := 0
 
 	channels := make([]chan message.Message, 0, tamConfig.TrustModelInstanceShards)
-	for range tamConfig.TrustModelInstanceShards {
+	for i := range tamConfig.TrustModelInstanceShards {
 		ch := make(chan message.Message, 10_000)
 		channels = append(channels, ch)
-		go worker(ch)
+		go worker(i, ch)
 	}
 
 	for {
@@ -86,11 +100,11 @@ func Run(ctx context.Context, tmts map[string]int, tamConfig config.TAMConfigura
 				continue
 			}*/
 			return
-		case <-ticker.C:
+		case <-throughputTicker.C:
 			delta := time.Since(lastTime)
 			throughput := float64(msgCtr) / delta.Seconds()
 			throughputSec := throughput
-			fmt.Println("Throughput: ", throughputSec)
+			fmt.Printf("TAM: %e messages per second\n", throughputSec)
 			msgCtr = 0
 			lastTime = time.Now()
 		case msgFromTMM := <-inputTMM:

@@ -14,7 +14,7 @@ type Configuration struct {
 
 // Configuration of the [v2xlistener].
 type V2XConfiguration struct {
-	SendIntervalMs int
+	SendIntervalNs int
 }
 
 type TAMConfiguration struct {
@@ -29,9 +29,9 @@ var (
 	// misses values, this struct defines the corresponding
 	// default values.
 	DefaultConfig Configuration = Configuration{
-		ChanBufSize: 1000000,
+		ChanBufSize: 1_000_000,
 		V2XConfig: V2XConfiguration{
-			SendIntervalMs: 1,
+			SendIntervalNs: 1,
 		},
 		TAMConfig: TAMConfiguration{
 			TrustModelInstanceShards: 1,

@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,10 +39,10 @@ func main() {
 		var err error
 		tafConfig, err = config.LoadJson(filepath)
 		if err != nil {
-			//log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 		}
 	}
-	//log.Printf("Running with configuration: %+v\n", tafConfig)
+	log.Printf("Running with configuration: %+v\n", tafConfig)
 
 	c1 := make(chan message.Message, tafConfig.ChanBufSize)
 	c2 := make(chan message.Message, tafConfig.ChanBufSize)
