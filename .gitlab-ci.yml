@@ -17,6 +17,7 @@ format:
   stage: test
   script:
     - make check
+    - make bench
 
 compile:
   stage: build
