@@ -38,7 +38,7 @@ var (
 		},
 		TAMConfig: TAMConfiguration{
 			TrustModelInstanceShards: 1,
-			UpdateResultsOp:          "UpdateWorkerResultsAdd",
+			UpdateResultsOp:          "add",
 			UpdateStateOp:            "TODO", //TODO
 		},
 	}

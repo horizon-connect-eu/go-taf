@@ -38,7 +38,7 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	}
 
 	var err error
-	retTam.updateResults, err = getUpdateResultsOpByName(conf.UpdateResultsOp)
+	err = getUpdateResultsOpByName(conf.UpdateResultsOp, &retTam)
 	if err != nil {
 		return tam{}, err
 	}
@@ -46,25 +46,35 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	return retTam, nil
 }
 
-type X interface{}
+func (t *tam) SetUpdateResults(f func(Results, State, TMTs, int)) {
+	t.updateResults = f
+}
 
-func getUpdateResultsOpByName(name string) (func(Results, State, TMTs, int), error) {
+type TamBuilder interface {
+	SetUpdateResults(func(Results, State, TMTs, int))
+}
+
+func getUpdateResultsOpByName(name string, tamInst *tam) error {
 	// TODO open questions:
 	// What should be "pluginable"? only the functions or also the types? (not sure if types are even possible)
 	// should we load all available plugins at startup or only the ones specified?
 	// maybe load at init time using an init function would be best.
 	// what are naming conventions? -> path of the .so files, names of the functions and so on.
 	// Do we want to provide default functions in our own codebase?
-	path := "plugins/bin/tam.so"
+	// Should it be part of the trust model which operators are used?
+	path := "plugins/bin/" + name + ".so"
+	registerFuncName := "RegisterTam"
 	p, err := plugin.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not find plugin file %s", path)
+		return fmt.Errorf("could not find plugin file %s", path)
 	}
-	updateResultsFunc, err := p.Lookup(name)
+	registerFunc, err := p.Lookup(registerFuncName)
 	if err != nil {
-		return nil, fmt.Errorf("could not find symbol %s in plugin file %s", name, path)
+		return fmt.Errorf("could not find symbol %s in plugin file %s", registerFuncName, path)
 	}
-	return updateResultsFunc.(func(Results, State, TMTs, int)), nil
+	registerFuncCast := registerFunc.(func(TamBuilder))
+	registerFuncCast(tamInst)
+	return nil
 }
 
 // Processes the messages received via the specified channel as fast as possible.

@@ -1,13 +1,17 @@
 .DEFAULT_GOAL := build
 
+PLUGINS := tam/add/ tam/mult/
+
 format:
 	go fmt ./...
 	go vet ./...
 .PHONY:format
 
-buildplugins:
+$(PLUGINS):
 	mkdir -p plugins/bin
-	go build -buildmode=plugin -o plugins/bin ./plugins/tam
+	go build -buildmode=plugin -o ./plugins/bin ./plugins/$@
+
+buildplugins: $(PLUGINS)
 .PHONY:buildplugins
 
 build: format buildplugins
