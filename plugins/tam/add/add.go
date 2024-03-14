@@ -1,9 +1,11 @@
-package main
+package add
 
-import "gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tam"
+import (
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tam"
+)
 
-func RegisterTam(tamInst tam.TamBuilder) {
-	tamInst.SetUpdateResults(UpdateWorkerResultsAdd)
+func init() {
+	tam.RegisterUpdateResultFunc("add", UpdateWorkerResultsAdd)
 }
 
 // Gets the slice stored in `states` under the key `id`, computes its sum,

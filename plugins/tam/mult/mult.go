@@ -1,9 +1,9 @@
-package main
+package mult
 
 import "gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tam"
 
-func RegisterTam(tamInst tam.TamBuilder) {
-	tamInst.SetUpdateResults(UpdateWorkerResultsMult)
+func init() {
+	tam.RegisterUpdateResultFunc("mult", UpdateWorkerResultsMult)
 }
 
 // Gets the slice stored in `states` under the key `id`, computes its product,

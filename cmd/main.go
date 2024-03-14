@@ -23,6 +23,8 @@ import (
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/v2xlistener"
 )
 
+//go:generate go run ../plugins/plugins.go
+
 // Blocks until the process receives SIGTERM (or equivalent).
 func WaitForCtrlC() {
 	c := make(chan os.Signal, 1)

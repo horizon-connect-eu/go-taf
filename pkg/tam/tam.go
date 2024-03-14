@@ -3,27 +3,40 @@ package tam
 import (
 	"context"
 	"fmt"
-	"plugin"
 	"time"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
 )
 
-// What are our states and results?
-type State = map[int][]int
-type Results = map[int]int
-type TMTs = map[string]int
+// Holds the available functions for updating
+// worker Results.
+var updateResultFuncs = map[string]ResultsUpdater{}
+
+// Register a new ResultUpdater under a name.
+// The name can be used in the config to refer to the registered function.
+// The ResultUpdater is called by a worker at a point in execution when the
+// Results it is responsible for should be refreshed.
+func RegisterUpdateResultFunc(name string, f ResultsUpdater) {
+	updateResultFuncs[name] = f
+}
+
+func getUpdateResultFunc(name string) (ResultsUpdater, error) {
+	if f, ok := updateResultFuncs[name]; ok {
+		return f, nil
+	}
+	return nil, fmt.Errorf("tam: no update result function named %s registered", name)
+}
 
 // later, we can make tam generic, ie tam[S stateT, R resultsT, M messageT]
 // where stateT, resultsT and messageT are suitable interfaces.
 // ToDo: make tmts fit in nicely
 // ToDo: decide what is included in the state, ie channels?
 type tam struct {
-	mkStateDatabase   func() State
-	mkResultsDatabase func() Results
-	updateState       func(State, TMTs, message.Message)
-	updateResults     func(Results, State, TMTs, int)
+	mkStateDatabase   StateFactory
+	mkResultsDatabase ResultsFactory
+	updateState       StateUpdater
+	updateResults     ResultsUpdater
 	tmts              TMTs
 	conf              config.TAMConfiguration
 }
@@ -38,43 +51,13 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	}
 
 	var err error
-	err = getUpdateResultsOpByName(conf.UpdateResultsOp, &retTam)
+	f, err := getUpdateResultFunc(conf.UpdateResultsOp)
 	if err != nil {
 		return tam{}, err
 	}
+	retTam.updateResults = f
 
 	return retTam, nil
-}
-
-func (t *tam) SetUpdateResults(f func(Results, State, TMTs, int)) {
-	t.updateResults = f
-}
-
-type TamBuilder interface {
-	SetUpdateResults(func(Results, State, TMTs, int))
-}
-
-func getUpdateResultsOpByName(name string, tamInst *tam) error {
-	// TODO open questions:
-	// What should be "pluginable"? only the functions or also the types? (not sure if types are even possible)
-	// should we load all available plugins at startup or only the ones specified?
-	// maybe load at init time using an init function would be best.
-	// what are naming conventions? -> path of the .so files, names of the functions and so on.
-	// Do we want to provide default functions in our own codebase?
-	// Should it be part of the trust model which operators are used?
-	path := "plugins/bin/" + name + ".so"
-	registerFuncName := "RegisterTam"
-	p, err := plugin.Open(path)
-	if err != nil {
-		return fmt.Errorf("could not find plugin file %s", path)
-	}
-	registerFunc, err := p.Lookup(registerFuncName)
-	if err != nil {
-		return fmt.Errorf("could not find symbol %s in plugin file %s", registerFuncName, path)
-	}
-	registerFuncCast := registerFunc.(func(TamBuilder))
-	registerFuncCast(tamInst)
-	return nil
 }
 
 // Processes the messages received via the specified channel as fast as possible.

@@ -4,6 +4,6 @@
         "SendIntervalMs": 1000
     },
     "TAMConfig": {
-        "UpdateResultsOp": "add"
+        "UpdateResultsOp": "mult"
     }
 }
