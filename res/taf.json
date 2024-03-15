@@ -1,7 +1,7 @@
 {
     "ChanBufSize": 10000,
     "V2XConfig": {
-        "SendIntervalNs": 1000
+        "SendIntervalNs": 10000
     },
     "TAMConfig": {
         "UpdateResultsOp": "mult",

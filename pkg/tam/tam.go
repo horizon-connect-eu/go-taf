@@ -104,18 +104,6 @@ func updateWorkerState(state State, tmt TMTs, msg message.Message) {
 	//log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
 }
 
-// Gets the slice stored in `states` under the key `id`, computes its sum,
-// and inserts this sum into `results` at key `id`.
-func updateResults(results map[int]int, id int, states map[int][]int) {
-	sum := 0
-	for _, x := range states[id] {
-		sum += x
-	}
-
-	results[id] = sum
-	//log.Printf("Current sum for ID %d: %d\n", id, sum)
-}
-
 // Runs the trust assessment manager
 func (t tam) Run(ctx context.Context,
 	inputTMM chan message.Message,
