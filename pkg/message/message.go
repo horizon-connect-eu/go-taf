@@ -2,22 +2,25 @@ package message
 
 import (
 	"math/rand/v2"
+	"time"
 )
 
 type Message struct {
-	ID    int
-	Value int
-	Rx    string
-	Type  string
+	ID        int
+	Value     int
+	Rx        string
+	Type      string
+	Timestamp time.Time
 }
 
 // Creates a new message with the given parameters
 func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
 	msg1 := Message{
-		Tx_ID,
-		Tx_value,
-		Tx_Rx,
-		Type,
+		ID:        Tx_ID,
+		Value:     Tx_value,
+		Rx:        Tx_Rx,
+		Type:      Type,
+		Timestamp: time.Now(),
 	}
 
 	return msg1

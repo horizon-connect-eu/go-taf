@@ -61,14 +61,27 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 }
 
 // Processes the messages received via the specified channel as fast as possible.
-func (t tam) tamWorker(inputs <-chan message.Message) {
+func (t tam) tamWorker(id int, inputs <-chan message.Message) {
 	states := t.mkStateDatabase()
 	results := t.mkResultsDatabase()
+
+	// Ticker for latency benchmark
+	latTicker := time.NewTicker(1 * time.Second)
+	latMeasurePending := false
+
 	for {
-		msg := <-inputs
-		t.updateState(states, t.tmts, msg)
-		t.updateResults(results, states, t.tmts, msg.ID)
-		//time.Sleep(1 * time.Millisecond)
+		select {
+		case msg := <-inputs:
+			t.updateState(states, t.tmts, msg)
+			t.updateResults(results, states, t.tmts, msg.ID)
+			time.Sleep(1 * time.Millisecond)
+			if latMeasurePending && id == 0 {
+				fmt.Printf("TAM: latency of %d µs\n", time.Since(msg.Timestamp).Microseconds())
+				latMeasurePending = false
+			}
+		case <-latTicker.C:
+			latMeasurePending = true
+		}
 	}
 }
 
@@ -87,6 +100,20 @@ func updateWorkerState(state State, tmt TMTs, msg message.Message) {
 	if len(state[msg.ID]) > value {
 		state[msg.ID] = state[msg.ID][1:]
 	}
+
+	//log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
+}
+
+// Gets the slice stored in `states` under the key `id`, computes its sum,
+// and inserts this sum into `results` at key `id`.
+func updateResults(results map[int]int, id int, states map[int][]int) {
+	sum := 0
+	for _, x := range states[id] {
+		sum += x
+	}
+
+	results[id] = sum
+	//log.Printf("Current sum for ID %d: %d\n", id, sum)
 }
 
 // Runs the trust assessment manager
@@ -100,15 +127,16 @@ func (t tam) Run(ctx context.Context,
 		//log.Println("TAM: shutting down")
 	}()
 
-	ticker := time.NewTicker(1 * time.Second)
+	// Ticker for throughput benchmark
+	throughputTicker := time.NewTicker(1 * time.Second)
 	lastTime := time.Now()
 	msgCtr := 0
 
 	channels := make([]chan message.Message, 0, t.conf.TrustModelInstanceShards)
-	for range t.conf.TrustModelInstanceShards {
+	for i := range t.conf.TrustModelInstanceShards {
 		ch := make(chan message.Message, 10_000)
 		channels = append(channels, ch)
-		go t.tamWorker(ch)
+		go t.tamWorker(i, ch)
 	}
 
 	for {
@@ -122,11 +150,11 @@ func (t tam) Run(ctx context.Context,
 				continue
 			}*/
 			return
-		case <-ticker.C:
+		case <-throughputTicker.C:
 			delta := time.Since(lastTime)
 			throughput := float64(msgCtr) / delta.Seconds()
 			throughputSec := throughput
-			fmt.Println("Throughput: ", throughputSec)
+			fmt.Printf("TAM: %e messages per second\n", throughputSec)
 			msgCtr = 0
 			lastTime = time.Now()
 		case msgFromTMM := <-inputTMM:
