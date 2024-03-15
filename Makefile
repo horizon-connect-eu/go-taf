@@ -5,7 +5,7 @@ format:
 	go vet ./...
 .PHONY:format
 
-build: generate format
+build: cmd/plugin_loader.go format
 	mkdir -p out
 	go build -o out ./cmd/main.go ./cmd/plugin_loader.go
 .PHONY:build
@@ -18,9 +18,10 @@ bench: format
 	go test -bench . -run=^$$ -benchmem $(shell go list ./... | grep -v /vendor/) 
 .PHONY:bench
 
-generate:
+PLUGIN_FILES = $(shell find plugins/ -type f -name '*.go')
+
+cmd/plugin_loader.go: $(PLUGIN_FILES)
 	go generate cmd/main.go
-.PHONY:generate
 
 run: build
 	TAF_CONFIG=res/taf.json out/main

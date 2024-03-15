@@ -16,5 +16,4 @@ func UpdateWorkerResultsAdd(results tam.Results, states tam.State, tmts tam.TMTs
 		sum += x
 	}
 	results[id] = sum
-	//log.Printf("Current sum for ID %d: %d\n", id, sum)
 }
