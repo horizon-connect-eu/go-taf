@@ -1,25 +1,17 @@
-# You can copy and paste this template into a new `.gitlab-ci.yml` file.
-# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
-#
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Go.gitlab-ci.yml
-
 image: golang:latest
 
 stages:
   - test
   - build
-  - deploy
+  - pages
 
-format:
+test:
   stage: test
   script:
     - make check
     - make bench
 
-compile:
+build:
   stage: build
   script:
     - make build
@@ -28,7 +20,29 @@ compile:
       - out
       - plugins/bin
 
-.deploy:
-  stage: deploy
-  script: echo "Define your deployment script!"
-  environment: production
+pages:
+  stage: pages
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go/bin
+    - mkdir -p .go/src
+    - mkdir -p .go/pkg
+  cache:
+    paths:
+      - .go/
+  environment:
+    name: pages
+    url: https://connect.p.lxd-vs.uni-ulm.de/taf-scalability-test
+  artifacts:
+    paths:
+      - public/
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - go install golang.org/x/pkgsite/cmd/pkgsite@latest
+    - export PATH=${PATH}:`go env GOPATH`/bin
+    - make docs
+    - mv docs/ public/
+    - echo '/taf-scalability-test/ /taf-scalability-test/gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/ 302' > public/_redirects
+
