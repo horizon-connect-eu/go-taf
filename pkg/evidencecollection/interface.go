@@ -3,6 +3,7 @@ package evidencecollection
 import (
 	"context"
 	"fmt"
+
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
@@ -32,7 +33,12 @@ func New(conf config.Configuration) (evidenceCollectionInterface, error) {
 
 	for _, adapter := range conf.EvidenceCollection.Adapters {
 		fmt.Println(adapter)
+		if f, ok := adapters[adapter]; ok {
+			evidenceCollector.inputChannels = append(evidenceCollector.inputChannels, make(chan message.EvidenceCollectionMessage))
+			evidenceCollector.adapters = append(evidenceCollector.adapters, f)
+		}
 	}
+
 	/*
 		var err error
 		f, err := getAdapterFactoryFunc(conf.EvidenceCollection.Adapters)
@@ -58,4 +64,8 @@ func (eci evidenceCollectionInterface) Run(ctx context.Context,
 		}()
 	*/
 	fmt.Println("Hello from ECI")
+
+	for i, adapter := range eci.adapters {
+		go adapter(eci.inputChannels[i], eci.conf)
+	}
 }

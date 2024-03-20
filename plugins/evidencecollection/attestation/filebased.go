@@ -1,19 +1,17 @@
 package attestation
 
 import (
+	"fmt"
+
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
 func init() {
 	evidencecollection.RegisterEvidenceCollectionAdapter("filebased", NewFileBasedAttestation)
 }
 
-type FileBasedAttestation struct {
-	Attestation
-	config config.Configuration
-}
-
-func NewFileBasedAttestation(configuration config.Configuration) FileBasedAttestation {
-	return FileBasedAttestation{}
+func NewFileBasedAttestation(channel chan message.EvidenceCollectionMessage, configuration config.Configuration) {
+	fmt.Println("Hello World from FileBasedAttestation!")
 }

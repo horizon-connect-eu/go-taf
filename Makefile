@@ -38,5 +38,5 @@ docs:
 PHONY:docs
 
 run: build
-	TAF_CONFIG=res/taf.json out/main
+	out/main
 .PHONY:run
