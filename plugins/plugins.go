@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const BaseURL = "gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test"
+const BaseURL = "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo"
 
 func main() {
 	pluginList := []string{}

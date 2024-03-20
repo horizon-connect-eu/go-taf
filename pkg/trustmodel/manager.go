@@ -1,12 +1,12 @@
-package tmm
+package trustmodel
 
 import (
 	"context"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
-func Run(ctx context.Context, input chan message.Message, output chan message.Message) {
+func Run(ctx context.Context, input chan message.InternalMessage, output chan message.InternalMessage) {
 	// Cleanup function:
 	defer func() {
 		//log.Println("TMM: shutting down")

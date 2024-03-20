@@ -1,6 +1,6 @@
-package tam
+package trustassessment
 
-import "gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
+import "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 
 // State is the collection of a number of Trust Model Instances.
 // It holds all TMIs owned by one worker goroutine.
@@ -11,4 +11,4 @@ type State = map[int][]int
 type StateFactory = func() State
 
 // A function that updates the State of a worker given an incoming message.
-type StateUpdater = func(State, TMTs, message.Message)
+type StateUpdater = func(State, TMTs, message.InternalMessage)
