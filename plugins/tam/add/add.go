@@ -1,16 +1,16 @@
 package add
 
 import (
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/tam"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
 )
 
 func init() {
-	tam.RegisterUpdateResultFunc("add", UpdateWorkerResultsAdd)
+	trustassessment.RegisterUpdateResultFunc("add", UpdateWorkerResultsAdd)
 }
 
 // Gets the slice stored in `states` under the key `id`, computes its sum,
 // and inserts this sum into `results` at key `id`.
-func UpdateWorkerResultsAdd(results tam.Results, states tam.State, tmts tam.TMTs, id int) {
+func UpdateWorkerResultsAdd(results trustassessment.Results, states trustassessment.State, tmts trustassessment.TMTs, id int) {
 	sum := 0
 	for _, x := range states[id] {
 		sum += x

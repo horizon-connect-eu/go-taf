@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
-func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan message.Message) {
+func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan message.InternalMessage) {
 	defer func() {
 		//log.Println("V2XListener: shutting down")
 	}()
@@ -34,13 +34,13 @@ func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan 
 			msg := message.Generate()
 			sendToAll(outputs, msg)
 			msgCtr++
-			time.Sleep(time.Duration(v2xconfig.SendIntervalNs) * time.Nanosecond)
+			//time.Sleep(time.Duration(v2xconfig.SendIntervalNs) * time.Nanosecond)
 		}
 	}
 }
 
 // Write a message to all channels in a slice of channels.
-func sendToAll(outputs []chan message.Message, msg message.Message) {
+func sendToAll(outputs []chan message.InternalMessage, msg message.InternalMessage) {
 	// TODO: think about what should happen if a channel is full.
 	// What if one is full and the other is not?
 	// We should document this.

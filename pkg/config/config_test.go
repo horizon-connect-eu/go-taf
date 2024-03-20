@@ -14,7 +14,7 @@ func TestLoadJson(t *testing.T) {
 	if err != nil {
 		t.Error("Error on existing and valid JSON config file")
 	}
-	if conf.ChanBufSize != 1337 || conf.V2XConfig.SendIntervalNs != 42 {
+	if conf.ChanBufSize != 1337 || conf.V2X.SendIntervalNs != 42 {
 		t.Error("Read valid config file incorrectly")
 	}
 }

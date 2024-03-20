@@ -1,12 +1,12 @@
-package tam
+package trustassessment
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
 // Holds the available functions for updating
@@ -25,24 +25,24 @@ func getUpdateResultFunc(name string) (ResultsUpdater, error) {
 	if f, ok := updateResultFuncs[name]; ok {
 		return f, nil
 	}
-	return nil, fmt.Errorf("tam: no update result function named %s registered", name)
+	return nil, fmt.Errorf("TrustAssessmentManager: no update result function named %s registered", name)
 }
 
-// later, we can make tam generic, ie tam[S stateT, R resultsT, M messageT]
+// later, we can make trustAssessmentManager generic, ie trustAssessmentManager[S stateT, R resultsT, M messageT]
 // where stateT, resultsT and messageT are suitable interfaces.
 // ToDo: make tmts fit in nicely
 // ToDo: decide what is included in the state, ie channels?
-type tam struct {
+type trustAssessmentManager struct {
 	mkStateDatabase   StateFactory
 	mkResultsDatabase ResultsFactory
 	updateState       StateUpdater
 	updateResults     ResultsUpdater
 	tmts              TMTs
-	conf              config.TAMConfiguration
+	conf              config.Configuration
 }
 
-func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
-	retTam := tam{
+func NewManager(conf config.Configuration, tmts TMTs) (trustAssessmentManager, error) {
+	retTam := trustAssessmentManager{
 		mkStateDatabase:   func() State { return make(map[int][]int) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
@@ -51,9 +51,9 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 	}
 
 	var err error
-	f, err := getUpdateResultFunc(conf.UpdateResultsOp)
+	f, err := getUpdateResultFunc(conf.TAM.UpdateResultsOp)
 	if err != nil {
-		return tam{}, err
+		return trustAssessmentManager{}, err
 	}
 	retTam.updateResults = f
 
@@ -61,7 +61,7 @@ func New(conf config.TAMConfiguration, tmts TMTs) (tam, error) {
 }
 
 // Processes the messages received via the specified channel as fast as possible.
-func (t tam) tamWorker(id int, inputs <-chan message.Message) {
+func (t trustAssessmentManager) tamWorker(id int, inputs <-chan message.InternalMessage) {
 	states := t.mkStateDatabase()
 	results := t.mkResultsDatabase()
 
@@ -74,7 +74,7 @@ func (t tam) tamWorker(id int, inputs <-chan message.Message) {
 		case msg := <-inputs:
 			t.updateState(states, t.tmts, msg)
 			t.updateResults(results, states, t.tmts, msg.ID)
-			time.Sleep(1 * time.Millisecond)
+			//time.Sleep(1 * time.Millisecond)
 			if latMeasurePending && id == 0 {
 				fmt.Printf("TAM: latency of %d µs\n", time.Since(msg.Timestamp).Microseconds())
 				latMeasurePending = false
@@ -85,7 +85,7 @@ func (t tam) tamWorker(id int, inputs <-chan message.Message) {
 	}
 }
 
-func updateWorkerState(state State, tmt TMTs, msg message.Message) {
+func updateWorkerState(state State, tmt TMTs, msg message.InternalMessage) {
 	value, ok := tmt[msg.Type]
 	if !ok {
 		//log.Println("Error")
@@ -104,12 +104,10 @@ func updateWorkerState(state State, tmt TMTs, msg message.Message) {
 	//log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
 }
 
-// Runs the trust assessment manager
-func (t tam) Run(ctx context.Context,
-	inputTMM chan message.Message,
-	inputTSM chan message.Message,
-	inputTAS chan message.TasQuery,
-	outputTAS chan message.TasResponse) {
+// Runs the trust assessment trustAssessmentManager
+func (t trustAssessmentManager) Run(ctx context.Context,
+	inputTMM chan message.InternalMessage,
+	inputTSM chan message.InternalMessage) {
 
 	defer func() {
 		//log.Println("TAM: shutting down")
@@ -120,9 +118,9 @@ func (t tam) Run(ctx context.Context,
 	lastTime := time.Now()
 	msgCtr := 0
 
-	channels := make([]chan message.Message, 0, t.conf.TrustModelInstanceShards)
-	for i := range t.conf.TrustModelInstanceShards {
-		ch := make(chan message.Message, 10_000)
+	channels := make([]chan message.InternalMessage, 0, t.conf.TAM.TrustModelInstanceShards)
+	for i := range t.conf.TAM.TrustModelInstanceShards {
+		ch := make(chan message.InternalMessage, 10_000)
 		channels = append(channels, ch)
 		go t.tamWorker(i, ch)
 	}
@@ -147,12 +145,12 @@ func (t tam) Run(ctx context.Context,
 			lastTime = time.Now()
 		case msgFromTMM := <-inputTMM:
 			//log.Printf("I am TAM, received %+v from TMM\n", msgFromTMM)
-			workerId := msgFromTMM.ID % t.conf.TrustModelInstanceShards
+			workerId := msgFromTMM.ID % t.conf.TAM.TrustModelInstanceShards
 			channels[workerId] <- msgFromTMM
 			msgCtr++
 		case msgFromTSM := <-inputTSM:
 			//log.Printf("I am TAM, received %+v from TSM\n", msgFromTSM)
-			workerId := msgFromTSM.ID % t.conf.TrustModelInstanceShards
+			workerId := msgFromTSM.ID % t.conf.TAM.TrustModelInstanceShards
 			channels[workerId] <- msgFromTSM
 			msgCtr++
 			//case tasQuery := <-inputTAS:

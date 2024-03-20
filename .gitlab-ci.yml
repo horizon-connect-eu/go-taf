@@ -44,5 +44,5 @@ pages:
     - export PATH=${PATH}:`go env GOPATH`/bin
     - make docs
     - mv docs/ public/
-    - echo '/taf-scalability-test/ /taf-scalability-test/gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/ 302' > public/_redirects
+    - echo '/taf-scalability-test/ /taf-scalability-test/gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/ 302' > public/_redirects
 
