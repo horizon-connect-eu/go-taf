@@ -3,6 +3,7 @@ package trustassessment
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
@@ -104,9 +105,14 @@ func updateWorkerState(state State, tmt TMTs, msg message.InternalMessage) {
 	//log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
 }
 
+// Get shard worker based on provided ID and configured number of shards
+func (t trustAssessmentManager) getShardWorkerById(id int) int {
+	return id % t.conf.TAM.TrustModelInstanceShards
+}
+
 // Runs the trust assessment trustAssessmentManager
 func (t trustAssessmentManager) Run(ctx context.Context,
-	inputTMM chan message.InternalMessage,
+	inputTMM chan Command,
 	inputTSM chan message.InternalMessage) {
 
 	defer func() {
@@ -143,11 +149,16 @@ func (t trustAssessmentManager) Run(ctx context.Context,
 			fmt.Printf("TAM: %e messages per second\n", throughputSec)
 			msgCtr = 0
 			lastTime = time.Now()
-		case msgFromTMM := <-inputTMM:
-			//log.Printf("I am TAM, received %+v from TMM\n", msgFromTMM)
-			workerId := msgFromTMM.ID % t.conf.TAM.TrustModelInstanceShards
-			channels[workerId] <- msgFromTMM
-			msgCtr++
+		case cmdFromTMM := <-inputTMM:
+			if cmdFromTMM.GetType() == INIT_TMI {
+				log.Printf("[TAM] processing %+v from TMM\n", cmdFromTMM)
+				//TODO
+				//workerId := t.getShardWorkerById(TODO)
+			}
+			/*			workerId := cmdFromTMM.ID % t.conf.TAM.TrustModelInstanceShards
+						channels[workerId] <- cmdFromTMM
+						msgCtr++
+			*/
 		case msgFromTSM := <-inputTSM:
 			//log.Printf("I am TAM, received %+v from TSM\n", msgFromTSM)
 			workerId := msgFromTSM.ID % t.conf.TAM.TrustModelInstanceShards

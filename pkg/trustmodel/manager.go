@@ -2,15 +2,22 @@ package trustmodel
 
 import (
 	"context"
-
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"fmt"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
 )
 
-func Run(ctx context.Context, input chan message.InternalMessage, output chan message.InternalMessage) {
+func Run(ctx context.Context, output chan trustassessment.Command) {
 	// Cleanup function:
 	defer func() {
 		//log.Println("TMM: shutting down")
 	}()
+
+	//create single TMI
+	cmd := trustassessment.CreateInitTMICommand("demoModel", 0x0fc9)
+	fmt.Print(cmd.GetType())
+
+	// Send initialization message to TAM
+	output <- cmd
 
 	for {
 		// Each iteration, check whether we've been cancelled.
@@ -20,11 +27,7 @@ func Run(ctx context.Context, input chan message.InternalMessage, output chan me
 		select {
 		case <-ctx.Done():
 			return
-		case received := <-input:
-			if received.Rx == "TMM" {
-				//log.Printf("I am TMM, received %+v\n", received)
-				output <- received
-			}
+
 		}
 	}
 }

@@ -51,6 +51,8 @@ func main() {
 	c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 	c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
+	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
+
 	tmts := map[string]int{}
 
 	ctx := context.Background()
@@ -67,9 +69,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go trustAssessmentManager.Run(ctx, c3, c4)
+	go trustAssessmentManager.Run(ctx, tmm2tamChannel, c4)
 
-	go trustmodel.Run(ctx, c1, c3)
+	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, c4)
 
 	ticker := time.NewTicker(1 * time.Second)
