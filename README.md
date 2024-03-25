@@ -22,16 +22,17 @@ From the TAF's perspective the following events would take place from time = 0 o
 1.  **TAF initialized**
 		- Trust Model Instance for the use-case is instantiated based on a Trust Model Template ("a single struct template") and a table is printed to the console:
 
-![[Pasted image 20240320153953.png]]
+![trust model 1](res/images/TAF_Brussels_TM1.png)
 Fig 1. - Trust Model Template for C-ACC in-vehicle use-case
 
-![[Pasted image 20240320154130.png]]
+![trust model 2](res/images/TAF_Brussels_TM2.png)
 Fig 2. - Trust Model Instance for C-ACC in-vehicle use-case
 
 | ID  | Trustor | Trustee | $\omega^{Trustor}_{Trustee}$ | Timestamp | $ATO_1$                        | $ATO_2$                        |
 | --- | ------- | ------- | ---------------------------- | --------- | ------------------------------ | ------------------------------ |
 | ID1 | TAF     | ECU1    | $(0,0,1)$                    | $t_1$     | $\omega^{TAF}_{ECU_1 \| TS_1}$ | $\omega^{TAF}_{ECU_1 \| TS_2}$ |
 | ID2 | TAF     | ECU2    | $(0,0,1)$                    | $t_2$     | $\omega^{TAF}_{ECU_2 \| TS_1}$ | $\omega^{TAF}_{ECU_2 \| TS_2}$ |
+
 Table 1 - Table that is printed to the console of the demo and refreshed when needed
 
 2. **Evidence arrives**
