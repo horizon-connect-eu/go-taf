@@ -1,0 +1,4 @@
+5,"{""trust_model_id"": 4711, ""trust_object_id"": 1, ""status"": true}"
+5,"{""trust_model_id"": 4711, ""trust_object_id"": 2, ""status"": true}"
+10,"{""trust_model_id"": 4711, ""trust_object_id"": 3, ""status"": true}"
+15,"{""trust_model_id"": 4711, ""trust_object_id"": 4, ""status"": false}"

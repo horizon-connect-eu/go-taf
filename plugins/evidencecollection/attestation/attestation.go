@@ -7,5 +7,5 @@ import (
 
 type Attestation struct {
 	evidencecollection.Adapter
-	outputChannel chan message.EvidenceCollectionMessage
+	outputChannel chan<- message.EvidenceCollectionMessage
 }

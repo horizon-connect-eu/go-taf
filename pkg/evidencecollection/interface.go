@@ -6,6 +6,7 @@ import (
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/util"
 )
 
 // Holds the available functions for updating
@@ -24,17 +25,21 @@ type evidenceCollectionInterface struct {
 	conf          config.Configuration
 	adapters      []Adapter
 	inputChannels []chan message.EvidenceCollectionMessage
+	outputChannel chan<- message.EvidenceCollectionMessage
 }
 
-func New(conf config.Configuration) (evidenceCollectionInterface, error) {
+func New(output chan message.EvidenceCollectionMessage,
+	conf config.Configuration) (evidenceCollectionInterface, error) {
 	evidenceCollector := evidenceCollectionInterface{
-		conf: conf,
+		conf:          conf,
+		outputChannel: output,
 	}
 
 	for _, adapter := range conf.EvidenceCollection.Adapters {
 		fmt.Println(adapter)
 		if f, ok := adapters[adapter]; ok {
-			evidenceCollector.inputChannels = append(evidenceCollector.inputChannels, make(chan message.EvidenceCollectionMessage))
+			channel := make(chan message.EvidenceCollectionMessage, conf.ChanBufSize)
+			evidenceCollector.inputChannels = append(evidenceCollector.inputChannels, channel)
 			evidenceCollector.adapters = append(evidenceCollector.adapters, f)
 		}
 	}
@@ -57,8 +62,7 @@ func getAdapterFactoryFunc(name string) (Adapter, error) {
 	return nil, fmt.Errorf("TrustAssessmentManager: no update result function named %s registered", name)
 }
 
-func (eci evidenceCollectionInterface) Run(ctx context.Context,
-) {
+func (eci evidenceCollectionInterface) Run(ctx context.Context) {
 	/*	defer func() {
 			log.Println("EvidenceCollectionInterface: shutting down")
 		}()
@@ -68,4 +72,5 @@ func (eci evidenceCollectionInterface) Run(ctx context.Context,
 	for i, adapter := range eci.adapters {
 		go adapter(eci.inputChannels[i], eci.conf)
 	}
+	util.MuxMany(eci.inputChannels, eci.outputChannel)
 }

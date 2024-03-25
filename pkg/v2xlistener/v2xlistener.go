@@ -34,7 +34,7 @@ func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan 
 			msg := message.Generate()
 			sendToAll(outputs, msg)
 			msgCtr++
-			//time.Sleep(time.Duration(v2xconfig.SendIntervalNs) * time.Nanosecond)
+			time.Sleep(time.Duration(v2xconfig.SendIntervalNs) * time.Nanosecond)
 		}
 	}
 }

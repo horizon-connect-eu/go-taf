@@ -12,6 +12,6 @@ func init() {
 	evidencecollection.RegisterEvidenceCollectionAdapter("kafkabased", NewKafkaBasedAttestation)
 }
 
-func NewKafkaBasedAttestation(channel chan message.EvidenceCollectionMessage, config config.Configuration) {
+func NewKafkaBasedAttestation(channel chan<- message.EvidenceCollectionMessage, config config.Configuration) {
 	fmt.Println("Hello World from KafkaBasedAttestation!")
 }

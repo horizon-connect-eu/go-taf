@@ -5,4 +5,4 @@ import (
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
-type Adapter func(chan message.EvidenceCollectionMessage, config.Configuration)
+type Adapter func(chan<- message.EvidenceCollectionMessage, config.Configuration)
