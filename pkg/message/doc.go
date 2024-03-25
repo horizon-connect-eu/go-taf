@@ -2,7 +2,7 @@
 //
 // # message
 //
-// the [message.InternalMessage] type represents V2X messages that are received by the [gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/v2xlistener] and passed to the [tmm] and [tsm].
+// the [message.Message] type represents V2X messages that are received by the [gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/v2xlistener] and passed to the [tmm] and [tsm].
 //
 // # tasquery
 //
