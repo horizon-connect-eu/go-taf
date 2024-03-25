@@ -1,11 +1,14 @@
 package trustassessment
 
-import "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+import (
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel/instance"
+)
 
 // State is the collection of a number of Trust Model Instances.
 // It holds all TMIs owned by one worker goroutine.
 // It does not include the Results.
-type State = map[int][]int
+type State = map[int]instance.TrustModelInstance
 
 // A function creating a new State.
 type StateFactory = func() State
