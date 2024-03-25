@@ -7,10 +7,9 @@ import (
 
 // Configuration of the TAF, including its subcomponents.
 type Configuration struct {
-	ChanBufSize        int
-	V2X                V2XConfiguration
-	TAM                TAMConfiguration
-	EvidenceCollection EvidenceCollectionConfiguration
+	ChanBufSize int
+	V2XConfig   V2XConfiguration
+	TAMConfig   TAMConfiguration
 }
 
 // V2XConfiguration stores the config of the [v2xlistener].
@@ -25,11 +24,6 @@ type TAMConfiguration struct {
 	UpdateResultsOp          string
 }
 
-// TAMConfiguration stores the config of the [tam.tam].
-type EvidenceCollectionConfiguration struct {
-	Adapters []string
-}
-
 var (
 	// Default configuration of the TAF.
 	// This configuration will be used if no configuration
@@ -38,17 +32,14 @@ var (
 	// misses values, this struct defines the corresponding
 	// default values.
 	DefaultConfig Configuration = Configuration{
-		ChanBufSize: 1_000,
-		V2X: V2XConfiguration{
-			SendIntervalNs: 1_000_000_000,
+		ChanBufSize: 1_000_000,
+		V2XConfig: V2XConfiguration{
+			SendIntervalNs: 1,
 		},
-		TAM: TAMConfiguration{
+		TAMConfig: TAMConfiguration{
 			TrustModelInstanceShards: 1,
 			UpdateResultsOp:          "add",
 			UpdateStateOp:            "TODO", //TODO
-		},
-		EvidenceCollection: EvidenceCollectionConfiguration{
-			Adapters: []string{"filebased"},
 		},
 	}
 )

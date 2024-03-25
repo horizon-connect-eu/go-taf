@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type InternalMessage struct {
+type Message struct {
 	ID        int
 	Value     int
 	Rx        string
@@ -14,8 +14,8 @@ type InternalMessage struct {
 }
 
 // Creates a new message with the given parameters
-func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) InternalMessage {
-	msg1 := InternalMessage{
+func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) Message {
+	msg1 := Message{
 		ID:        Tx_ID,
 		Value:     Tx_value,
 		Rx:        Tx_Rx,
@@ -29,7 +29,7 @@ func New(Tx_ID int, Tx_value int, Tx_Rx string, Type string) InternalMessage {
 // Generates a new message with random values
 //
 // Produces messages that contain an ID (an integer from 0 to 10), a value (an integer from 100 to 999), and a string (either "TSM" or "TMM").
-func Generate() InternalMessage {
+func Generate() Message {
 	var Tx_Rx string
 	Tx_ID := rand.IntN(100000)
 	Tx_value := 100 + rand.IntN(899)

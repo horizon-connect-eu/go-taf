@@ -1,4 +1,4 @@
-package trustassessment
+package tam
 
 type Results = map[int]int
 
