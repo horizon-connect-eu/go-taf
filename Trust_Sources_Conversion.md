@@ -58,7 +58,7 @@ Types of Trust Sources that we will use:
 Trust Sources to be used:
 1. $TS_1$: Secure Boot (**static**)
 	- weight $w_1 = 0.2$ 
-2. $TS_2$: [Dynamic Control Flow Integrity]() (**dynamic**)
+2. $TS_2$: Dynamic Control Flow Integrity (**dynamic**)
 	- weight $w_2 = 0.4$
 1. $TS_3$: Intrusion Detection System (**dynamic**)
 	- weight $w_3 = 0.4$
