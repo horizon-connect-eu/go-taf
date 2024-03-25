@@ -2,29 +2,56 @@
 // plugin_loader.go consists of import statements for each plugin found under plugins/
 // This is necessary because we want 1) out plugins under plugins/ 2) no explicit knowledge
 // which plugins exist in non-generated files in pkg/ or cmd/.
-// Suspected bugs: if a plugin folder contains more than 1 .go file, we could run into problems.
-// Fix: remove duplicates in pluginImportList.
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
 )
 
-const BaseURL = "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo"
+// Read and return the module name from go.mod
+func getModuleName() string {
+	f, err := os.Open(filepath.FromSlash("../go.mod"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if modname, ok := strings.CutPrefix(line, "module "); ok {
+			return modname
+		}
+	}
+
+	if err = scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	log.Fatal("module name not found in go.mod")
+	return ""
+}
 
 func main() {
 	pluginList := []string{}
+	fileSystem := os.DirFS("..")
+	BaseURL := getModuleName()
 
-	err := filepath.WalkDir("../plugins", func(path string, d fs.DirEntry, err error) error {
+	// get a  listing of all go files in the plugins directory and store the paths to the directories (=packages)
+	// they are in.
+	err := fs.WalkDir(fileSystem, filepath.FromSlash("plugins"), func(path string, d fs.DirEntry, err error) error {
 		if strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "plugins.go") {
-			pluginList = append(pluginList, filepath.Dir(path[2:]))
+			packageName := "/" + filepath.Dir(path)
+			packageName = strings.ReplaceAll(packageName, "\\", "/")
+			pluginList = append(pluginList, packageName)
 		}
 		return nil
 	})
@@ -32,7 +59,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println(pluginList)
+	// Sort the list of packages and remove duplicates
+	slices.Sort(pluginList)
+	pluginList = slices.Compact(pluginList)
+
+	log.Printf("discovered the following plugins: %+v\n", pluginList)
 
 	pluginImportList := []string{}
 	for _, plugin := range pluginList {
