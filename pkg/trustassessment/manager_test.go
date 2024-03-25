@@ -1,9 +1,9 @@
-package tam
+package trustassessment
 
 import (
 	"testing"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
 func generateStates(nkeys int, nentries int) State {
