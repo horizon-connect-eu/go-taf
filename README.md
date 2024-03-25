@@ -42,7 +42,7 @@ Table 1 - Table that is printed to the console of the demo and refreshed when ne
 		- trustee_ID: numeric value, trust_source_ID: numeric value, evid_type: boolean
 
 3. **TSM converts evidence** into an atomic trust opinion
-	- [ ] A method for converting evidence to an ATO needs to be implemented
+	- [ ] A [method](Trust_Sources_Conversion.md) for converting evidence to an ATO needs to be implemented
 		
 4. **TAM receives a change-event from TSM** with latest opinions to be reflected in the TMI
 	 - [ ] Implement this with go-routines and go-channels?
