@@ -71,12 +71,12 @@ $\Delta_3 = 0.4 * 0.57 = 0.228$
 **Case 1**: Initially, all 3 trust sources provide **positive** evidence.
 
 1. $TS_1 = 1$     $\Rightarrow$     $b_1 = 0.25 + 0.114 = 0.364$  $|$ $d_1 = 0.18$ $|$ $u_1 = 0.57 - 0.114 = 0.456$
-2. $TS_2 = 1$     $\Rightarrow$     $b_2 = 0.364 + 0.228 = 0.592$ $|$ $d_1 = 0.18$ $|$ $u_2 = 0.456 - 0.228 = 0.228$ 
-3. $TS_3 = 1$     $\Rightarrow$     $b_3 = 0.592 + 0.228 = 0.820$ $|$ $d_1 = 0.18$ $|$ $u_3 = 0.228 - 0.228 = 0$
+2. $TS_2 = 1$     $\Rightarrow$     $b_2 = 0.364 + 0.228 = 0.592$ $|$ $d_2 = 0.18$ $|$ $u_2 = 0.456 - 0.228 = 0.228$ 
+3. $TS_3 = 1$     $\Rightarrow$     $b_3 = 0.592 + 0.228 = 0.820$ $|$ $d_3 = 0.18$ $|$ $u_3 = 0.228 - 0.228 = 0$
 
 Therefore, the run-time Trust Opinion after the first conversion is $\omega_{RTI} = (0.820,0.18,0)$. 
 
-Therefore, $\omega^{TAF}_{ECU_1} = (0.820,0.18,0)$.
+Therefore, $\omega^{TAF}_{ECU_1}=(0.820,0.18,0)$.
 
 **Case 2**: At some point, a single trust source will provide **negative** evidence.
 
