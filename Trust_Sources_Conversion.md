@@ -42,13 +42,13 @@ $b_0 = b_{RTI}$, $d_0 = d_{RTI}$, and $u_0 = u_{RTI}$
 
 Note $TS_{x, new} - TS_{x, old}$ options: 
 
-0 - 1 = -1 (negative change)
+0 - 1 = -1 (negative change as the new $TS_x$ is 0 implying negative evidence, and the old $TS_x$ is 1 implying positive evidence)
 
-0 - 0 = 0 (no change)
+0 - 0 = 0 (no change, evidence was negative and stayed negative)
 
-1 - 1 = 0 (no change)
+1 - 1 = 0 (no change, evidence was positive and stayed positive)
 
-1 - 0 = 1 (positive change)
+1 - 0 = 1 (positive change as the new $TS_x$ is 1 implying positive evidence, and the old $TS_x$ is 0 implying negative evidence)
 
 In this case, the belief or disbelief have to change depending on whether the change in evidence is positive or negative. If the change is negative, meaning we go from positive evidence to negative evidence, then the belief should drop and the disbelief should increase. If the change is positive, meaning we go from negative evidence to positive evidence, the the belief should increase, and the disbelief should increase. The uncertainty should stay the same unless there is evidence from a trust source we haven't processed yet, in which case we use the formulas from "Running the conversion for the 1st time".
 
