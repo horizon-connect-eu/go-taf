@@ -55,7 +55,7 @@ In this case, the belief or disbelief have to change depending on whether the ch
 ### Example of conversion
 
 We are focusing on the DENSO ECU migration use case and we use the following trust model in this case:
-![[TAF_Brussels_TM2.png]]]
+![trust model 2](res/images/TAF_Brussels_TM2.png)
 
 We will be assessing the trustworthiness of an ECU as assessed by the TAF, e.g. $\omega^{TAF}_{ECU_1}$.
 
