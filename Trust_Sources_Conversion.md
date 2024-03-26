@@ -13,7 +13,7 @@ $\Delta_x = w_x * u_{DTI}$
 
 ##### Running the conversion the 1st time
 
-Calculating the **belief**, **disbelief**, and **uncertainty** after processing evidence from a trust source $TS_x$ for the first time, where $x \in [1, 2, 3, ...n)$, $n$ is the total number of trust sources (e.g. 3 in this case), and $TS_x$ is a boolean: 
+Calculating the **belief**, **disbelief**, and **uncertainty** after processing evidence from a trust source $TS_x$ for the first time, where $x \in [1, 2, 3, ...n)$, $n$ is the total number of trust sources, and $TS_x$ is a boolean value (where 1 represents positive evidence and 0 represents negative evidence): 
 
 $$b_x = b_{x-1} + TS_x*\Delta_x$$
 
@@ -41,9 +41,13 @@ Note that in this case:
 $b_0 = b_{RTI}$, $d_0 = d_{RTI}$, and $u_0 = u_{RTI}$ 
 
 Note $TS_{x, new} - TS_{x, old}$ options: 
+
 0 - 1 = -1 (negative change)
+
 0 - 0 = 0 (no change)
+
 1 - 1 = 0 (no change)
+
 1 - 0 = 1 (positive change)
 
 In this case, the belief or disbelief have to change depending on whether the change in evidence is positive or negative. If the change is negative, meaning we go from positive evidence to negative evidence, then the belief should drop and the disbelief should increase. If the change is positive, meaning we go from negative evidence to positive evidence, the the belief should increase, and the disbelief should increase. The uncertainty should stay the same unless there is evidence from a trust source we haven't processed yet, in which case we use the formulas from "Running the conversion for the 1st time".
