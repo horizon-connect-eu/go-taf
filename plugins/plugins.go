@@ -6,7 +6,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"log"
 	"os"
@@ -40,14 +43,69 @@ func getModuleName() string {
 	return ""
 }
 
+func checkFile(path string) error {
+	fset := token.NewFileSet()
+	fcontents, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f, err := parser.ParseFile(fset, path, fcontents, parser.ImportsOnly)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, impt := range f.Imports {
+		//fmt.Printf("%s %s\n", path, impt.Path.Value)
+		if strings.Contains(impt.Path.Value, "plugins") {
+			return fmt.Errorf("%s: you cannot import from plugins/", path)
+		}
+	}
+	return nil
+}
+
+func checkForPluginImportStatements() error {
+	fileSystem := os.DirFS("..")
+	errorList := []string{}
+	fs.WalkDir(fileSystem, filepath.FromSlash("."), func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Skip the plugin/ directory
+		if strings.HasPrefix(path, "plugins") {
+			return fs.SkipDir
+		}
+		// Skip cmd/plugin_loader.go
+		if strings.HasSuffix(path, "plugin_loader.go") {
+			return nil
+		}
+		if !d.IsDir() && strings.HasSuffix(path, ".go") {
+			err = checkFile(filepath.FromSlash("../" + path))
+			if err != nil {
+				errorList = append(errorList, err.Error())
+			}
+		}
+
+		return nil
+	})
+	if len(errorList) != 0 {
+		return errors.New(strings.Join(errorList, "\n"))
+	}
+	return nil
+}
+
 func main() {
+
+	err := checkForPluginImportStatements()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	pluginList := []string{}
 	fileSystem := os.DirFS("..")
 	BaseURL := getModuleName()
 
 	// get a  listing of all go files in the plugins directory and store the paths to the directories (=packages)
 	// they are in.
-	err := fs.WalkDir(fileSystem, filepath.FromSlash("plugins"), func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(fileSystem, filepath.FromSlash("plugins"), func(path string, d fs.DirEntry, err error) error {
 		if strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "plugins.go") {
 			packageName := "/" + filepath.Dir(path)
 			packageName = strings.ReplaceAll(packageName, "\\", "/")
