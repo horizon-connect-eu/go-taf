@@ -42,12 +42,10 @@ func MuxMany[T any](sources []chan T, sink chan<- T) {
 	for i, source := range sources {
 		if i == len(sources)-1 {
 			Mux(csink, source, sink)
-			//fmt.Println("A")
 		} else {
 			newSink := make(chan T)
 			Mux(csink, source, newSink)
 			csink = newSink
-			//fmt.Println("B")
 		}
 	}
 

@@ -3,10 +3,11 @@ package trustassessment
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel/instance"
-	"log"
 )
 
 // Holds the available functions for updating
@@ -75,18 +76,18 @@ func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
 		case command := <-inputs:
 			switch cmd := command.(type) {
 			case InitTMICommand:
-				fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v", id, cmd)
+				fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", id, cmd)
 
 				states[int(cmd.Identifier)] = instance.NewTrustModelInstance(int(cmd.Identifier), cmd.TrustModelTemplate)
 
 			case UpdateATOCommand:
-				fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v", id, cmd)
+				fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", id, cmd)
 
 				trustModelInstance := states[int(cmd.Identifier)]
 				println(trustModelInstance.GetId())
 
 			default:
-				fmt.Printf("[TAM Worker %d] Unknown message to %v", id, cmd)
+				fmt.Printf("[TAM Worker %d] Unknown message to %v\n", id, cmd)
 			}
 			/*
 				t.updateState(states, t.tmts, msg)

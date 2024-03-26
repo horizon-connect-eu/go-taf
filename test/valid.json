@@ -1,6 +1,11 @@
 {
     "ChanBufSize": 1337,
-    "V2XConfig": {
+    "V2X": {
         "SendIntervalNs": 42
+    },
+    "EvidenceCollection": {
+        "Adapters": [
+            {"Name": "filebased", "Params": {"path": "res/file_based_evidence_collection_1.csv"}}
+        ]
     }
 }

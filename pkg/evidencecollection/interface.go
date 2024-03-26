@@ -3,6 +3,7 @@ package evidencecollection
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
@@ -23,7 +24,7 @@ func RegisterEvidenceCollectionAdapter(name string, f Adapter) {
 
 type evidenceCollectionInterface struct {
 	conf          config.Configuration
-	adapters      []Adapter
+	adapters      map[int]Adapter
 	inputChannels []chan message.EvidenceCollectionMessage
 	outputChannel chan<- message.EvidenceCollectionMessage
 }
@@ -33,14 +34,16 @@ func New(output chan message.EvidenceCollectionMessage,
 	evidenceCollector := evidenceCollectionInterface{
 		conf:          conf,
 		outputChannel: output,
+		adapters:      make(map[int]Adapter),
 	}
 
-	for _, adapter := range conf.EvidenceCollection.Adapters {
-		fmt.Println(adapter)
-		if f, ok := adapters[adapter]; ok {
+	for id, adapter := range conf.EvidenceCollection.Adapters {
+		if f, ok := adapters[adapter.Name]; ok {
 			channel := make(chan message.EvidenceCollectionMessage, conf.ChanBufSize)
 			evidenceCollector.inputChannels = append(evidenceCollector.inputChannels, channel)
-			evidenceCollector.adapters = append(evidenceCollector.adapters, f)
+			evidenceCollector.adapters[id] = f
+		} else {
+			log.Printf("[ECI] cannot find adapter plugin \"%s\"\n", adapter.Name)
 		}
 	}
 
@@ -69,8 +72,8 @@ func (eci evidenceCollectionInterface) Run(ctx context.Context) {
 	*/
 	fmt.Println("Hello from ECI")
 
-	for i, adapter := range eci.adapters {
-		go adapter(eci.inputChannels[i], eci.conf)
+	for id, adapter := range eci.adapters {
+		go adapter(ctx, id, eci.inputChannels[id], eci.conf)
 	}
 	util.MuxMany(eci.inputChannels, eci.outputChannel)
 }

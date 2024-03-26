@@ -20,7 +20,7 @@ build:
       - out
       - plugins/bin
 
-pages:
+.pages:
   stage: pages
   variables:
     GOPATH: $CI_PROJECT_DIR/.go

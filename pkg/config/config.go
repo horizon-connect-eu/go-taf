@@ -27,7 +27,12 @@ type TAMConfiguration struct {
 
 // TAMConfiguration stores the config of the [tam.tam].
 type EvidenceCollectionConfiguration struct {
-	Adapters []string
+	Adapters []AdapterConfig
+}
+
+type AdapterConfig struct {
+	Name   string
+	Params map[string]string
 }
 
 var (
@@ -48,7 +53,10 @@ var (
 			UpdateStateOp:            "TODO", //TODO
 		},
 		EvidenceCollection: EvidenceCollectionConfiguration{
-			Adapters: []string{"filebased"},
+			Adapters: []AdapterConfig{
+				{"filebased", map[string]string{"path": "res/file_based_evidence_1.csv"}},
+				{"filebased", map[string]string{"path": "res/file_based_evidence_2.csv"}},
+			},
 		},
 	}
 )
