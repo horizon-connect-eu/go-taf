@@ -6,19 +6,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
+
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustsource"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/v2xlistener"
 )
 
 //go:generate go run ../plugins/plugins.go
@@ -52,6 +52,8 @@ func main() {
 	c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
 	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
+	eci2tsm := make(chan message.EvidenceCollectionMessage, tafConfig.ChanBufSize)
+	tsm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
 
 	tmts := map[string]int{}
 
@@ -60,19 +62,22 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
+	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
 
-	evidenceCollection, err := evidencecollection.New(tafConfig)
+	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 	go evidenceCollection.Run(ctx)
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafConfig, tmts)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go trustAssessmentManager.Run(ctx, tmm2tamChannel, c4)
+	go trustAssessmentManager.Run(ctx, tmm2tamChannel, tsm2tamChannel)
 
 	go trustmodel.Run(ctx, tmm2tamChannel)
-	go trustsource.Run(ctx, c2, c4)
+	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
 
 	ticker := time.NewTicker(1 * time.Second)
 	for range ticker.C {

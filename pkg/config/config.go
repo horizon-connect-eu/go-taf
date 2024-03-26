@@ -40,7 +40,7 @@ var (
 	DefaultConfig Configuration = Configuration{
 		ChanBufSize: 1_000,
 		V2X: V2XConfiguration{
-			SendIntervalNs: 1,
+			SendIntervalNs: 1_000_000_000,
 		},
 		TAM: TAMConfiguration{
 			TrustModelInstanceShards: 1,
@@ -48,7 +48,7 @@ var (
 			UpdateStateOp:            "TODO", //TODO
 		},
 		EvidenceCollection: EvidenceCollectionConfiguration{
-			Adapters: []string{"filebased", "kafkabased"},
+			Adapters: []string{"filebased"},
 		},
 	}
 )

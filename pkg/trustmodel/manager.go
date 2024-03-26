@@ -2,7 +2,6 @@ package trustmodel
 
 import (
 	"context"
-	"fmt"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
 )
 
@@ -12,13 +11,13 @@ func Run(ctx context.Context, output chan trustassessment.Command) {
 		//log.Println("TMM: shutting down")
 	}()
 
-	//create single TMI
-	cmd := trustassessment.CreateInitTMICommand("demoModel", 0x0fc9)
-	fmt.Print(cmd.GetType())
+	// Create single TMI
+	cmd := trustassessment.CreateInitTMICommand("demoModel", 4711)
 
 	// Send initialization message to TAM
 	output <- cmd
 
+	// Do nothing until end
 	for {
 		// Each iteration, check whether we've been cancelled.
 		if err := context.Cause(ctx); err != nil {
