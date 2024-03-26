@@ -2,7 +2,9 @@
 ### Formulas for TS conversion
 
 $\omega_{DTI} = (b_{DTI}, d_{DTI}, u_{DTI})$ - **initial trust opinion** based on the Design Time Information
+
 $\omega_{RTI} = (b_{RTI}, d_{RTI}, u_{RTI})$ - **run-time trust opinion** calculated during run-time
+
 $w_x$ - the **weight** associated with trust source $TS_x$
 
 
