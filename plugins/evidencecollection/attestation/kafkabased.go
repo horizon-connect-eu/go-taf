@@ -1,6 +1,7 @@
 package attestation
 
 import (
+	"context"
 	"fmt"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
@@ -12,6 +13,6 @@ func init() {
 	evidencecollection.RegisterEvidenceCollectionAdapter("kafkabased", NewKafkaBasedAttestation)
 }
 
-func NewKafkaBasedAttestation(channel chan<- message.EvidenceCollectionMessage, config config.Configuration) {
+func NewKafkaBasedAttestation(ctx context.Context, id int, channel chan<- message.EvidenceCollectionMessage, config config.Configuration) {
 	fmt.Println("Hello World from KafkaBasedAttestation!")
 }

@@ -1,6 +1,7 @@
 package attestation
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"log"
@@ -53,8 +54,12 @@ func readEvents(path string) ([]message.EvidenceCollectionMessage, error) {
 	return events, nil
 }
 
-func NewFileBasedAttestation(channel chan<- message.EvidenceCollectionMessage, configuration config.Configuration) {
-	events, err := readEvents(filepath.FromSlash("./res/file_based_evidence_1.csv"))
+func NewFileBasedAttestation(ctx context.Context, id int, channel chan<- message.EvidenceCollectionMessage, configuration config.Configuration) {
+	path, ok := configuration.EvidenceCollection.Adapters[id].Params["path"]
+	if !ok {
+		log.Fatal("filebased evidence collector plugin: no path specified to read from")
+	}
+	events, err := readEvents(filepath.FromSlash(path))
 	log.Printf("filebased evidence collector plugin: read %d messages", len(events))
 
 	if err != nil {

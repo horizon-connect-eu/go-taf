@@ -1,8 +1,12 @@
 package evidencecollection
 
 import (
+	"context"
+
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
 )
 
-type Adapter func(chan<- message.EvidenceCollectionMessage, config.Configuration)
+// Adapter is a function that writes Evidence to the supplied channel.
+// It receives the following arguments: The context, an ID, the channel to write to, the configuration.
+type Adapter func(context.Context, int, chan<- message.EvidenceCollectionMessage, config.Configuration)
