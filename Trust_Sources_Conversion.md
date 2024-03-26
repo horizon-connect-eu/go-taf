@@ -29,9 +29,11 @@ Moreover, note that in this case, all of the trust sources are taken into accoun
 
 When a run-time trust opinion has been calculated and we need to re-assess it when there is a change caused by new evidence from the trust sources we have already gotten evidence from, we use the following formulas:
 
-$b_x = b_{x-1} + (TS_{x, new} - TS_{x, old})*\Delta_x$
-$d_x = d_{x-1} - (TS_{x, new} - TS_{x, old})*\Delta_x$
-$u_x = u_{x-1}$
+$$b_x = b_{x-1} + (TS_{x, new} - TS_{x, old})*\Delta_x$$
+
+$$d_x = d_{x-1} - (TS_{x, new} - TS_{x, old})*\Delta_x$$
+
+$$u_x = u_{x-1}$$
 
 Note that in this case:
 $b_0 = b_{RTI}$, $d_0 = d_{RTI}$, and $u_0 = u_{RTI}$ 
