@@ -33,7 +33,7 @@ build:
       - .go/
   environment:
     name: pages
-    url: https://connect.p.lxd-vs.uni-ulm.de/taf-scalability-test
+    url: https://connect.p.lxd-vs.uni-ulm.de/$CI_PROJECT_NAME
   artifacts:
     paths:
       - public/
@@ -44,5 +44,5 @@ build:
     - export PATH=${PATH}:`go env GOPATH`/bin
     - make docs
     - mv docs/ public/
-    - echo '/taf-scalability-test/ /taf-scalability-test/gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/ 302' > public/_redirects
-
+    - echo "/$CI_PROJECT_NAME/ /$CI_PROJECT_NAME/gitlab-vs.informatik.uni-ulm.de/connect/$CI_PROJECT_NAME/ 302" > public/_redirects
+    - cat public/_redirects
