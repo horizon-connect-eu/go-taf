@@ -13,11 +13,13 @@ $\Delta_x = w_x * u_{DTI}$
 
 Calculating the **belief**, **disbelief**, and **uncertainty** after processing evidence from a trust source $TS_x$ for the first time, where $x \in [1, 2, 3, ...n)$, $n$ is the total number of trust sources (e.g. 3 in this case), and $TS_x$ is a boolean: 
 
-$b_x = b_{x-1} + TS_x*\Delta_x$
-$d_x = d_{x-1} + (1-TS_x)*\Delta_x$
-$u_x = u_{x-1} - \Delta_x$
+$$b_x = b_{x-1} + TS_x*\Delta_x$$
 
-$\omega_{RTI} = (b_n, d_n, u_n)$
+$$d_x = d_{x-1} + (1-TS_x)*\Delta_x$$
+
+$$u_x = u_{x-1} - \Delta_x$$
+
+$$\omega_{RTI} = (b_n, d_n, u_n)$$
 
 Note that in this case:
 $b_0 = b_{DTI}$, $d_0 = d_{DTI}$, and $u_0 = u_{DTI}$ 
