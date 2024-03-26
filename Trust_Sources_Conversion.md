@@ -74,8 +74,11 @@ Trust Sources to be used:
 	- weight $w_3 = 0.4$
 
 Therefore, for these three trust sources, the deltas are:
+
 $\Delta_1 = 0.2 * 0.57 = 0.114$
+
 $\Delta_2 = 0.4 * 0.57 = 0.228$
+
 $\Delta_3 = 0.4 * 0.57 = 0.228$
 
 **Case 1**: Initially, all 3 trust sources provide **positive** evidence.
