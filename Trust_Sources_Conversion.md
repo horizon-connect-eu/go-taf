@@ -76,7 +76,7 @@ $\Delta_3 = 0.4 * 0.57 = 0.228$
 
 Therefore, the run-time Trust Opinion after the first conversion is $\omega_{RTI} = (0.820,0.18,0)$. 
 
-Therefore, $\omega^{TAF}_{ECU_1}=(0.820,0.18,0)$.
+Therefore, $$\omega^{TAF}_{ECU_1}=(0.820,0.18,0)$$
 
 **Case 2**: At some point, a single trust source will provide **negative** evidence.
 
