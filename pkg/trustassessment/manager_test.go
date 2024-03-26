@@ -4,15 +4,13 @@ import (
 	"testing"
 
 	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel/instance"
 )
 
 func generateStates(nkeys int, nentries int) State {
 	state := State{}
 	for i := range nkeys {
-		state[i] = []int{}
-		for j := range nentries / nkeys {
-			state[i] = append(state[i], j)
-		}
+		state[i] = instance.NewTrustModelInstance(i, "test")
 	}
 	return state
 }
