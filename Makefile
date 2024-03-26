@@ -23,9 +23,11 @@ PLUGIN_FILES = $(shell find plugins/ -type f -name '*.go')
 cmd/plugin_loader.go: $(PLUGIN_FILES)
 	go generate cmd/main.go
 
+PROJECT_NAME = taf-brussels-demo
+
 docs:
-	pkgsite & sleep 5
-	wget -r -N -q -p -k -E --regex-type pcre --accept-regex '^.*/(static|third_party|gitlab-vs.informatik.uni-ulm.de)/.*$$' http://localhost:8080/gitlab-vs.informatik.uni-ulm.de/connect/taf-scalability-test/ || true
+	pkgsite >/dev/null 2>&1 & sleep 5
+	wget -r -N -q -p -k -E --regex-type pcre --accept-regex '^.*/(static|third_party|gitlab-vs.informatik.uni-ulm.de)/.*$$' http://localhost:8080/gitlab-vs.informatik.uni-ulm.de/connect/$(PROJECT_NAME)/ || true
 	mv localhost:8080 docs
 	mkdir -p docs/third_party/dialog-polyfill
 	wget -q http://localhost:8080/third_party/dialog-polyfill/dialog-polyfill.js -O docs/third_party/dialog-polyfill/dialog-polyfill.js
