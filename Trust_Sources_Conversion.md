@@ -93,9 +93,9 @@ Therefore, $$\omega^{TAF}_{ECU_1}=(0.820,0.18,0)$$
 
 **Case 2**: At some point, a single trust source will provide **negative** evidence.
 
-1. $TS_1 = 1$     $\Rightarrow$     $b_1 = 0.820+(1 - 1)\Delta_1 = 0.820$  $|$ $d_1 = 0.18 - (1 - 1) * \Delta_1 = 0.18$ $|$ $u_1 = 0$
-2. $TS_2 = 1$     $\Rightarrow$     $b_2 = 0.820 + (0 - 1)*0.228 = 0.592$ $|$ $d_2 = 0.18 - (0 - 1) * 0.228 = 0.408$ $|$ $u_2 = 0$ 
-3. $TS_3 = 1$ 	  $\Rightarrow$		$b_3 = 0.592 + (1-1) * \Delta_3 = 0.592$ $|$ $d_3 = 0.408 - (1-1) * \Delta_3 = 0.408$ $|$ $u_3 = 0$
+1. $TS_1 = 1$     $\Rightarrow$     $b_1 = 0.820+(1 - 1)\Delta_1 = 0.820$  $|$ $d_1 = 0.18 - (1 - 1)*\Delta_1 = 0.18$ $|$ $u_1 = 0$
+2. $TS_2 = 0$     $\Rightarrow$     $b_2 = 0.820 + (0 - 1)*0.228 = 0.592$ $|$ $d_2 = 0.18 - (0 - 1)*0.228 = 0.408$ $|$ $u_2 = 0$ 
+3. $TS_3 = 1$ 	  $\Rightarrow$		$b_3 = 0.592 + (1 - 1)*\Delta_3 = 0.592$ $|$ $d_3 = 0.408 - (1-1)*\Delta_3 = 0.408$ $|$ $u_3 = 0$
 
 Therefore, the run-time Trust Opinion after the second conversion is $\omega_{RTI} = (0.592,0.402,0)$. 
 
