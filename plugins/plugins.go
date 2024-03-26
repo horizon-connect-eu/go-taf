@@ -1,7 +1,10 @@
 // main generates cmd/plugin_loader.go.
 // plugin_loader.go consists of import statements for each plugin found under plugins/
-// This is necessary because we want 1) out plugins under plugins/ 2) no explicit knowledge
+// This is necessary because we want 1) our plugins under plugins/ 2) no explicit knowledge
 // which plugins exist in non-generated files in pkg/ or cmd/.
+//
+// Additionally, this script checks that no .go file (except cmd/plugin_loader.go
+// and the ones in plugins/) imports packages in plugins/. This ensures that 2) from above holds.
 package main
 
 import (
