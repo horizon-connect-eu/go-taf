@@ -75,5 +75,5 @@ func (eci evidenceCollectionInterface) Run(ctx context.Context) {
 	for id, adapter := range eci.adapters {
 		go adapter(ctx, id, eci.inputChannels[id], eci.conf)
 	}
-	util.MuxMany(eci.inputChannels, eci.outputChannel)
+	util.Mux(eci.outputChannel, eci.inputChannels...)
 }
