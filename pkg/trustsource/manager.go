@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
+	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/message"
 )
 
 func Run(ctx context.Context,

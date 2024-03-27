@@ -1,6 +1,6 @@
 package mult
 
-import "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
+import "github.com/vs-uulm/go-taf/pkg/trustassessment"
 
 func init() {
 	trustassessment.RegisterUpdateResultFunc("mult", UpdateWorkerResultsMult)

@@ -3,8 +3,8 @@ package trustassessment
 import (
 	"testing"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel/instance"
+	"github.com/vs-uulm/go-taf/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
 )
 
 func generateStates(nkeys int, nentries int) State {

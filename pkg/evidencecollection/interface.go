@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/util"
+	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/util"
 )
 
 // Holds the available functions for updating

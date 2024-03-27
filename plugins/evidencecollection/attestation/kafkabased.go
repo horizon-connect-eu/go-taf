@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/evidencecollection"
+	"github.com/vs-uulm/go-taf/pkg/message"
 )
 
 func init() {

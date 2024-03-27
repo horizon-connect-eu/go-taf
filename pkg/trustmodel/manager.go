@@ -2,7 +2,7 @@ package trustmodel
 
 import (
 	"context"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
+	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 )
 
 func Run(ctx context.Context, output chan trustassessment.Command) {

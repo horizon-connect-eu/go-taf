@@ -3,6 +3,6 @@
 // 2024-03-26 13:22:40.800398516 +0100 CET m=+0.003935241
 package main
 
-import _ "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/plugins/evidencecollection/attestation"
-import _ "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/plugins/tam/add"
-import _ "gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/plugins/tam/mult"
+import _ "github.com/vs-uulm/go-taf/plugins/evidencecollection/attestation"
+import _ "github.com/vs-uulm/go-taf/plugins/tam/add"
+import _ "github.com/vs-uulm/go-taf/plugins/tam/mult"

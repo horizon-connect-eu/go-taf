@@ -12,13 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
+	"github.com/vs-uulm/go-taf/pkg/evidencecollection"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustassessment"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustsource"
+	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/trustassessment"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel"
+	"github.com/vs-uulm/go-taf/pkg/trustsource"
 )
 
 //go:generate go run ../plugins/plugins.go

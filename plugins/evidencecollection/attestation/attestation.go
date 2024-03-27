@@ -1,8 +1,8 @@
 package attestation
 
 import (
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/evidencecollection"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/evidencecollection"
+	"github.com/vs-uulm/go-taf/pkg/message"
 )
 
 type Attestation struct {

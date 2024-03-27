@@ -3,8 +3,8 @@ package evidencecollection
 import (
 	"context"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/config"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/message"
 )
 
 // Adapter is a function that writes Evidence to the supplied channel.

@@ -1,8 +1,8 @@
 package trustassessment
 
 import (
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/message"
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/trustmodel/instance"
+	"github.com/vs-uulm/go-taf/pkg/message"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
 )
 
 // State is the collection of a number of Trust Model Instances.

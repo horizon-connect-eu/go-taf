@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"gitlab-vs.informatik.uni-ulm.de/connect/taf-brussels-demo/pkg/util"
+	"github.com/vs-uulm/go-taf/pkg/util"
 )
 
 func TestMuxMany(t *testing.T) {
