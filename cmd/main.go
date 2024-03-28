@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/pterm/pterm"
 	"log"
 	"os"
 	"os/signal"
@@ -45,11 +46,11 @@ func main() {
 	log.Printf("Running with configuration: %+v\n", tafConfig)
 
 	//Create main channels
-	c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 	c2 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
-	c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-	c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
 	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
 	eci2tsm := make(chan message.EvidenceCollectionMessage, tafConfig.ChanBufSize)
@@ -79,11 +80,46 @@ func main() {
 	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
 
-	ticker := time.NewTicker(1 * time.Second)
-	for range ticker.C {
-		fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
+	/*
+		ticker := time.NewTicker(1 * time.Second)
+		for range ticker.C {
+			fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
+		}
+	*/
+
+	go printOutput()
+
+	WaitForCtrlC()
+
+}
+
+func renderTable(data pterm.TableData) {
+	pterm.DefaultTable.WithHasHeader().WithBoxed().WithRightAlignment().WithData(data).Render()
+}
+
+func clearTerminal() {
+	fmt.Print("\033[H\033[2J")
+}
+
+func printOutput() {
+	//	headerStyle := pterm.NewStyle(pterm.Bold, pterm.BgBlack, pterm.FgWhite)
+	tableData := pterm.TableData{
+		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
 	}
 
-	//waitForCtrlC()
+	// Render the initial table
+	//clearTerminal()
+	renderTable(tableData)
 
+	// Simulate a delay before updating the table
+	time.Sleep(2 * time.Second)
+
+	// Update the table data
+	tableData[1][4] = pterm.Red(" ✗ ")
+
+	// Clear the terminal and re-render the table with updated data
+	//clearTerminal()
+	renderTable(tableData)
 }
