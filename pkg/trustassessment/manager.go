@@ -62,51 +62,6 @@ func NewManager(conf config.Configuration, tmts TMTs) (trustAssessmentManager, e
 	return retTam, nil
 }
 
-// Processes the messages received via the specified channel as fast as possible.
-func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
-	states := t.mkStateDatabase()
-	//results := t.mkResultsDatabase()
-
-	// Ticker for latency benchmark
-	//latTicker := time.NewTicker(1 * time.Second)
-	//latMeasurePending := false
-
-	for {
-		select {
-		case command := <-inputs:
-			switch cmd := command.(type) {
-			case InitTMICommand:
-				fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", id, cmd)
-
-				states[int(cmd.Identifier)] = instance.NewTrustModelInstance(int(cmd.Identifier), cmd.TrustModelTemplate)
-
-			case UpdateATOCommand:
-				fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", id, cmd)
-
-				trustModelInstance := states[int(cmd.Identifier)]
-				println(trustModelInstance.GetId())
-
-			default:
-				fmt.Printf("[TAM Worker %d] Unknown message to %v\n", id, cmd)
-			}
-			/*
-				t.updateState(states, t.tmts, msg)
-				t.updateResults(results, states, t.tmts, msg.ID)
-				//time.Sleep(1 * time.Millisecond)
-				if latMeasurePending && id == 0 {
-					fmt.Printf("TAM: latency of %d µs\n", time.Since(msg.Timestamp).Microseconds())
-					latMeasurePending = false
-				}
-
-			*/
-			/*
-				case <-latTicker.C:
-						latMeasurePending = true
-			*/
-		}
-	}
-}
-
 func updateWorkerState(state State, tmt TMTs, msg message.InternalMessage) {
 	_, ok := tmt[msg.Type]
 	//value, ok := tmt[msg.Type]
