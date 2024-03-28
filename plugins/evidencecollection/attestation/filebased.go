@@ -70,7 +70,7 @@ func NewFileBasedAttestation(ctx context.Context, id int, channel chan<- message
 	for _, event := range events {
 		// Sleep until the next event is due
 		sleepFor := event.Timestamp - internalTime
-		time.Sleep(time.Duration(sleepFor) * time.Second)
+		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
 		internalTime = event.Timestamp
 
 		// Send the next event
