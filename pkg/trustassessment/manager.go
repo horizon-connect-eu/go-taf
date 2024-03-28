@@ -126,7 +126,7 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 		case cmdFromTSM := <-inputTSM:
 
 			switch cmd := cmdFromTSM.(type) {
-			case UpdateATOCommand:
+			case UpdateTOCommand:
 				t.handleUpdateATOCommand(cmd)
 			default:
 				log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
@@ -141,7 +141,7 @@ func (t *trustAssessmentManager) handleInitTMICommand(cmd InitTMICommand) {
 	t.channels[workerId] <- cmd
 }
 
-func (t *trustAssessmentManager) handleUpdateATOCommand(cmd UpdateATOCommand) {
+func (t *trustAssessmentManager) handleUpdateATOCommand(cmd UpdateTOCommand) {
 	//	log.Printf("[TAM] processing UpdateATOCommand %+v from TMM\n", cmd)
 	workerId := t.getShardWorkerById(int(cmd.Identifier))
 	t.channels[workerId] <- cmd

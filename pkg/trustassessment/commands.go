@@ -20,24 +20,31 @@ type InitTMICommand struct {
 func (receiver InitTMICommand) GetType() CommandType {
 	return INIT_TMI
 }
-func CreateInitTMICommand(tmt string, identifier uint64) Command {
+func CreateInitTMICommand(tmt string, identifier uint64) InitTMICommand {
 	return InitTMICommand{
 		Identifier:         identifier,
 		TrustModelTemplate: tmt,
 	}
 }
 
-type UpdateATOCommand struct {
+type UpdateTOCommand struct {
 	Identifier         uint64
 	TrustModelTemplate string
+	Trustor            string
+	Trustee            string
+	TS_ID              string
+	Evidence           bool
 }
 
-func (receiver UpdateATOCommand) GetType() CommandType {
+func (receiver UpdateTOCommand) GetType() CommandType {
 	return UPDATE_ATO
 }
-func CreateUpdateUpdateATOCommand(tmt string, identifier uint64) Command {
-	return UpdateATOCommand{
-		Identifier:         identifier,
-		TrustModelTemplate: tmt,
+func CreateUpdateTOCommand(identifier uint64, trustor string, trustee string, ts_ID string, evidence bool) UpdateTOCommand {
+	return UpdateTOCommand{
+		Identifier: identifier,
+		Trustor:    trustor,
+		Trustee:    trustee,
+		TS_ID:      ts_ID,
+		Evidence:   evidence,
 	}
 }
