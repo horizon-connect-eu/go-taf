@@ -5,7 +5,8 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/pterm/pterm"
+	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"log"
 	"os"
 	"os/signal"
@@ -44,12 +45,14 @@ func main() {
 	}
 	log.Printf("Running with configuration: %+v\n", tafConfig)
 
+	logger := consolelogger.NewLogger()
+
 	//Create main channels
-	c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 	c2 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
-	c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-	c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
+	//c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
 	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
 	eci2tsm := make(chan message.EvidenceCollectionMessage, tafConfig.ChanBufSize)
@@ -79,11 +82,31 @@ func main() {
 	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
 
-	ticker := time.NewTicker(1 * time.Second)
-	for range ticker.C {
-		fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
-	}
+	/*
+		ticker := time.NewTicker(1 * time.Second)
+		for range ticker.C {
+			fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
+		}
+	*/
 
-	//waitForCtrlC()
+	go logger.Run(ctx)
+
+	time.Sleep(1 * time.Second)
+
+	logger.Info(pterm.Blue("Test"))
+
+	logger.Table([][]string{
+		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+	})
+	time.Sleep(5 * time.Second)
+	logger.Table([][]string{
+		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Red(" ✗ ")},
+	})
+
+	WaitForCtrlC()
 
 }
