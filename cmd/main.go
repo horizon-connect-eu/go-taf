@@ -5,8 +5,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/pterm/pterm"
+	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"log"
 	"os"
 	"os/signal"
@@ -44,6 +44,8 @@ func main() {
 		}
 	}
 	log.Printf("Running with configuration: %+v\n", tafConfig)
+
+	logger := consolelogger.NewLogger()
 
 	//Create main channels
 	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
@@ -87,39 +89,24 @@ func main() {
 		}
 	*/
 
-	go printOutput()
+	go logger.Run(ctx)
 
-	WaitForCtrlC()
+	time.Sleep(1 * time.Second)
 
-}
+	logger.Info(pterm.Blue("Test"))
 
-func renderTable(data pterm.TableData) {
-	pterm.DefaultTable.WithHasHeader().WithBoxed().WithRightAlignment().WithData(data).Render()
-}
-
-func clearTerminal() {
-	fmt.Print("\033[H\033[2J")
-}
-
-func printOutput() {
-	//	headerStyle := pterm.NewStyle(pterm.Bold, pterm.BgBlack, pterm.FgWhite)
-	tableData := pterm.TableData{
+	logger.Table([][]string{
 		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
 		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
 		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-	}
+	})
+	time.Sleep(5 * time.Second)
+	logger.Table([][]string{
+		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Red(" ✗ ")},
+	})
 
-	// Render the initial table
-	//clearTerminal()
-	renderTable(tableData)
+	WaitForCtrlC()
 
-	// Simulate a delay before updating the table
-	time.Sleep(2 * time.Second)
-
-	// Update the table data
-	tableData[1][4] = pterm.Red(" ✗ ")
-
-	// Clear the terminal and re-render the table with updated data
-	//clearTerminal()
-	renderTable(tableData)
 }
