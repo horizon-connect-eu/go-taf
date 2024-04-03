@@ -38,7 +38,7 @@ func processCommand(workerID int, cmd Command, states State) {
 
 		states[int(cmd.Identifier)] = instance.NewTrustModelInstance(int(cmd.Identifier), cmd.TrustModelTemplate)
 
-	case UpdateATOCommand:
+	case UpdateTOCommand:
 		fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
 
 		trustModelInstance := states[int(cmd.Identifier)]
