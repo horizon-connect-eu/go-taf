@@ -33,7 +33,12 @@ func (l *Logger) Run(ctx context.Context) {
 
 			switch logMsg := msg.(type) {
 			case logOutput:
-				logger.WithLevel(logMsg.level).Print(logMsg.message)
+				switch logMsg.level {
+				case pterm.LogLevelInfo:
+					logger.Info(logMsg.message)
+				case pterm.LogLevelWarn:
+					logger.Warn(logMsg.message)
+				}
 			case logTable:
 				l.tableData = pterm.TableData(logMsg.table)
 				pterm.DefaultTable.WithHasHeader().WithBoxed().WithRightAlignment().WithData(l.tableData).Render()
