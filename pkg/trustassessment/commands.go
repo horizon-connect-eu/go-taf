@@ -5,7 +5,7 @@ type CommandType int64
 const (
 	UNDEFINED CommandType = iota
 	INIT_TMI
-	UPDATE_ATO
+	UPDATE_TO
 )
 
 type Command interface {
@@ -37,7 +37,7 @@ type UpdateTOCommand struct {
 }
 
 func (receiver UpdateTOCommand) GetType() CommandType {
-	return UPDATE_ATO
+	return UPDATE_TO
 }
 func CreateUpdateTOCommand(identifier uint64, trustor string, trustee string, ts_ID string, evidence bool) UpdateTOCommand {
 	return UpdateTOCommand{

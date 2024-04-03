@@ -1,7 +1,6 @@
 package trustassessment
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
@@ -34,18 +33,18 @@ func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
 func processCommand(workerID int, cmd Command, states State) {
 	switch cmd := cmd.(type) {
 	case InitTMICommand:
-		fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", workerID, cmd)
+		//LOG: fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", workerID, cmd)
 
 		states[int(cmd.Identifier)] = instance.NewTrustModelInstance(int(cmd.Identifier), cmd.TrustModelTemplate)
 
 	case UpdateTOCommand:
-		fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
+		//LOG: fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
 
-		trustModelInstance := states[int(cmd.Identifier)]
+		//trustModelInstance := states[int(cmd.Identifier)]
 
-		fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
+		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
 
 	default:
-		fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
+		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
 	}
 }

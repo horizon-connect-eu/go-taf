@@ -45,7 +45,7 @@ func readEvents(path string) ([]message.EvidenceCollectionMessage, error) {
 			log.Printf("filebased evidence collector plugin: error reading event in line %d (%s): %+v", lineNr, rawEvent[1], err)
 		}
 
-		event.Timestamp = delay // TODO why not have this as a json field in the first place?
+		event.Timestamp = delay
 		events = append(events, event)
 	}
 
@@ -60,7 +60,7 @@ func NewFileBasedAttestation(ctx context.Context, id int, channel chan<- message
 		log.Fatal("filebased evidence collector plugin: no path specified to read from")
 	}
 	events, err := readEvents(filepath.FromSlash(path))
-	log.Printf("filebased evidence collector plugin: read %d messages", len(events))
+	//LOG: log.Printf("filebased evidence collector plugin: read %d messages", len(events))
 
 	if err != nil {
 		log.Fatal(err)
@@ -74,8 +74,8 @@ func NewFileBasedAttestation(ctx context.Context, id int, channel chan<- message
 		internalTime = event.Timestamp
 
 		// Send the next event
-		log.Printf("filebased evidence collector plugin: sending %+v\n", event)
+		//LOG: log.Printf("filebased evidence collector plugin: sending %+v\n", event)
 		channel <- event
-		log.Printf("filebased evidence collector plugin: sent %+v\n", event)
+		//LOG: log.Printf("filebased evidence collector plugin: sent %+v\n", event)
 	}
 }

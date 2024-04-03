@@ -2,7 +2,6 @@ package v2xlistener
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/config"
@@ -15,7 +14,7 @@ func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan 
 	}()
 
 	msgCtr := 0
-	lastTime := time.Now()
+	//lastTime := time.Now()
 
 	// Ticker for measuring throughput
 	bmTicker := time.NewTicker(1 * time.Second)
@@ -25,11 +24,11 @@ func Run(ctx context.Context, v2xconfig config.V2XConfiguration, outputs []chan 
 		case <-ctx.Done():
 			return
 		case <-bmTicker.C:
-			delta := time.Since(lastTime)
-			genRate := float64(msgCtr) / delta.Seconds()
-			fmt.Printf("v2x: %e messages per second\n", genRate)
+			//delta := time.Since(lastTime)
+			//genRate := float64(msgCtr) / delta.Seconds()
+			//LOG: fmt.Printf("v2x: %e messages per second\n", genRate)
 			msgCtr = 0
-			lastTime = time.Now()
+			//lastTime = time.Now()
 		default:
 			msg := message.Generate()
 			sendToAll(outputs, msg)

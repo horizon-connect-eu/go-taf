@@ -7,7 +7,6 @@ import (
 	"context"
 	"github.com/pterm/pterm"
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,10 +39,10 @@ func main() {
 		var err error
 		tafConfig, err = config.LoadJSON(filepath)
 		if err != nil {
-			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			//LOG: log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 		}
 	}
-	log.Printf("Running with configuration: %+v\n", tafConfig)
+	//LOG: log.Printf("Running with configuration: %+v\n", tafConfig)
 
 	logger := consolelogger.NewLogger()
 
@@ -69,13 +68,13 @@ func main() {
 
 	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
 	if err != nil {
-		log.Fatal(err)
+		//LOG: log.Fatal(err)
 	}
 	go evidenceCollection.Run(ctx)
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafConfig, tmts)
 	if err != nil {
-		log.Fatal(err)
+		//LOG: log.Fatal(err)
 	}
 	go trustAssessmentManager.Run(ctx, tmm2tamChannel, tsm2tamChannel)
 
@@ -101,6 +100,9 @@ func main() {
 		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
 	})
 	time.Sleep(5 * time.Second)
+
+	logger.Warn(pterm.Blue("Test"))
+
 	logger.Table([][]string{
 		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
 		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},

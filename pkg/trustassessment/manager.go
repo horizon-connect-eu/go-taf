@@ -3,8 +3,6 @@ package trustassessment
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
@@ -121,7 +119,7 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 			case InitTMICommand:
 				t.handleInitTMICommand(cmd)
 			default:
-				log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
+				//LOG: log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
 			}
 		case cmdFromTSM := <-inputTSM:
 
@@ -129,20 +127,20 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 			case UpdateTOCommand:
 				t.handleUpdateATOCommand(cmd)
 			default:
-				log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
+				//LOG: log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
 			}
 		}
 	}
 }
 
 func (t *trustAssessmentManager) handleInitTMICommand(cmd InitTMICommand) {
-	//	log.Printf("[TAM] processing InitTMICommand %+v from TMM\n", cmd)
+	//LOG: 	log.Printf("[TAM] processing InitTMICommand %+v from TMM\n", cmd)
 	workerId := t.getShardWorkerById(int(cmd.Identifier))
 	t.channels[workerId] <- cmd
 }
 
 func (t *trustAssessmentManager) handleUpdateATOCommand(cmd UpdateTOCommand) {
-	//	log.Printf("[TAM] processing UpdateATOCommand %+v from TMM\n", cmd)
+	//LOG: 	log.Printf("[TAM] processing UpdateATOCommand %+v from TMM\n", cmd)
 	workerId := t.getShardWorkerById(int(cmd.Identifier))
 	t.channels[workerId] <- cmd
 }

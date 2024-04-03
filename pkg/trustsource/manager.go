@@ -2,8 +2,6 @@ package trustsource
 
 import (
 	"context"
-	"log"
-
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 
 	"github.com/vs-uulm/go-taf/pkg/message"
@@ -28,7 +26,7 @@ func Run(ctx context.Context,
 			return
 
 		case received := <-inputEvidenceCollection:
-			log.Printf("[TSM], received %+v from evidence collection\n", received)
+			//LOG: log.Printf("[TSM], received %+v from evidence collection\n", received)
 			//TODO: handle incoming evidence and generate update command
 			cmd := trustassessment.CreateUpdateTOCommand(uint64(received.TrustModelID), "TAF", received.Trustee, received.TS_ID, received.Evidence)
 			output <- cmd

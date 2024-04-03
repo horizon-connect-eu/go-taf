@@ -3,8 +3,6 @@ package evidencecollection
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/vs-uulm/go-taf/pkg/util"
@@ -43,7 +41,7 @@ func New(output chan message.EvidenceCollectionMessage,
 			evidenceCollector.inputChannels = append(evidenceCollector.inputChannels, channel)
 			evidenceCollector.adapters[id] = f
 		} else {
-			log.Printf("[ECI] cannot find adapter plugin \"%s\"\n", adapter.Name)
+			//LOG: log.Printf("[ECI] cannot find adapter plugin \"%s\"\n", adapter.Name)
 		}
 	}
 
@@ -70,7 +68,7 @@ func (eci evidenceCollectionInterface) Run(ctx context.Context) {
 			log.Println("EvidenceCollectionInterface: shutting down")
 		}()
 	*/
-	fmt.Println("Hello from ECI")
+	//LOG: fmt.Println("Hello from ECI")
 
 	for id, adapter := range eci.adapters {
 		go adapter(ctx, id, eci.inputChannels[id], eci.conf)
