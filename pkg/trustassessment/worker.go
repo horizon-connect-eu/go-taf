@@ -1,9 +1,11 @@
 package trustassessment
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"
 )
 
 // Processes the messages received via the specified channel as fast as possible.
@@ -43,6 +45,28 @@ func processCommand(workerID int, cmd Command, states State) {
 		//trustModelInstance := states[int(cmd.Identifier)]
 
 		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
+
+		var evidence map[string]bool
+		var omega_DTI subjectivelogic.Opinion
+		var omega *subjectivelogic.Opinion
+
+		if cmd.Trustee == "1" {
+			evidence = states[int(cmd.Identifier)].Evidence1
+			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_1
+		} else if cmd.Trustee == "2" {
+			evidence = states[int(cmd.Identifier)].Evidence2
+			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_2
+		} else {
+			return
+		}
+
+		evidence[cmd.TS_ID] = cmd.Evidence
+
+		omega = &omega_DTI
+		omega.Belief = omega.Belief + 0.1
+
+		fmt.Println("Omega: ", omega)
+		fmt.Println("DTI:", omega_DTI)
 
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
