@@ -55,7 +55,6 @@ var (
 		EvidenceCollection: EvidenceCollectionConfiguration{
 			Adapters: []AdapterConfig{
 				{"filebased", map[string]string{"path": "res/file_based_evidence_1.csv"}},
-				{"filebased", map[string]string{"path": "res/file_based_evidence_2.csv"}},
 			},
 		},
 	}
