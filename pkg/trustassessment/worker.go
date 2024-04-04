@@ -46,27 +46,46 @@ func processCommand(workerID int, cmd Command, states State) {
 
 		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
 
-		var evidence map[string]bool
+		var evidence_collection map[string]bool
 		var omega_DTI subjectivelogic.Opinion
-		var omega *subjectivelogic.Opinion
+		var omega subjectivelogic.Opinion
 
 		if cmd.Trustee == "1" {
-			evidence = states[int(cmd.Identifier)].Evidence1
+			evidence_collection = states[int(cmd.Identifier)].Evidence1
 			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_1
 		} else if cmd.Trustee == "2" {
-			evidence = states[int(cmd.Identifier)].Evidence2
+			evidence_collection = states[int(cmd.Identifier)].Evidence2
 			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_2
 		} else {
 			return
 		}
 
-		evidence[cmd.TS_ID] = cmd.Evidence
+		evidence_collection[cmd.TS_ID] = cmd.Evidence
+		omega = omega_DTI
 
-		omega = &omega_DTI
-		omega.Belief = omega.Belief + 0.1
+		for ts_id, evidence := range evidence_collection {
 
-		fmt.Println("Omega: ", omega)
-		fmt.Println("DTI:", omega_DTI)
+			if evidence { // positive evidence, e.g. secure boot ran successfully
+				omega.Belief = omega.Belief + states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - states[int(cmd.Identifier)].Weights[ts_id]
+			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
+				omega.Disbelief = omega.Disbelief + states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - states[int(cmd.Identifier)].Weights[ts_id]
+			}
+		}
+
+		if entry, ok := states[int(cmd.Identifier)]; ok {
+			if cmd.Trustee == "1" {
+				entry.Omega1 = omega
+			} else if cmd.Trustee == "2" {
+				entry.Omega2 = omega
+			}
+
+			states[int(cmd.Identifier)] = entry
+		}
+
+		fmt.Println("Omega:", omega)
+		fmt.Println("States: ", states[int(cmd.Identifier)].Omega1)
 
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
