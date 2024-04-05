@@ -16,20 +16,18 @@ import (
 )
 
 type Worker struct {
-	id             int
-	inputs         <-chan Command
-	logger         consolelogger.Logger
-	states         State
-	messageCounter int
+	id     int
+	inputs <-chan Command
+	logger consolelogger.Logger
+	states State
 }
 
 func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan Command, logger consolelogger.Logger) Worker {
 	return Worker{
-		id:             id,
-		inputs:         inputs,
-		logger:         logger,
-		states:         t.mkStateDatabase(),
-		messageCounter: 0,
+		id:     id,
+		inputs: inputs,
+		logger: logger,
+		states: t.mkStateDatabase(),
 	}
 }
 
@@ -138,12 +136,11 @@ func (w *Worker) processCommand(cmd Command) {
 		for ts_id, evidence := range evidence_collection {
 			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
 			if evidence { // positive evidence, e.g. secure boot ran successfully
-				//TODO for Artur: replace with `tmiID`
-				omega.Belief = omega.Belief + omega_DTI.Uncertainty*w.states[int(cmd.Identifier)].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Belief = omega.Belief + omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
 			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
-				omega.Disbelief = omega.Disbelief + omega_DTI.Uncertainty*w.states[int(cmd.Identifier)].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Disbelief = omega.Disbelief + omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
 			}
 		}
 
@@ -172,8 +169,6 @@ func (w *Worker) processCommand(cmd Command) {
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
 	}
-
-	w.messageCounter++
 
 	if doRunTlee {
 
@@ -204,9 +199,8 @@ func (w *Worker) processCommand(cmd Command) {
 			"1139-124": "ECU2",
 		}
 
-		//print Table?
-
-		if w.messageCounter > 6 {
+		//print table only after all evidences are set for both trust objects (2*3)
+		if len(tmi.Evidence1)+len(tmi.Evidence2) >= 6 {
 			w.logger.Info("Result of TLEE and TDE Execution:")
 			printTable(w.logger, tleeResults, tdeResults)
 
