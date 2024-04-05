@@ -17,6 +17,8 @@ type TrustModelInstance struct {
 	Weights     map[string]float64
 	Evidence1   map[string]bool
 	Evidence2   map[string]bool
+	RTL1        subjectivelogic.Opinion
+	RTL2        subjectivelogic.Opinion
 }
 
 func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
@@ -32,6 +34,8 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 		Fingerprint: -1,
 		Evidence1:   make(map[string]bool),
 		Evidence2:   make(map[string]bool),
+		RTL1:        subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},   // RTL1 needs to be updated with reasonable values
+		RTL2:        subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5}, // RTL2 needs to be updated with reasonable values
 	}
 }
 
