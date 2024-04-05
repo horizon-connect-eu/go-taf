@@ -1,4 +1,4 @@
-package instance
+package trustmodelinstance
 
 import (
 	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"

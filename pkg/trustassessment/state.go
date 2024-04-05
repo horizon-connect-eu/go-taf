@@ -2,13 +2,13 @@ package trustassessment
 
 import (
 	"github.com/vs-uulm/go-taf/pkg/message"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 )
 
 // State is the collection of a number of Trust Model Instances.
 // It holds all TMIs owned by one worker goroutine.
 // It does not include the Results.
-type State = map[int]instance.TrustModelInstance
+type State = map[int]trustmodelinstance.TrustModelInstance
 
 // A function creating a new State.
 type StateFactory = func() State

@@ -5,6 +5,7 @@ import "github.com/pterm/pterm"
 type logOutput struct {
 	message string
 	level   pterm.LogLevel
+	args    []pterm.LoggerArgument
 	//	args    map[string]any
 }
 

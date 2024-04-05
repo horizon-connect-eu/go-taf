@@ -1,16 +1,16 @@
 package trustassessment
 
 import (
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"testing"
 
 	"github.com/vs-uulm/go-taf/pkg/message"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
 )
 
 func generateStates(nkeys int, nentries int) State {
 	state := State{}
 	for i := range nkeys {
-		state[i] = instance.NewTrustModelInstance(i, "test")
+		state[i] = trustmodelinstance.NewTrustModelInstance(i, "test")
 	}
 	return state
 }

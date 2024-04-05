@@ -6,7 +6,7 @@ import (
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 )
 
 // Holds the available functions for updating
@@ -45,7 +45,7 @@ type trustAssessmentManager struct {
 
 func NewManager(conf config.Configuration, tmts TMTs, logger consolelogger.Logger) (trustAssessmentManager, error) {
 	retTam := trustAssessmentManager{
-		mkStateDatabase:   func() State { return make(map[int]instance.TrustModelInstance) },
+		mkStateDatabase:   func() State { return make(map[int]trustmodelinstance.TrustModelInstance) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
 		tmts:              tmts,
@@ -102,7 +102,10 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 	for i := range t.conf.TAM.TrustModelInstanceShards {
 		ch := make(chan Command, 1_000)
 		t.channels = append(t.channels, ch)
-		go t.tamWorker(i, ch, t.logger)
+
+		worker := t.SpawnNewWorker(i, ch, t.logger)
+
+		go worker.Run(ctx)
 	}
 
 	for {
