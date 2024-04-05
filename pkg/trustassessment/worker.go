@@ -1,7 +1,6 @@
 package trustassessment
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -88,14 +87,6 @@ func processCommand(workerID int, cmd Command, states State) {
 			}
 
 			states[int(cmd.Identifier)] = entry
-
-			if cmd.Trustee == "1" {
-				fmt.Println("Omega1 :", omega)
-				fmt.Println("States 1: ", states[int(cmd.Identifier)].Omega1)
-			} else if cmd.Trustee == "2" {
-				fmt.Println("Omega2 :", omega)
-				fmt.Println("States 2: ", states[int(cmd.Identifier)].Omega2)
-			}
 		}
 
 	default:
