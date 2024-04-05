@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"github.com/pterm/pterm"
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"os"
 	"os/signal"
@@ -72,7 +71,7 @@ func main() {
 	}
 	go evidenceCollection.Run(ctx)
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafConfig, tmts)
+	trustAssessmentManager, err := trustassessment.NewManager(tafConfig, tmts, logger)
 	if err != nil {
 		//LOG: log.Fatal(err)
 	}
@@ -90,25 +89,26 @@ func main() {
 
 	go logger.Run(ctx)
 
-	time.Sleep(1 * time.Second)
+	/*
+		time.Sleep(1 * time.Second)
 
-	logger.Info(pterm.Blue("Test"))
+		logger.Info(pterm.Blue("Test"))
 
-	logger.Table([][]string{
-		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
-		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-	})
-	time.Sleep(5 * time.Second)
+		logger.Table([][]string{
+			{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+			{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+			{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+		})
+		time.Sleep(5 * time.Second)
 
-	logger.Warn(pterm.Blue("Test"))
+		logger.Warn(pterm.Blue("Test"))
 
-	logger.Table([][]string{
-		{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
-		{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-		{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Red(" ✗ ")},
-	})
-
+		logger.Table([][]string{
+			{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
+			{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
+			{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Red(" ✗ ")},
+		})
+	*/
 	WaitForCtrlC()
 
 }

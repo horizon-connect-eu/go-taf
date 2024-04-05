@@ -3,6 +3,7 @@ package trustassessment
 import (
 	"context"
 	"fmt"
+	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
@@ -39,15 +40,17 @@ type trustAssessmentManager struct {
 	tmts              TMTs
 	conf              config.Configuration
 	channels          []chan Command
+	logger            consolelogger.Logger
 }
 
-func NewManager(conf config.Configuration, tmts TMTs) (trustAssessmentManager, error) {
+func NewManager(conf config.Configuration, tmts TMTs, logger consolelogger.Logger) (trustAssessmentManager, error) {
 	retTam := trustAssessmentManager{
 		mkStateDatabase:   func() State { return make(map[int]instance.TrustModelInstance) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
 		tmts:              tmts,
 		conf:              conf,
+		logger:            logger,
 	}
 
 	var err error
@@ -99,7 +102,7 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 	for i := range t.conf.TAM.TrustModelInstanceShards {
 		ch := make(chan Command, 1_000)
 		t.channels = append(t.channels, ch)
-		go t.tamWorker(i, ch)
+		go t.tamWorker(i, ch, t.logger)
 	}
 
 	for {

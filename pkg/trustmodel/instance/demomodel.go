@@ -34,19 +34,50 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 		Fingerprint: -1,
 		Evidence1:   make(map[string]bool),
 		Evidence2:   make(map[string]bool),
-		RTL1:        subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},   // RTL1 needs to be updated with reasonable values
-		RTL2:        subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5}, // RTL2 needs to be updated with reasonable values
+		RTL1:        subjectivelogic.Opinion{Belief: 0.85, Disbelief: 0.15, Uncertainty: 0.0, BaseRate: 0.5}, // RTL1 needs to be updated with reasonable values
+		RTL2:        subjectivelogic.Opinion{Belief: 0.80, Disbelief: 0.20, Uncertainty: 0.0, BaseRate: 0.5}, // RTL2 needs to be updated with reasonable values
 	}
 }
 
 // TODO: Implement return hardcoded structure of this trust model instance
-func (i *TrustModelInstance) getStructure() trustmodelstructure.Structure {
-	return nil
+func (i TrustModelInstance) GetStructure() trustmodelstructure.Structure {
+	var ecu1 = trustmodelstructure.Object{
+		ID:        "ECU1",
+		Operator:  "NONE",
+		Relations: nil,
+	}
+	var ecu2 = trustmodelstructure.Object{
+		ID:        "ECU2",
+		Operator:  "NONE",
+		Relations: nil,
+	}
+	var taf = trustmodelstructure.Object{
+		ID:       "TAF",
+		Operator: "NONE",
+		Relations: []trustmodelstructure.Relation{
+			{
+				ID:     "1139-123",
+				Target: "ECU1",
+			},
+			{
+				ID:     "1139-124",
+				Target: "ECU2",
+			},
+		},
+	}
+
+	return trustmodelstructure.Structure{
+		taf, ecu1, ecu2,
+	}
 }
 
 // TODO: Implement return of all Trust Opinions (values) of this trust model instance
-func (i *TrustModelInstance) getValues() map[string]subjectivelogic.Opinion {
-	return nil
+func (i TrustModelInstance) GetValues() map[string]subjectivelogic.Opinion {
+
+	return map[string]subjectivelogic.Opinion{
+		"1139-123": i.Omega1,
+		"1139-124": i.Omega2,
+	}
 }
 
 func (i *TrustModelInstance) GetId() int {

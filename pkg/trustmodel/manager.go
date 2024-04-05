@@ -12,7 +12,7 @@ func Run(ctx context.Context, output chan trustassessment.Command) {
 	}()
 
 	// Create single TMI
-	cmd := trustassessment.CreateInitTMICommand("demoModel", 4711)
+	cmd := trustassessment.CreateInitTMICommand("demoModel", 1139)
 
 	// Send initialization message to TAM
 	output <- cmd

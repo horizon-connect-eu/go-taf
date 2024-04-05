@@ -1,7 +1,12 @@
 package trustassessment
 
 import (
+	"github.com/pterm/pterm"
+	"github.com/vs-uulm/go-taf/internal/consolelogger"
+	"github.com/vs-uulm/go-taf/pkg/trustdecision"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/tlee"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
@@ -9,7 +14,7 @@ import (
 )
 
 // Processes the messages received via the specified channel as fast as possible.
-func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
+func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command, logger consolelogger.Logger) {
 	states := t.mkStateDatabase()
 	//results := t.mkResultsDatabase()
 
@@ -20,7 +25,7 @@ func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
 	for {
 		select {
 		case command := <-inputs:
-			processCommand(id, command, states)
+			processCommand(id, logger, command, states)
 			if latMeasurePending && id == 0 {
 				//fmt.Printf("TAM: latency of %d µs\n", time.Since(command.Timestamp).Microseconds())
 				latMeasurePending = false
@@ -32,12 +37,17 @@ func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command) {
 	}
 }
 
-func processCommand(workerID int, cmd Command, states State) {
+func processCommand(workerID int, logger consolelogger.Logger, cmd Command, states State) {
+
+	var doRunTlee = false
+	var tmiID int
+
 	switch cmd := cmd.(type) {
 	case InitTMICommand:
 		//LOG: fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", workerID, cmd)
 
-		states[int(cmd.Identifier)] = instance.NewTrustModelInstance(int(cmd.Identifier), cmd.TrustModelTemplate)
+		tmiID = int(cmd.Identifier)
+		states[tmiID] = instance.NewTrustModelInstance(tmiID, cmd.TrustModelTemplate)
 
 	case UpdateTOCommand:
 		//LOG: fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
@@ -46,16 +56,20 @@ func processCommand(workerID int, cmd Command, states State) {
 
 		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
 
+		logger.Info("New evidence received: (Trust Source: " + cmd.TS_ID + "; Trust Object: ECU" + cmd.Trustee + "; Evidence: " + strconv.FormatBool(cmd.Evidence) + ")")
+
+		tmiID = int(cmd.Identifier)
+
 		var evidence_collection map[string]bool
 		var omega_DTI subjectivelogic.Opinion
 		var omega subjectivelogic.Opinion
 
 		if cmd.Trustee == "1" {
-			evidence_collection = states[int(cmd.Identifier)].Evidence1
-			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_1
+			evidence_collection = states[tmiID].Evidence1
+			omega_DTI = states[tmiID].Omega_DTI_1
 		} else if cmd.Trustee == "2" {
-			evidence_collection = states[int(cmd.Identifier)].Evidence2
-			omega_DTI = states[int(cmd.Identifier)].Omega_DTI_2
+			evidence_collection = states[tmiID].Evidence2
+			omega_DTI = states[tmiID].Omega_DTI_2
 		} else {
 			return
 		}
@@ -66,6 +80,7 @@ func processCommand(workerID int, cmd Command, states State) {
 		for ts_id, evidence := range evidence_collection {
 			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
 			if evidence { // positive evidence, e.g. secure boot ran successfully
+				//TODO for Artur: replace with `tmiID`
 				omega.Belief = omega.Belief + omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
 				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
 			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
@@ -86,10 +101,53 @@ func processCommand(workerID int, cmd Command, states State) {
 				entry.Omega2 = omega
 			}
 
+			entry.Version = entry.Version + 1
+
 			states[int(cmd.Identifier)] = entry
+
 		}
+
+		doRunTlee = true
+		//logger.Info(pterm.Blue("New evidence received for TMI 1139"))
+		//logger.Warn(pterm.Blue("New evidence received for TMI 1139"))
 
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
+	}
+
+	if doRunTlee {
+
+		var tmi = states[tmiID]
+
+		var tleeResults = tlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetStructure(), tmi.GetValues())
+
+		//map[string]subjectivelogic.Opinion
+
+		//TDE
+		var tdeResults = make(map[string]bool)
+
+		tdeResults["1139-123"] = trustdecision.Decide(tleeResults["1139-123"], tmi.RTL1)
+		tdeResults["1139-124"] = trustdecision.Decide(tleeResults["1139-124"], tmi.RTL2)
+
+		//print Table?
+		logger.Info("Executed TLEE and TDE:")
+		printTable(logger, tleeResults, tdeResults)
+	}
+}
+
+func printTable(logger consolelogger.Logger, atls map[string]subjectivelogic.Opinion, tds map[string]bool) {
+
+	logger.Table([][]string{
+		{"Rel. ID", "Trustor", "Trustee", "ATL", "Trust Decision"},
+		{"1139-123", "TAF", "ECU1", atls["1139-123"].ToString(), printTDE(tds["1139-123"])},
+		{"1139-124", "TAF", "ECU2", atls["1139-124"].ToString(), printTDE(tds["1139-124"])},
+	})
+}
+
+func printTDE(value bool) string {
+	if value {
+		return pterm.Green(" ✔ ")
+	} else {
+		return pterm.Red(" ✗ ")
 	}
 }
