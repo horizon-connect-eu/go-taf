@@ -2,6 +2,7 @@ package trustassessment
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/instance"
@@ -64,17 +65,22 @@ func processCommand(workerID int, cmd Command, states State) {
 		omega = omega_DTI
 
 		for ts_id, evidence := range evidence_collection {
-
+			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
 			if evidence { // positive evidence, e.g. secure boot ran successfully
-				omega.Belief = omega.Belief + states[int(cmd.Identifier)].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Belief = omega.Belief + omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
 			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
-				omega.Disbelief = omega.Disbelief + states[int(cmd.Identifier)].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Disbelief = omega.Disbelief + omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
+				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*states[int(cmd.Identifier)].Weights[ts_id]
 			}
 		}
 
 		if entry, ok := states[int(cmd.Identifier)]; ok {
+			// round values to two decimal places
+			omega.Belief = math.Abs(math.Round(omega.Belief*100) / 100)
+			omega.Disbelief = math.Abs(math.Round(omega.Disbelief*100) / 100)
+			omega.Uncertainty = math.Abs(math.Round(omega.Uncertainty*100) / 100)
+
 			if cmd.Trustee == "1" {
 				entry.Omega1 = omega
 			} else if cmd.Trustee == "2" {
@@ -82,10 +88,15 @@ func processCommand(workerID int, cmd Command, states State) {
 			}
 
 			states[int(cmd.Identifier)] = entry
-		}
 
-		fmt.Println("Omega:", omega)
-		fmt.Println("States: ", states[int(cmd.Identifier)].Omega1)
+			if cmd.Trustee == "1" {
+				fmt.Println("Omega1 :", omega)
+				fmt.Println("States 1: ", states[int(cmd.Identifier)].Omega1)
+			} else if cmd.Trustee == "2" {
+				fmt.Println("Omega2 :", omega)
+				fmt.Println("States 2: ", states[int(cmd.Identifier)].Omega2)
+			}
+		}
 
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
