@@ -98,9 +98,9 @@ func (w *Worker) processCommand(cmd Command) {
 
 		var evidenceStr string
 		if cmd.Evidence {
-			evidenceStr = strconv.FormatBool(cmd.Evidence)
+			evidenceStr = "positive"
 		} else {
-			evidenceStr = pterm.Red(strconv.FormatBool(cmd.Evidence))
+			evidenceStr = pterm.Red("negative")
 		}
 
 		w.logger.InfoWithArgs("New evidence received", pterm.LoggerArgument{
