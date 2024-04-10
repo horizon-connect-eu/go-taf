@@ -87,6 +87,8 @@ func (w *Worker) processCommand(cmd Command) {
 		tmiID = int(cmd.Identifier)
 		w.states[tmiID] = trustmodelinstance.NewTrustModelInstance(tmiID, cmd.TrustModelTemplate)
 
+		w.logger.Info("Trust Model with ID 1139 has been instantiated ")
+
 	case UpdateTOCommand:
 		//LOG: fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
 
