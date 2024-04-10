@@ -27,15 +27,15 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 		Tmt:         tmt,
 		Omega_DTI_1: subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},
 		Omega_DTI_2: subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5},
-		Weights:     map[string]float64{"SB": 0.2, "IDS": 0.4, "CFI": 0.4},
+		Weights:     map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},
 		Omega1:      subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},
 		Omega2:      subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5},
 		Version:     0,
 		Fingerprint: -1,
 		Evidence1:   make(map[string]bool),
 		Evidence2:   make(map[string]bool),
-		RTL1:        subjectivelogic.Opinion{Belief: 0.85, Disbelief: 0.15, Uncertainty: 0.0, BaseRate: 0.5}, // RTL1 needs to be updated with reasonable values
-		RTL2:        subjectivelogic.Opinion{Belief: 0.80, Disbelief: 0.20, Uncertainty: 0.0, BaseRate: 0.5}, // RTL2 needs to be updated with reasonable values
+		RTL1:        subjectivelogic.Opinion{Belief: 0.70, Disbelief: 0.15, Uncertainty: 0.1, BaseRate: 0.5},
+		RTL2:        subjectivelogic.Opinion{Belief: 0.65, Disbelief: 0.30, Uncertainty: 0.1, BaseRate: 0.5},
 	}
 }
 

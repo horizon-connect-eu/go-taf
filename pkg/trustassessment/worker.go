@@ -3,14 +3,15 @@ package trustassessment
 import (
 	"context"
 	"fmt"
+	"math"
+	"strconv"
+	"time"
+
 	"github.com/pterm/pterm"
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tlee"
-	"math"
-	"strconv"
-	"time"
 
 	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"
 )
@@ -137,12 +138,14 @@ func (w *Worker) processCommand(cmd Command) {
 
 		for ts_id, evidence := range evidence_collection {
 			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
+			delta := math.Abs(math.Round(omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]*100) / 100) // Round delta value to two decimal places to prevent rounding errors in the belief, disbelief and uncertainty values
+
 			if evidence { // positive evidence, e.g. secure boot ran successfully
-				omega.Belief = omega.Belief + omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
+				omega.Belief = omega.Belief + delta
+				omega.Uncertainty = omega.Uncertainty - delta
 			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
-				omega.Disbelief = omega.Disbelief + omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
-				omega.Uncertainty = omega.Uncertainty - omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]
+				omega.Disbelief = omega.Disbelief + delta
+				omega.Uncertainty = omega.Uncertainty - delta
 			}
 		}
 
