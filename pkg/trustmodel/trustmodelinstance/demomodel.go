@@ -34,8 +34,8 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 		Fingerprint: -1,
 		Evidence1:   make(map[string]bool),
 		Evidence2:   make(map[string]bool),
-		RTL1:        subjectivelogic.Opinion{Belief: 0.70, Disbelief: 0.15, Uncertainty: 0.1, BaseRate: 0.5},
-		RTL2:        subjectivelogic.Opinion{Belief: 0.65, Disbelief: 0.30, Uncertainty: 0.1, BaseRate: 0.5},
+		RTL1:        subjectivelogic.Opinion{Belief: 0.70, Disbelief: 0.20, Uncertainty: 0.1, BaseRate: 0.5},
+		RTL2:        subjectivelogic.Opinion{Belief: 0.65, Disbelief: 0.25, Uncertainty: 0.1, BaseRate: 0.5},
 	}
 }
 
