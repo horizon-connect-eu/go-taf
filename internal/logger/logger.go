@@ -29,6 +29,8 @@ func CreateMainLogger(configuration config.LogConfiguration) *slog.Logger {
 		logger := slog.New(slog.NewJSONHandler(os.Stderr, handlerOpts))
 		slog.SetDefault(logger)
 		return logger
+	case PLAIN:
+		fallthrough
 	default:
 		handlerOpts := &slog.HandlerOptions{
 			Level: slog.LevelDebug,
