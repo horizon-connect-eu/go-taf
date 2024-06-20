@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
+	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
+	"log/slog"
 )
 
 // Holds the available functions for updating
@@ -40,21 +43,25 @@ type trustAssessmentManager struct {
 	tmts              TMTs
 	conf              config.Configuration
 	channels          []chan Command
-	logger            consolelogger.Logger
+	tablelogger       consolelogger.Logger
+	logger            *slog.Logger
+	tafContext        core.RuntimeContext
 }
 
-func NewManager(conf config.Configuration, tmts TMTs, logger consolelogger.Logger) (trustAssessmentManager, error) {
+func NewManager(tafContext core.RuntimeContext, tmts TMTs, logger consolelogger.Logger) (trustAssessmentManager, error) {
 	retTam := trustAssessmentManager{
 		mkStateDatabase:   func() State { return make(map[int]trustmodelinstance.TrustModelInstance) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
 		tmts:              tmts,
-		conf:              conf,
-		logger:            logger,
+		conf:              tafContext.Configuration,
+		tablelogger:       logger,
+		tafContext:        tafContext,
 	}
+	retTam.logger = logging.CreateChildLogger(tafContext.Logger, "TAM")
 
 	var err error
-	f, err := getUpdateResultFunc(conf.TAM.UpdateResultsOp)
+	f, err := getUpdateResultFunc(tafContext.Configuration.TAM.UpdateResultsOp)
 	if err != nil {
 		return trustAssessmentManager{}, err
 	}
@@ -90,12 +97,12 @@ func (t *trustAssessmentManager) getShardWorkerById(id int) int {
 }
 
 // Runs the trust assessment trustAssessmentManager
-func (t *trustAssessmentManager) Run(ctx context.Context,
+func (t *trustAssessmentManager) Run(
 	inputTMM chan Command,
 	inputTSM chan Command) {
 
 	defer func() {
-		//log.Println("TAM: shutting down")
+		t.logger.Info("Shutting down")
 	}()
 
 	t.channels = make([]chan Command, 0, t.conf.TAM.TrustModelInstanceShards)
@@ -103,18 +110,18 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 		ch := make(chan Command, 1_000)
 		t.channels = append(t.channels, ch)
 
-		worker := t.SpawnNewWorker(i, ch, t.logger)
+		worker := t.SpawnNewWorker(i, ch, t.tablelogger, t.tafContext)
 
-		go worker.Run(ctx)
+		go worker.Run()
 	}
 
 	for {
 		// Each iteration, check whether we've been cancelled.
-		if err := context.Cause(ctx); err != nil {
+		if err := context.Cause(t.tafContext.Context); err != nil {
 			return
 		}
 		select {
-		case <-ctx.Done():
+		case <-t.tafContext.Context.Done():
 			/*if len(inputTMM) != 0 || len(inputTSM) != 0 {
 				continue
 			}*/
@@ -125,7 +132,7 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 			case InitTMICommand:
 				t.handleInitTMICommand(cmd)
 			default:
-				//LOG: log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
+				t.logger.Warn("Unknown message received from TMM", "message", fmt.Sprintf("%+v", cmd))
 			}
 		case cmdFromTSM := <-inputTSM:
 
@@ -133,20 +140,20 @@ func (t *trustAssessmentManager) Run(ctx context.Context,
 			case UpdateTOCommand:
 				t.handleUpdateTOCommand(cmd)
 			default:
-				//LOG: log.Printf("[TAM] Unknown message %+v from TMM\n", cmd)
+				t.logger.Warn("Unknown message received from TMM", "message", fmt.Sprintf("%+v", cmd))
 			}
 		}
 	}
 }
 
 func (t *trustAssessmentManager) handleInitTMICommand(cmd InitTMICommand) {
-	//LOG: 	log.Printf("[TAM] processing InitTMICommand %+v from TMM\n", cmd)
+	t.logger.Debug("Processing InitTMICommand", "Message", fmt.Sprintf("%+v", cmd))
 	workerId := t.getShardWorkerById(int(cmd.Identifier))
 	t.channels[workerId] <- cmd
 }
 
 func (t *trustAssessmentManager) handleUpdateTOCommand(cmd UpdateTOCommand) {
-	//LOG: 	log.Printf("[TAM] processing UpdateATOCommand %+v from TMM\n", cmd)
+	t.logger.Debug("processing UpdateATOCommand from TMM", "Message", fmt.Sprintf("%+v", cmd))
 	workerId := t.getShardWorkerById(int(cmd.Identifier))
 	t.channels[workerId] <- cmd
 }

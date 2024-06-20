@@ -2,15 +2,22 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/pterm/pterm"
 	"os"
 )
 
 // Configuration of the TAF, including its subcomponents.
 type Configuration struct {
+	Logging            LogConfiguration
 	ChanBufSize        int
 	V2X                V2XConfiguration
 	TAM                TAMConfiguration
 	EvidenceCollection EvidenceCollectionConfiguration
+}
+
+type LogConfiguration struct {
+	LogLevel pterm.LogLevel
+	LogStyle string //PLAIN, PRETTY, JSON
 }
 
 // V2XConfiguration stores the config of the [v2xlistener].
@@ -43,6 +50,7 @@ var (
 	// misses values, this struct defines the corresponding
 	// default values.
 	DefaultConfig Configuration = Configuration{
+		Logging:     LogConfiguration{LogLevel: pterm.LogLevelDebug, LogStyle: "PRETTY"},
 		ChanBufSize: 1_000,
 		V2X: V2XConfiguration{
 			SendIntervalNs: 1_000_000_000,

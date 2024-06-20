@@ -5,7 +5,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/vs-uulm/go-taf/internal/consolelogger"
+	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,12 +43,29 @@ func main() {
 		var err error
 		tafConfig, err = config.LoadJSON(filepath)
 		if err != nil {
-			//LOG: log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 		}
 	}
-	//LOG: log.Printf("Running with configuration: %+v\n", tafConfig)
 
-	logger := consolelogger.NewLogger()
+	logger := logging.CreateMainLogger(tafConfig.Logging)
+	logger.Info("Configuration loaded")
+	logger.Debug("Running with following configuration",
+		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
+
+	oldLogger := consolelogger.NewLogger() //TODO: remove
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
+	defer cancelFunc()
+
+	tafContext := core.RuntimeContext{
+		Configuration: tafConfig,
+		Logger:        logger,
+		Context:       ctx,
+	}
+
+	logger.Debug("Running with following configuration",
+		slog.String("CTX", fmt.Sprintf("%+v", tafContext)))
 
 	//Create main channels
 	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
@@ -58,11 +80,6 @@ func main() {
 
 	tmts := map[string]int{}
 
-	ctx := context.Background()
-	ctx, cancelFunc := context.WithCancel(ctx)
-	defer time.Sleep(1 * time.Second) // TODO replace this cleanup interval with waitgroups
-	defer cancelFunc()
-
 	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
 
 	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
@@ -71,44 +88,18 @@ func main() {
 	}
 	go evidenceCollection.Run(ctx)
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafConfig, tmts, logger)
+	//trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts, oldLogger)
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts, oldLogger)
 	if err != nil {
 		//LOG: log.Fatal(err)
 	}
-	go trustAssessmentManager.Run(ctx, tmm2tamChannel, tsm2tamChannel)
+	go trustAssessmentManager.Run(tmm2tamChannel, tsm2tamChannel)
 
 	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
 
-	/*
-		ticker := time.NewTicker(1 * time.Second)
-		for range ticker.C {
-			fmt.Println("CHANNELS: ", len(c1), len(c2), len(c3), len(c4))
-		}
-	*/
+	go oldLogger.Run(ctx)
 
-	go logger.Run(ctx)
-
-	/*
-		time.Sleep(1 * time.Second)
-
-		logger.Info(pterm.Blue("Test"))
-
-		logger.Table([][]string{
-			{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
-			{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-			{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-		})
-		time.Sleep(5 * time.Second)
-
-		logger.Warn(pterm.Blue("Test"))
-
-		logger.Table([][]string{
-			{"Rel. ID", "Trustor", "Trustee", "ω", "Trust Decision"},
-			{"4711-123", "TAF", "ECU1", "(0.1, 0.2, 0.3, 0.4)", pterm.Green(" ✔ ")},
-			{"4711-124", "TAF", "ECU2", "(0.1, 0.2, 0.3, 0.4)", pterm.Red(" ✗ ")},
-		})
-	*/
 	WaitForCtrlC()
 
 }

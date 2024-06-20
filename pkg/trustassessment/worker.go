@@ -1,8 +1,10 @@
 package trustassessment
 
 import (
-	"context"
 	"fmt"
+	logger2 "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"log/slog"
 	"math"
 	"strconv"
 	"time"
@@ -17,22 +19,24 @@ import (
 )
 
 type Worker struct {
-	id     int
-	inputs <-chan Command
-	logger consolelogger.Logger
-	states State
+	id          int
+	inputs      <-chan Command
+	tablelogger consolelogger.Logger
+	logger      *slog.Logger
+	states      State
 }
 
-func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan Command, logger consolelogger.Logger) Worker {
+func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan Command, logger consolelogger.Logger, tafContext core.RuntimeContext) Worker {
 	return Worker{
-		id:     id,
-		inputs: inputs,
-		logger: logger,
-		states: t.mkStateDatabase(),
+		id:          id,
+		inputs:      inputs,
+		tablelogger: logger,
+		states:      t.mkStateDatabase(),
+		logger:      logger2.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
 	}
 }
 
-func (w *Worker) Run(ctx context.Context) {
+func (w *Worker) Run() {
 	// Ticker for latency benchmark
 	latTicker := time.NewTicker(1 * time.Second)
 	latMeasurePending := false
@@ -50,10 +54,11 @@ func (w *Worker) Run(ctx context.Context) {
 
 		}
 	}
+	//TODO use ctx to shutdown worker
 }
 
 //// Processes the messages received via the specified channel as fast as possible.
-//func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command, logger consolelogger.Logger) {
+//func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command, tablelogger consolelogger.Logger) {
 //	states := t.mkStateDatabase()
 //	//results := t.mkResultsDatabase()
 //
@@ -64,7 +69,7 @@ func (w *Worker) Run(ctx context.Context) {
 //	for {
 //		select {
 //		case command := <-inputs:
-//			processCommand(id, logger, command, states)
+//			processCommand(id, tablelogger, command, states)
 //			if latMeasurePending && id == 0 {
 //				//fmt.Printf("TAM: latency of %d µs\n", time.Since(command.Timestamp).Microseconds())
 //				latMeasurePending = false
@@ -83,21 +88,21 @@ func (w *Worker) processCommand(cmd Command) {
 
 	switch cmd := cmd.(type) {
 	case InitTMICommand:
-		//LOG: fmt.Printf("[TAM Worker %d] handling InitTMICommand: %v\n", workerID, cmd)
+		w.logger.Debug("handling InitTMICommand", "Message", fmt.Sprintf("%+v", cmd))
 
 		tmiID = int(cmd.Identifier)
 		w.states[tmiID] = trustmodelinstance.NewTrustModelInstance(tmiID, cmd.TrustModelTemplate)
 
-		w.logger.Info("Trust Model with ID 1139 has been instantiated ")
+		w.tablelogger.Info("Trust Model with ID 1139 has been instantiated ")
 
 	case UpdateTOCommand:
-		//LOG: fmt.Printf("[TAM Worker %d] handling UpdateATOCommand: %v\n", workerID, cmd)
+		w.logger.Debug("handling UpdateATOCommand", "Message", fmt.Sprintf("%+v", cmd))
 
 		//trustModelInstance := states[int(cmd.Identifier)]
 
 		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
 
-		//w.logger.Info("New evidence received: (Trust Source: " + cmd.TS_ID + "; Trust Object: ECU" + cmd.Trustee + "; Evidence: " + strconv.FormatBool(cmd.Evidence) + ")")
+		//w.tablelogger.Info("New evidence received: (Trust Source: " + cmd.TS_ID + "; Trust Object: ECU" + cmd.Trustee + "; Evidence: " + strconv.FormatBool(cmd.Evidence) + ")")
 
 		var evidenceStr string
 		if cmd.Evidence {
@@ -106,7 +111,7 @@ func (w *Worker) processCommand(cmd Command) {
 			evidenceStr = pterm.Red("negative")
 		}
 
-		w.logger.InfoWithArgs("New evidence received", pterm.LoggerArgument{
+		w.tablelogger.InfoWithArgs("New evidence received", pterm.LoggerArgument{
 			Key:   "Trust Source",
 			Value: cmd.TS_ID,
 		}, pterm.LoggerArgument{
@@ -168,8 +173,8 @@ func (w *Worker) processCommand(cmd Command) {
 		}
 
 		doRunTlee = true
-		//logger.Info(pterm.Blue("New evidence received for TMI 1139"))
-		//logger.Warn(pterm.Blue("New evidence received for TMI 1139"))
+		//tablelogger.Info(pterm.Blue("New evidence received for TMI 1139"))
+		//tablelogger.Warn(pterm.Blue("New evidence received for TMI 1139"))
 
 	default:
 		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
@@ -206,12 +211,12 @@ func (w *Worker) processCommand(cmd Command) {
 
 		//print table only after all evidences are set for both trust objects (2*3)
 		if len(tmi.Evidence1)+len(tmi.Evidence2) >= 6 {
-			w.logger.Info("Result of TLEE and TDE Execution:")
-			printTable(w.logger, tleeResults, tdeResults)
+			w.tablelogger.Info("Result of TLEE and TDE Execution:")
+			printTable(w.tablelogger, tleeResults, tdeResults)
 
 			for _, id := range []string{"1139-123", "1139-124"} {
 				if !tdeResults[id] {
-					w.logger.WarnWithArgs(pterm.Red(trustee[id]+" is untrustworthy!"), pterm.LoggerArgument{
+					w.tablelogger.WarnWithArgs(pterm.Red(trustee[id]+" is untrustworthy!"), pterm.LoggerArgument{
 						Key:   "ATL",
 						Value: tleeResults[id].ToString() + " ==> Projected Probability: " + pterm.Red(fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
 					}, pterm.LoggerArgument{
@@ -219,7 +224,7 @@ func (w *Worker) processCommand(cmd Command) {
 						Value: rtls[id].ToString() + " ==> Projected Probability: " + fmt.Sprintf("%.2f", projectedRtls[id]),
 					})
 				} else {
-					w.logger.InfoWithArgs(trustee[id]+" is trustworthy", pterm.LoggerArgument{
+					w.tablelogger.InfoWithArgs(trustee[id]+" is trustworthy", pterm.LoggerArgument{
 						Key:   "ATL",
 						Value: tleeResults[id].ToString() + " ==> Projected Probability: " + pterm.Green(fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
 					}, pterm.LoggerArgument{
