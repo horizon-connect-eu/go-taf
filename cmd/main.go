@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
@@ -52,8 +51,6 @@ func main() {
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
-	oldLogger := consolelogger.NewLogger() //TODO: remove
-
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
@@ -88,8 +85,7 @@ func main() {
 	}
 	go evidenceCollection.Run(ctx)
 
-	//trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts, oldLogger)
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts, oldLogger)
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts)
 	if err != nil {
 		//LOG: log.Fatal(err)
 	}
@@ -97,8 +93,6 @@ func main() {
 
 	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
-
-	go oldLogger.Run(ctx)
 
 	WaitForCtrlC()
 

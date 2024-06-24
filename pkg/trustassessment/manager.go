@@ -3,7 +3,6 @@ package trustassessment
 import (
 	"context"
 	"fmt"
-	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
@@ -43,19 +42,17 @@ type trustAssessmentManager struct {
 	tmts              TMTs
 	conf              config.Configuration
 	channels          []chan Command
-	tablelogger       consolelogger.Logger
 	logger            *slog.Logger
 	tafContext        core.RuntimeContext
 }
 
-func NewManager(tafContext core.RuntimeContext, tmts TMTs, logger consolelogger.Logger) (trustAssessmentManager, error) {
+func NewManager(tafContext core.RuntimeContext, tmts TMTs) (trustAssessmentManager, error) {
 	retTam := trustAssessmentManager{
 		mkStateDatabase:   func() State { return make(map[int]trustmodelinstance.TrustModelInstance) },
 		mkResultsDatabase: func() Results { return make(map[int]int) },
 		updateState:       updateWorkerState,
 		tmts:              tmts,
 		conf:              tafContext.Configuration,
-		tablelogger:       logger,
 		tafContext:        tafContext,
 	}
 	retTam.logger = logging.CreateChildLogger(tafContext.Logger, "TAM")
@@ -110,7 +107,7 @@ func (t *trustAssessmentManager) Run(
 		ch := make(chan Command, 1_000)
 		t.channels = append(t.channels, ch)
 
-		worker := t.SpawnNewWorker(i, ch, t.tablelogger, t.tafContext)
+		worker := t.SpawnNewWorker(i, ch, t.tafContext)
 
 		go worker.Run()
 	}

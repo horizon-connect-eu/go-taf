@@ -1,16 +1,15 @@
 package trustassessment
 
 import (
+	"context"
 	"fmt"
-	logger2 "github.com/vs-uulm/go-taf/internal/logger"
+	logger "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log/slog"
 	"math"
 	"strconv"
 	"time"
 
-	"github.com/pterm/pterm"
-	"github.com/vs-uulm/go-taf/internal/consolelogger"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tlee"
@@ -19,20 +18,20 @@ import (
 )
 
 type Worker struct {
-	id          int
-	inputs      <-chan Command
-	tablelogger consolelogger.Logger
-	logger      *slog.Logger
-	states      State
+	tafContext core.RuntimeContext
+	id         int
+	inputs     <-chan Command
+	logger     *slog.Logger
+	states     State
 }
 
-func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan Command, logger consolelogger.Logger, tafContext core.RuntimeContext) Worker {
+func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan Command, tafContext core.RuntimeContext) Worker {
 	return Worker{
-		id:          id,
-		inputs:      inputs,
-		tablelogger: logger,
-		states:      t.mkStateDatabase(),
-		logger:      logger2.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
+		tafContext: tafContext,
+		id:         id,
+		inputs:     inputs,
+		states:     t.mkStateDatabase(),
+		logger:     logger.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
 	}
 }
 
@@ -93,57 +92,50 @@ func (w *Worker) processCommand(cmd Command) {
 		tmiID = int(cmd.Identifier)
 		w.states[tmiID] = trustmodelinstance.NewTrustModelInstance(tmiID, cmd.TrustModelTemplate)
 
-		w.tablelogger.Info("Trust Model with ID 1139 has been instantiated ")
+		w.logger.Debug("Trust Model with ID 1139 has been instantiated ")
 
 	case UpdateTOCommand:
 		w.logger.Debug("handling UpdateATOCommand", "Message", fmt.Sprintf("%+v", cmd))
 
-		//trustModelInstance := states[int(cmd.Identifier)]
+		trustModelInstance := w.states[int(cmd.Identifier)]
 
-		//LOG: fmt.Printf("[TAM Worker %d] updating TMI %d\n", workerID, trustModelInstance.GetId())
-
-		//w.tablelogger.Info("New evidence received: (Trust Source: " + cmd.TS_ID + "; Trust Object: ECU" + cmd.Trustee + "; Evidence: " + strconv.FormatBool(cmd.Evidence) + ")")
+		w.logger.Info("Updating TMI", "TMI ID", trustModelInstance.GetId())
 
 		var evidenceStr string
 		if cmd.Evidence {
 			evidenceStr = "positive"
 		} else {
-			evidenceStr = pterm.Red("negative")
+			evidenceStr = "negative"
 		}
 
-		w.tablelogger.InfoWithArgs("New evidence received", pterm.LoggerArgument{
-			Key:   "Trust Source",
-			Value: cmd.TS_ID,
-		}, pterm.LoggerArgument{
-			Key:   "Trust Object",
-			Value: "ECU" + cmd.Trustee,
-		}, pterm.LoggerArgument{
-			Key:   "Evidence",
-			Value: evidenceStr,
-		})
+		w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, "New evidence received", slog.Group("Evidence"),
+			slog.String("Trust Source", cmd.TS_ID),
+			slog.String("Trust Object", "ECU"+cmd.Trustee),
+			slog.String("Evidence", evidenceStr),
+		)
 
 		tmiID = int(cmd.Identifier)
 
-		var evidence_collection map[string]bool
-		var omega_DTI subjectivelogic.Opinion
+		var evidenceCollection map[string]bool
+		var omegaDTI subjectivelogic.Opinion
 		var omega subjectivelogic.Opinion
 
 		if cmd.Trustee == "1" {
-			evidence_collection = w.states[tmiID].Evidence1
-			omega_DTI = w.states[tmiID].Omega_DTI_1
+			evidenceCollection = w.states[tmiID].Evidence1
+			omegaDTI = w.states[tmiID].Omega_DTI_1
 		} else if cmd.Trustee == "2" {
-			evidence_collection = w.states[tmiID].Evidence2
-			omega_DTI = w.states[tmiID].Omega_DTI_2
+			evidenceCollection = w.states[tmiID].Evidence2
+			omegaDTI = w.states[tmiID].Omega_DTI_2
 		} else {
 			return
 		}
 
-		evidence_collection[cmd.TS_ID] = cmd.Evidence
-		omega = omega_DTI
+		evidenceCollection[cmd.TS_ID] = cmd.Evidence
+		omega = omegaDTI
 
-		for ts_id, evidence := range evidence_collection {
+		for tsId, evidence := range evidenceCollection {
 			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
-			delta := math.Abs(math.Round(omega_DTI.Uncertainty*w.states[tmiID].Weights[ts_id]*100) / 100) // Round delta value to two decimal places to prevent rounding errors in the belief, disbelief and uncertainty values
+			delta := math.Abs(math.Round(omegaDTI.Uncertainty*w.states[tmiID].Weights[tsId]*100) / 100) // Round delta value to two decimal places to prevent rounding errors in the belief, disbelief and uncertainty values
 
 			if evidence { // positive evidence, e.g. secure boot ran successfully
 				omega.Belief = omega.Belief + delta
@@ -173,11 +165,9 @@ func (w *Worker) processCommand(cmd Command) {
 		}
 
 		doRunTlee = true
-		//tablelogger.Info(pterm.Blue("New evidence received for TMI 1139"))
-		//tablelogger.Warn(pterm.Blue("New evidence received for TMI 1139"))
 
 	default:
-		//LOG: fmt.Printf("[TAM Worker %d] Unknown message to %v\n", workerID, cmd)
+		w.logger.Warn("Unknown message", "Message", fmt.Sprintf("%+v", cmd))
 	}
 
 	if doRunTlee {
@@ -211,46 +201,48 @@ func (w *Worker) processCommand(cmd Command) {
 
 		//print table only after all evidences are set for both trust objects (2*3)
 		if len(tmi.Evidence1)+len(tmi.Evidence2) >= 6 {
-			w.tablelogger.Info("Result of TLEE and TDE Execution:")
-			printTable(w.tablelogger, tleeResults, tdeResults)
 
+			w.logger.Info("Result of TLEE and TDE Execution:")
+
+			printResults(w.logger, tleeResults, tdeResults)
 			for _, id := range []string{"1139-123", "1139-124"} {
 				if !tdeResults[id] {
-					w.tablelogger.WarnWithArgs(pterm.Red(trustee[id]+" is untrustworthy!"), pterm.LoggerArgument{
-						Key:   "ATL",
-						Value: tleeResults[id].ToString() + " ==> Projected Probability: " + pterm.Red(fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
-					}, pterm.LoggerArgument{
-						Key:   "RTL",
-						Value: rtls[id].ToString() + " ==> Projected Probability: " + fmt.Sprintf("%.2f", projectedRtls[id]),
-					})
+					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+"is untrustworthy!", slog.Group("Result"),
+						slog.String("ATL", tleeResults[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
+						slog.String("RTL", rtls[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
+					)
 				} else {
-					w.tablelogger.InfoWithArgs(trustee[id]+" is trustworthy", pterm.LoggerArgument{
-						Key:   "ATL",
-						Value: tleeResults[id].ToString() + " ==> Projected Probability: " + pterm.Green(fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
-					}, pterm.LoggerArgument{
-						Key:   "RTL",
-						Value: rtls[id].ToString() + " ==> Projected Probability: " + fmt.Sprintf("%.2f", projectedRtls[id]),
-					})
-
+					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+"is trustworthy!", slog.Group("Result"),
+						slog.String("ATL", tleeResults[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
+						slog.String("RTL", rtls[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
+					)
 				}
 			}
 		}
 	}
 }
 
-func printTable(logger consolelogger.Logger, atls map[string]subjectivelogic.Opinion, tds map[string]bool) {
+func printResults(logger *slog.Logger, atls map[string]subjectivelogic.Opinion, tds map[string]bool) {
 
-	logger.Table([][]string{
-		{"Rel. ID", "Trustor", "Trustee", "ATL", "Trust Decision"},
-		{"1139-123", "TAF", "ECU1", atls["1139-123"].ToString(), printTDE(tds["1139-123"])},
-		{"1139-124", "TAF", "ECU2", atls["1139-124"].ToString(), printTDE(tds["1139-124"])},
-	})
+	logger.LogAttrs(context.Background(), slog.LevelInfo, "Results",
+		slog.Group("1139-123",
+			slog.String("Trustor", "TAF"),
+			slog.String("Trustee", "ECU1"),
+			slog.String("ATL", atls["1139-123"].ToString()),
+			slog.String("Trust Decision", printTDE(tds["1139-123"])),
+		),
+		slog.Group("1139-124",
+			slog.String("Trustor", "TAF"),
+			slog.String("Trustee", "ECU1"),
+			slog.String("ATL", atls["1139-124"].ToString()),
+			slog.String("Trust Decision", printTDE(tds["1139-124"])),
+		))
 }
 
 func printTDE(value bool) string {
 	if value {
-		return pterm.Green(" ✔ ")
+		return " ✔ "
 	} else {
-		return pterm.Red(" ✗ ")
+		return " ✗ "
 	}
 }
