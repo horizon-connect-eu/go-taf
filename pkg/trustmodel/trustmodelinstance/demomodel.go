@@ -1,7 +1,7 @@
 package trustmodelinstance
 
 import (
-	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 )
 
@@ -22,20 +22,30 @@ type TrustModelInstance struct {
 }
 
 func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
+
+	dti1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
+	dti2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
+
+	omega1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
+	omega2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
+
+	rtl1, _ := subjectivelogic.NewOpinion(0.7, 0.2, 0.1, 0.5)
+	rtl2, _ := subjectivelogic.NewOpinion(0.65, 0.25, 0.1, 0.5)
+
 	return TrustModelInstance{
 		Id:          id,
 		Tmt:         tmt,
-		Omega_DTI_1: subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},
-		Omega_DTI_2: subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5},
+		Omega_DTI_1: dti1,
+		Omega_DTI_2: dti2,
 		Weights:     map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},
-		Omega1:      subjectivelogic.Opinion{Belief: 0.2, Disbelief: 0.1, Uncertainty: 0.7, BaseRate: 0.5},
-		Omega2:      subjectivelogic.Opinion{Belief: 0.15, Disbelief: 0.15, Uncertainty: 0.7, BaseRate: 0.5},
+		Omega1:      omega1,
+		Omega2:      omega2,
 		Version:     0,
 		Fingerprint: -1,
 		Evidence1:   make(map[string]bool),
 		Evidence2:   make(map[string]bool),
-		RTL1:        subjectivelogic.Opinion{Belief: 0.70, Disbelief: 0.20, Uncertainty: 0.1, BaseRate: 0.5},
-		RTL2:        subjectivelogic.Opinion{Belief: 0.65, Disbelief: 0.25, Uncertainty: 0.1, BaseRate: 0.5},
+		RTL1:        rtl1,
+		RTL2:        rtl2,
 	}
 }
 
@@ -72,11 +82,11 @@ func (i TrustModelInstance) GetStructure() trustmodelstructure.Structure {
 }
 
 // TODO: Implement return of all Trust Opinions (values) of this trust model instance
-func (i TrustModelInstance) GetValues() map[string]subjectivelogic.Opinion {
+func (i TrustModelInstance) GetValues() map[string]subjectivelogic.QueryableOpinion {
 
-	return map[string]subjectivelogic.Opinion{
-		"1139-123": i.Omega1,
-		"1139-124": i.Omega2,
+	return map[string]subjectivelogic.QueryableOpinion{
+		"1139-123": &i.Omega1,
+		"1139-124": &i.Omega2,
 	}
 }
 

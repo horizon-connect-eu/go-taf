@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/pterm/pterm v0.12.79
+	github.com/vs-uulm/go-subjectivelogic v0.2.0
 	github.com/vs-uulm/taf-tlee-interface v0.0.0-00010101000000-000000000000
 )
 
@@ -16,11 +17,13 @@ require (
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/vs-uulm/go-subjectivelogic v0.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
 
-replace github.com/vs-uulm/taf-tlee-interface => ../tlee-interface
+replace (
+	connect.informatik.uni-ulm.de/coordination/tlee-implementation => ../integration-tlee-implementation
+	github.com/vs-uulm/taf-tlee-interface => ../tlee-interface
+)

@@ -10,11 +10,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tlee"
-
-	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"
 )
 
 type Worker struct {
@@ -135,22 +134,21 @@ func (w *Worker) processCommand(cmd Command) {
 
 		for tsId, evidence := range evidenceCollection {
 			// Equation: delta = u_DTI * weight_ts -> delta specifies how much belief, disbelief and uncertainty will be increased / decreased
-			delta := math.Abs(math.Round(omegaDTI.Uncertainty*w.states[tmiID].Weights[tsId]*100) / 100) // Round delta value to two decimal places to prevent rounding errors in the belief, disbelief and uncertainty values
+			delta := math.Abs(math.Round(omegaDTI.Uncertainty()*w.states[tmiID].Weights[tsId]*100) / 100) // Round delta value to two decimal places to prevent rounding errors in the belief, disbelief and uncertainty values
 
 			if evidence { // positive evidence, e.g. secure boot ran successfully
-				omega.Belief = omega.Belief + delta
-				omega.Uncertainty = omega.Uncertainty - delta
+				omega, _ = subjectivelogic.NewOpinion(omega.Belief()+delta, omega.Disbelief(), omega.Uncertainty()-delta, omega.BaseRate())
 			} else if !evidence { // negative evidence, e.g. secure boot didn't run successfully
-				omega.Disbelief = omega.Disbelief + delta
-				omega.Uncertainty = omega.Uncertainty - delta
+				omega, _ = subjectivelogic.NewOpinion(omega.Belief(), omega.Disbelief()+delta, omega.Uncertainty()-delta, omega.BaseRate())
 			}
 		}
 
 		if entry, ok := w.states[int(cmd.Identifier)]; ok {
 			// round values to two decimal places
-			omega.Belief = math.Abs(math.Round(omega.Belief*100) / 100)
-			omega.Disbelief = math.Abs(math.Round(omega.Disbelief*100) / 100)
-			omega.Uncertainty = math.Abs(math.Round(omega.Uncertainty*100) / 100)
+			err := omega.Modify(math.Abs(math.Round(omega.Belief()*100)/100), math.Abs(math.Round(omega.Disbelief()*100)/100), math.Abs(math.Round(omega.Uncertainty()*100)/100), omega.BaseRate())
+			if err != nil {
+				w.logger.Warn("Failed SL Opinion operation", "Error", err)
+			}
 
 			if cmd.Trustee == "1" {
 				entry.Omega1 = omega
@@ -181,12 +179,12 @@ func (w *Worker) processCommand(cmd Command) {
 		//TDE
 		var tdeResults = make(map[string]bool)
 
-		tdeResults["1139-123"] = trustdecision.Decide(tleeResults["1139-123"], tmi.RTL1)
-		tdeResults["1139-124"] = trustdecision.Decide(tleeResults["1139-124"], tmi.RTL2)
+		tdeResults["1139-123"] = trustdecision.Decide(tleeResults["1139-123"], &tmi.RTL1)
+		tdeResults["1139-124"] = trustdecision.Decide(tleeResults["1139-124"], &tmi.RTL2)
 
 		projectedRtls := map[string]float64{
-			"1139-123": trustdecision.ProjectProbability(tmi.RTL1),
-			"1139-124": trustdecision.ProjectProbability(tmi.RTL2),
+			"1139-123": trustdecision.ProjectProbability(&tmi.RTL1),
+			"1139-124": trustdecision.ProjectProbability(&tmi.RTL2),
 		}
 
 		rtls := map[string]subjectivelogic.Opinion{
@@ -206,15 +204,16 @@ func (w *Worker) processCommand(cmd Command) {
 
 			printResults(w.logger, tleeResults, tdeResults)
 			for _, id := range []string{"1139-123", "1139-124"} {
+				opinion := rtls[id]
 				if !tdeResults[id] {
-					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+"is untrustworthy!", slog.Group("Result"),
-						slog.String("ATL", tleeResults[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
-						slog.String("RTL", rtls[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
+					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+" is untrustworthy!", slog.Group("Result"),
+						slog.String("ATL", tleeResults[id].String()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
+						slog.String("RTL", opinion.String()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
 					)
 				} else {
-					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+"is trustworthy!", slog.Group("Result"),
-						slog.String("ATL", tleeResults[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
-						slog.String("RTL", rtls[id].ToString()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
+					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+" is trustworthy!", slog.Group("Result"),
+						slog.String("ATL", tleeResults[id].String()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", trustdecision.ProjectProbability(tleeResults[id]))),
+						slog.String("RTL", opinion.String()+" ==> Projected Probability: "+fmt.Sprintf("%.2f", projectedRtls[id])),
 					)
 				}
 			}
@@ -222,19 +221,22 @@ func (w *Worker) processCommand(cmd Command) {
 	}
 }
 
-func printResults(logger *slog.Logger, atls map[string]subjectivelogic.Opinion, tds map[string]bool) {
+func printResults(logger *slog.Logger, atls map[string]subjectivelogic.QueryableOpinion, tds map[string]bool) {
+
+	atl1 := atls["1139-123"]
+	atl2 := atls["1139-123"]
 
 	logger.LogAttrs(context.Background(), slog.LevelInfo, "Results",
 		slog.Group("1139-123",
 			slog.String("Trustor", "TAF"),
 			slog.String("Trustee", "ECU1"),
-			slog.String("ATL", atls["1139-123"].ToString()),
+			slog.String("ATL", atl1.String()),
 			slog.String("Trust Decision", printTDE(tds["1139-123"])),
 		),
 		slog.Group("1139-124",
 			slog.String("Trustor", "TAF"),
 			slog.String("Trustee", "ECU1"),
-			slog.String("ATL", atls["1139-124"].ToString()),
+			slog.String("ATL", atl2.String()),
 			slog.String("Trust Decision", printTDE(tds["1139-124"])),
 		))
 }

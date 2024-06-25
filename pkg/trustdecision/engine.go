@@ -1,10 +1,10 @@
 package trustdecision
 
 import (
-	"github.com/vs-uulm/taf-tlee-interface/pkg/subjectivelogic"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 )
 
-func Decide(atl subjectivelogic.Opinion, rtl subjectivelogic.Opinion) bool {
+func Decide(atl subjectivelogic.QueryableOpinion, rtl subjectivelogic.QueryableOpinion) bool {
 
 	var probabilisticAtl = ProjectProbability(atl)
 	var probabilisticRtl = ProjectProbability(rtl)
@@ -12,6 +12,6 @@ func Decide(atl subjectivelogic.Opinion, rtl subjectivelogic.Opinion) bool {
 	return probabilisticAtl > probabilisticRtl
 }
 
-func ProjectProbability(opinion subjectivelogic.Opinion) float64 {
-	return opinion.Belief + opinion.Uncertainty*opinion.BaseRate
+func ProjectProbability(opinion subjectivelogic.QueryableOpinion) float64 {
+	return opinion.Belief() + opinion.Uncertainty()*opinion.BaseRate()
 }
