@@ -2,6 +2,7 @@ package trustmodelinstance
 
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+	internaltrustmodelstructure "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 )
 
@@ -49,44 +50,21 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 	}
 }
 
-// TODO: Implement return hardcoded structure of this trust model instance
-func (i TrustModelInstance) GetStructure() trustmodelstructure.Structure {
-	var ecu1 = trustmodelstructure.Object{
-		ID:        "ECU1",
-		Operator:  "NONE",
-		Relations: nil,
-	}
-	var ecu2 = trustmodelstructure.Object{
-		ID:        "ECU2",
-		Operator:  "NONE",
-		Relations: nil,
-	}
-	var taf = trustmodelstructure.Object{
-		ID:       "TAF",
-		Operator: "NONE",
-		Relations: []trustmodelstructure.Relation{
-			{
-				ID:     "1139-123",
-				Target: "ECU1",
-			},
-			{
-				ID:     "1139-124",
-				Target: "ECU2",
-			},
-		},
-	}
-
-	return trustmodelstructure.Structure{
-		taf, ecu1, ecu2,
-	}
+// structure parameter for runTLEE
+func (i *TrustModelInstance) GetTrustGraphStructure() trustmodelstructure.TrustGraphStructure {
+	return internaltrustmodelstructure.NewTrustGraphDTO("NONE", []trustmodelstructure.AdjacencyListEntry{
+		internaltrustmodelstructure.NewAdjacencyEntryDTO("TAF", []string{"ECU1", "ECU2"}),
+	})
 }
 
-// TODO: Implement return of all Trust Opinions (values) of this trust model instance
-func (i TrustModelInstance) GetValues() map[string]subjectivelogic.QueryableOpinion {
+// Values parameter for runTLEE
+func (i *TrustModelInstance) GetTrustRelationships() map[string][]trustmodelstructure.TrustRelationship {
 
-	return map[string]subjectivelogic.QueryableOpinion{
-		"1139-123": &i.Omega1,
-		"1139-124": &i.Omega2,
+	return map[string][]trustmodelstructure.TrustRelationship{
+		"scope": []trustmodelstructure.TrustRelationship{
+			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "ECU1", &i.Omega1),
+			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "ECU2", &i.Omega2),
+		},
 	}
 }
 

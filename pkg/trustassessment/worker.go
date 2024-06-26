@@ -5,6 +5,7 @@ import (
 	"fmt"
 	logger "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	tlee2 "github.com/vs-uulm/go-taf/pkg/tlee"
 	"log/slog"
 	"math"
 	"strconv"
@@ -13,7 +14,6 @@ import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
-	"github.com/vs-uulm/taf-tlee-interface/pkg/tlee"
 )
 
 type Worker struct {
@@ -172,29 +172,35 @@ func (w *Worker) processCommand(cmd Command) {
 
 		var tmi = w.states[tmiID]
 
-		var tleeResults = tlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetStructure(), tmi.GetValues())
+		myTlee := tlee2.TLEE{}
+
+		var tleeResults = myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
+
+		//		var tleeResults = tlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetStructure(), tmi.GetValues())
 
 		//map[string]subjectivelogic.Opinion
 
 		//TDE
 		var tdeResults = make(map[string]bool)
 
-		tdeResults["1139-123"] = trustdecision.Decide(tleeResults["1139-123"], &tmi.RTL1)
-		tdeResults["1139-124"] = trustdecision.Decide(tleeResults["1139-124"], &tmi.RTL2)
+		w.logger.Debug("TLEE results", "Output", fmt.Sprintf("%+v", tleeResults))
+
+		tdeResults["ECU1"] = trustdecision.Decide(tleeResults["ECU1"], &tmi.RTL1)
+		tdeResults["ECU2"] = trustdecision.Decide(tleeResults["ECU2"], &tmi.RTL2)
 
 		projectedRtls := map[string]float64{
-			"1139-123": trustdecision.ProjectProbability(&tmi.RTL1),
-			"1139-124": trustdecision.ProjectProbability(&tmi.RTL2),
+			"ECU1": trustdecision.ProjectProbability(&tmi.RTL1),
+			"ECU2": trustdecision.ProjectProbability(&tmi.RTL2),
 		}
 
 		rtls := map[string]subjectivelogic.Opinion{
-			"1139-123": tmi.RTL1,
-			"1139-124": tmi.RTL2,
+			"ECU1": tmi.RTL1,
+			"ECU2": tmi.RTL2,
 		}
 
 		trustee := map[string]string{
-			"1139-123": "ECU1",
-			"1139-124": "ECU2",
+			"ECU1": "ECU1",
+			"ECU2": "ECU2",
 		}
 
 		//print table only after all evidences are set for both trust objects (2*3)
@@ -203,7 +209,7 @@ func (w *Worker) processCommand(cmd Command) {
 			w.logger.Info("Result of TLEE and TDE Execution:")
 
 			printResults(w.logger, tleeResults, tdeResults)
-			for _, id := range []string{"1139-123", "1139-124"} {
+			for _, id := range []string{"ECU1", "ECU2"} {
 				opinion := rtls[id]
 				if !tdeResults[id] {
 					w.logger.LogAttrs(w.tafContext.Context, slog.LevelInfo, trustee[id]+" is untrustworthy!", slog.Group("Result"),
@@ -223,21 +229,21 @@ func (w *Worker) processCommand(cmd Command) {
 
 func printResults(logger *slog.Logger, atls map[string]subjectivelogic.QueryableOpinion, tds map[string]bool) {
 
-	atl1 := atls["1139-123"]
-	atl2 := atls["1139-123"]
+	atl1 := atls["ECU1"]
+	atl2 := atls["ECU2"]
 
 	logger.LogAttrs(context.Background(), slog.LevelInfo, "Results",
-		slog.Group("1139-123",
+		slog.Group("ECU1",
 			slog.String("Trustor", "TAF"),
 			slog.String("Trustee", "ECU1"),
 			slog.String("ATL", atl1.String()),
-			slog.String("Trust Decision", printTDE(tds["1139-123"])),
+			slog.String("Trust Decision", printTDE(tds["ECU1"])),
 		),
-		slog.Group("1139-124",
+		slog.Group("ECU2",
 			slog.String("Trustor", "TAF"),
 			slog.String("Trustee", "ECU1"),
 			slog.String("ATL", atl2.String()),
-			slog.String("Trust Decision", printTDE(tds["1139-124"])),
+			slog.String("Trust Decision", printTDE(tds["ECU2"])),
 		))
 }
 

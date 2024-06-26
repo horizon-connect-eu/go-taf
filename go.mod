@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/pterm/pterm v0.12.79
 	github.com/vs-uulm/go-subjectivelogic v0.2.0
-	github.com/vs-uulm/taf-tlee-interface v0.0.0-00010101000000-000000000000
+	github.com/vs-uulm/taf-tlee-interface v0.1.0
 )
 
 require (
@@ -23,7 +23,3 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-replace (
-	connect.informatik.uni-ulm.de/coordination/tlee-implementation => ../integration-tlee-implementation
-	github.com/vs-uulm/taf-tlee-interface => ../tlee-interface
-)
