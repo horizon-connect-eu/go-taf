@@ -172,18 +172,20 @@ func (w *Worker) processCommand(cmd Command) {
 
 		var tmi = w.states[tmiID]
 
+		//TLEE execution
+
+		//Uncomment to use dummy TLEE (for Brussels use case only)
 		myTlee := tlee2.TLEE{}
+		tleeResults := myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
 
-		var tleeResults = myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
-
-		//		var tleeResults = tlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetStructure(), tmi.GetValues())
-
-		//map[string]subjectivelogic.Opinion
-
-		//TDE
-		var tdeResults = make(map[string]bool)
+		//Uncomment to use actual TLEE (
+		//actualTlee := &actualtlee.TLEE{}
+		//tleeResults := actualTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
 
 		w.logger.Debug("TLEE results", "Output", fmt.Sprintf("%+v", tleeResults))
+
+		//TDE execution
+		var tdeResults = make(map[string]bool)
 
 		tdeResults["ECU1"] = trustdecision.Decide(tleeResults["ECU1"], &tmi.RTL1)
 		tdeResults["ECU2"] = trustdecision.Decide(tleeResults["ECU2"], &tmi.RTL2)
