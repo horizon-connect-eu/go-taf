@@ -55,14 +55,17 @@ func (i *TrustModelInstance) GetTrustGraphStructure() trustmodelstructure.TrustG
 	return internaltrustmodelstructure.NewTrustGraphDTO("NONE", []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("TAF", []string{"ECU1", "ECU2"}),
 	})
+
 }
 
 // Values parameter for runTLEE
 func (i *TrustModelInstance) GetTrustRelationships() map[string][]trustmodelstructure.TrustRelationship {
 
 	return map[string][]trustmodelstructure.TrustRelationship{
-		"scope": []trustmodelstructure.TrustRelationship{
+		"ECU1": []trustmodelstructure.TrustRelationship{
 			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "ECU1", &i.Omega1),
+		},
+		"ECU2": []trustmodelstructure.TrustRelationship{
 			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "ECU2", &i.Omega2),
 		},
 	}
