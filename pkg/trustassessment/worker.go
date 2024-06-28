@@ -10,8 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
+	//actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+	tlee2 "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 )
@@ -175,12 +176,12 @@ func (w *Worker) processCommand(cmd Command) {
 		//TLEE execution
 
 		//Uncomment to use dummy TLEE (for Brussels use case only)
-		//myTlee := tlee2.TLEE{}
-		//tleeResults := myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
+		myTlee := tlee2.TLEE{}
+		tleeResults := myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
 
 		//Uncomment to use actual TLEE (
-		actualTlee := &actualtlee.TLEE{}
-		tleeResults := actualTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
+		//actualTlee := &actualtlee.TLEE{}
+		//tleeResults := actualTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
 
 		w.logger.Debug("TLEE results", "Output", fmt.Sprintf("%+v", tleeResults))
 
