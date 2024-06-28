@@ -1,0 +1,10 @@
+{
+  "sender": "application",
+  "serviceType": "TAS",
+  "messageType": "TAS_INIT_REQUEST",
+  "responseTopic": "todo",
+  "requestId": "1234",
+  "message" : {
+    "trustModelTemplate": "TRUSTMODEL@0.0.1"
+  }
+}
