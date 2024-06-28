@@ -1,126 +1,126 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_NOTIFY /",
-    "title": "TAS_NOTIFY ",
-    "type": "object",
-    "properties": {
-      "sessionId": {
-        "type": "string"
-      },
-      "error": {
-        "type": "string"
-      },
-      "results" : {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "description" : "The identifier of the trust model instance.",
-                "type": "string"
-              },
-              "propositions" : {
-                "type" : "array",
-                "items" : {
-                  "type" : "object",
-                  "properties": {
-                    "propositionId": {
-                      "description" : "The identifier of the proposition.",
-                      "type": "string"
-                    },
-                    "actualTrustworthinessLevel" : {
-                      "type" : "array",
-                      "items" : {
-                        "oneOf" : [
-                          {
-                            "type": "object",
-                            "properties" : {
-                              "type" : {
-                                  "type" : "string",
-                                  "enum" : ["SUBJECTIVE_LOGIC_OPINION"]
-                              },
-                              "output" : {
-                                "type": "object",
-                                "properties" : {
-                                    "belief" : {
-                                      "type": "number"
-                                    },
-                                    "disbelief" : {
-                                      "type": "number"
-                                    },
-                                    "uncertainty" : {
-                                      "type": "number"
-                                    },
-                                    "baseRate" : {
-                                      "type": "number"
-                                    }
-                                },
-                                "required" : ["type", "output"]
-                              }
-                            },
-                            "required" : ["type", "output"]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TA_RESPONSE/",
+  "title": "TAS_TA_RESPONSE ",
+  "type": "object",
+  "properties": {
+    "sessionId": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    },
+    "results" : {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description" : "The identifier of the trust model instance.",
+            "type": "string"
+          },
+          "propositions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties": {
+                "propositionId": {
+                  "description" : "The identifier of the proposition.",
+                  "type": "string"
+                },
+                "actualTrustworthinessLevel" : {
+                  "type" : "array",
+                  "items" : {
+                    "oneOf" : [
+                      {
+                        "type": "object",
+                        "properties" : {
+                          "type" : {
+                            "type" : "string",
+                            "enum" : ["SUBJECTIVE_LOGIC_OPINION"]
                           },
-                          {
+                          "output" : {
                             "type": "object",
                             "properties" : {
-                              "type" : {
-                                  "type" : "string",
-                                  "enum" : ["PROJECTED_PROBABILITY"]
+                              "belief" : {
+                                "type": "number"
                               },
-                              "output" : {
-                                "type": "object",
-                                "properties" : {
-                                    "value" : {
-                                      "type": "number"
-                                    }
-                                },
-                                "required" : ["value"]
+                              "disbelief" : {
+                                "type": "number"
+                              },
+                              "uncertainty" : {
+                                "type": "number"
+                              },
+                              "baseRate" : {
+                                "type": "number"
                               }
                             },
                             "required" : ["type", "output"]
                           }
-                        ]
-                      },              
-                      "minItems" : 1
-                    },
-                    "trustDecision" : {
-                      "description" : "The result of the trust decision engine.",
-                      "anyOf": [
-                        { "type": "boolean" },
-                        { "type": "null" }
-                      ] 
-                    }
+                        },
+                        "required" : ["type", "output"]
+                      },
+                      {
+                        "type": "object",
+                        "properties" : {
+                          "type" : {
+                            "type" : "string",
+                            "enum" : ["PROJECTED_PROBABILITY"]
+                          },
+                          "output" : {
+                            "type": "object",
+                            "properties" : {
+                              "value" : {
+                                "type": "number"
+                              }
+                            },
+                            "required" : ["value"]
+                          }
+                        },
+                        "required" : ["type", "output"]
+                      }
+                    ]
                   },
-                  "required" : ["propositionId", "actualTrustworthinessLevel", "trustDecision"]
-                },              
-                "minItems" : 1
-              }
+                  "minItems" : 1
+                },
+                "trustDecision" : {
+                  "description" : "The result of the trust decision engine.",
+                  "anyOf": [
+                    { "type": "boolean" },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required" : ["propositionId", "actualTrustworthinessLevel", "trustDecision"]
             },
-            "required" : [
-                "id", "propositions"
-            ]
+            "minItems" : 1
+          }
         },
-        "minItems" : 1
+        "required" : [
+          "id", "propositions"
+        ]
       },
-      "attestationCertificate" : {
-        "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
-        "type": "string"
-      }
+      "minItems" : 1
     },
-    "oneOf": [
-      {
-        "required": [
-          "sessionId",
-          "error",
-          "attestationCertificate"
-        ]
-      },
-      {
-        "required": [
-          "sessionId",
-          "results",
-          "attestationCertificate"
-        ]
-      }
-    ]
-  }
+    "attestationCertificate" : {
+      "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "sessionId",
+        "error",
+        "attestationCertificate"
+      ]
+    },
+    {
+      "required": [
+        "sessionId",
+        "results",
+        "attestationCertificate"
+      ]
+    }
+  ]
+}
