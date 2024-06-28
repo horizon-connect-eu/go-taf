@@ -19,6 +19,9 @@
 //    tasTaRequest, err := UnmarshalTasTaRequest(bytes)
 //    bytes, err = tasTaRequest.Marshal()
 //
+//    tasTaResponse, err := UnmarshalTasTaResponse(bytes)
+//    bytes, err = tasTaResponse.Marshal()
+//
 //    tasTeardownRequest, err := UnmarshalTasTeardownRequest(bytes)
 //    bytes, err = tasTeardownRequest.Marshal()
 //
@@ -95,6 +98,16 @@ func (r *TasTaRequest) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+func UnmarshalTasTaResponse(data []byte) (TasTaResponse, error) {
+	var r TasTaResponse
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TasTaResponse) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
 func UnmarshalTasTeardownRequest(data []byte) (TasTeardownRequest, error) {
 	var r TasTeardownRequest
 	err := json.Unmarshal(data, &r)
@@ -153,31 +166,31 @@ type TasNotify struct {
 	// The certificate (*base64 string*) issued by the IAM, attesting to the correct execution
 	// of the TAF within an enclave.
 	AttestationCertificate string   `json:"attestationCertificate"`
-	Error                  *string  `json:"error,omitempty"`
-	Results                []Result `json:"results,omitempty"`
 	SessionID              string   `json:"sessionId"`
+	SubscriptionID         string   `json:"subscriptionId"`
+	Updates                []Update `json:"updates"`
 }
 
-type Result struct {
+type Update struct {
 	// The identifier of the trust model instance.
-	ID           string        `json:"id"`
-	Propositions []Proposition `json:"propositions"`
+	ID           string              `json:"id"`
+	Propositions []UpdateProposition `json:"propositions"`
 }
 
-type Proposition struct {
-	ActualTrustworthinessLevel []ActualTrustworthinessLevelElement `json:"actualTrustworthinessLevel"`
+type UpdateProposition struct {
+	ActualTrustworthinessLevel []PurpleActualTrustworthinessLevel `json:"actualTrustworthinessLevel"`
 	// The identifier of the proposition.
 	PropositionID string `json:"propositionId"`
 	// The result of the trust decision engine.
 	TrustDecision *bool `json:"trustDecision"`
 }
 
-type ActualTrustworthinessLevelElement struct {
-	Output Output `json:"output"`
-	Type   Type   `json:"type"`
+type PurpleActualTrustworthinessLevel struct {
+	Output PurpleOutput `json:"output"`
+	Type   Type         `json:"type"`
 }
 
-type Output struct {
+type PurpleOutput struct {
 	BaseRate    *float64    `json:"baseRate,omitempty"`
 	Belief      *float64    `json:"belief,omitempty"`
 	Disbelief   *float64    `json:"disbelief,omitempty"`
@@ -225,6 +238,44 @@ type TasTaRequest struct {
 type Query struct {
 	// A potentially empty list of targets
 	Filter []string `json:"filter"`
+}
+
+type TasTaResponse struct {
+	// The certificate (*base64 string*) issued by the IAM, attesting to the correct execution
+	// of the TAF within an enclave.
+	AttestationCertificate string   `json:"attestationCertificate"`
+	Error                  *string  `json:"error,omitempty"`
+	Results                []Result `json:"results,omitempty"`
+	SessionID              string   `json:"sessionId"`
+}
+
+type Result struct {
+	// The identifier of the trust model instance.
+	ID           string              `json:"id"`
+	Propositions []ResultProposition `json:"propositions"`
+}
+
+type ResultProposition struct {
+	ActualTrustworthinessLevel []FluffyActualTrustworthinessLevel `json:"actualTrustworthinessLevel"`
+	// The identifier of the proposition.
+	PropositionID string `json:"propositionId"`
+	// The result of the trust decision engine.
+	TrustDecision *bool `json:"trustDecision"`
+}
+
+type FluffyActualTrustworthinessLevel struct {
+	Output FluffyOutput `json:"output"`
+	Type   Type         `json:"type"`
+}
+
+type FluffyOutput struct {
+	BaseRate    *float64    `json:"baseRate,omitempty"`
+	Belief      *float64    `json:"belief,omitempty"`
+	Disbelief   *float64    `json:"disbelief,omitempty"`
+	Uncertainty *float64    `json:"uncertainty,omitempty"`
+	Type        interface{} `json:"type"`
+	Output      interface{} `json:"output"`
+	Value       *float64    `json:"value,omitempty"`
 }
 
 type TasTeardownRequest struct {
