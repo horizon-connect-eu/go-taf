@@ -5,6 +5,8 @@ import (
 	"fmt"
 	logger "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
 	"math"
 	"strconv"
@@ -173,14 +175,13 @@ func (w *Worker) processCommand(cmd Command) {
 		var tmi = w.states[tmiID]
 
 		//TLEE execution
-
-		//Uncomment to use dummy TLEE (for Brussels use case only)
-		//myTlee := tlee2.TLEE{}
-		//tleeResults := myTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
-
-		//Uncomment to use actual TLEE (
-		actualTlee := &actualtlee.TLEE{}
-		tleeResults := actualTlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
+		var tlee tleeinterface.TLEE
+		if w.tafContext.Configuration.TLEE.UseInternalTLEE {
+			tlee = &internaltlee.TLEE{}
+		} else {
+			tlee = &actualtlee.TLEE{}
+		}
+		tleeResults := tlee.RunTLEE(strconv.Itoa(tmi.Id), tmi.Version, uint32(tmi.Fingerprint), tmi.GetTrustGraphStructure(), tmi.GetTrustRelationships())
 
 		w.logger.Debug("TLEE results", "Output", fmt.Sprintf("%+v", tleeResults))
 

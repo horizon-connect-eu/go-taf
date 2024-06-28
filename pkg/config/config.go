@@ -13,6 +13,8 @@ type Configuration struct {
 	V2X                V2XConfiguration
 	TAM                TAMConfiguration
 	EvidenceCollection EvidenceCollectionConfiguration
+	Kafka              KafkaConfig
+	TLEE               TLEEConfig
 }
 
 type LogConfiguration struct {
@@ -42,6 +44,14 @@ type AdapterConfig struct {
 	Params map[string]string
 }
 
+type TLEEConfig struct {
+	UseInternalTLEE bool
+}
+
+type KafkaConfig struct {
+	Brokers []string
+}
+
 var (
 	// Default configuration of the TAF.
 	// This configuration will be used if no configuration
@@ -64,6 +74,12 @@ var (
 			Adapters: []AdapterConfig{
 				{"filebased", map[string]string{"path": "res/file_based_evidence_1.csv"}},
 			},
+		},
+		Kafka: KafkaConfig{
+			Brokers: []string{"localhost:9092"},
+		},
+		TLEE: TLEEConfig{
+			UseInternalTLEE: true,
 		},
 	}
 )
