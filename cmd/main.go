@@ -33,8 +33,9 @@ func WaitForCtrlC() {
 	<-c
 }
 
-// main is the entry point of the application.
-// It starts all the components of the application and waits for a signal to stop the application.
+/*
+The main TAF application thats tarts all the components of the application and waits for a signal to stop the application.
+*/
 func main() {
 	tafConfig := config.DefaultConfig
 	// First, see whether a config file path has been specified
