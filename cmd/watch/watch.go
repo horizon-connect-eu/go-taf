@@ -19,11 +19,19 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
 var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam"}
 var logger *slog.Logger
+
+// Blocks until the process receives SIGTERM (or equivalent).
+func WaitForCtrlC() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+}
 
 /*
 A helper command to watch and check Kafka topics
@@ -44,11 +52,9 @@ func main() {
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
-	saramaConsume()
+	go saramaConsume()
 
-	/*
-
-	 */
+	WaitForCtrlC()
 
 }
 
@@ -61,7 +67,7 @@ func saramaConsume() {
 
 	brokers := []string{"localhost:9092"}
 
-	client, err := sarama.NewConsumerGroup(brokers, "cg"+string(rand.IntN(1000000)), config)
+	client, err := sarama.NewConsumerGroup(brokers, "cg"+fmt.Sprint(rand.IntN(1000000)), config)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("unable to create kafka consumer group: %v", err))
 	}
@@ -112,8 +118,8 @@ func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 	for msg := range claim.Messages() {
 		logger.Info("Received message:",
 			slog.String("Topic", string(msg.Topic)),
-			slog.String("Offset", string(msg.Offset)),
-			slog.String("Partition", string(msg.Partition)),
+			slog.Int64("Offset", msg.Offset),
+			slog.Int("Partition", int(msg.Partition)),
 			slog.String("Key", string(msg.Key)),
 			slog.String("Value", string(msg.Value)),
 		)
