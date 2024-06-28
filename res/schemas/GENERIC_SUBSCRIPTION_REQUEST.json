@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/",
+    "title": "GENERIC_SUBSCRIPTION_REQUEST ",
+    "type": "object",
+    "properties": {
+      "sender": {
+        "type": "string",
+        "description": "The identifier of the sender of this message."
+      },
+      "serviceType": {
+        "type": "string",
+        "description": "The service type to be used by the receiver to process this message."
+      },
+      "messageType": {
+        "type": "string",
+        "description": "The message type to be used by the receiver to process this message."
+      },
+      "responseTopic": {
+        "type": "string",
+        "description": "The Kafka topic to be used to send a response to this request."
+      },
+      "subscriberTopic": {
+        "type": "string",
+        "description": "The Kafka topic of this sender to which notifications should be published to."
+      },
+      "requestId": {
+        "type": "string",
+        "description": "The unique identifier to be repeated in the response for linking request and response."
+      },
+      "message": {
+        "type": "object",
+        "description": "The actual application message of type messageType."
+      }
+    },
+    "required": [
+      "sender",
+      "serviceType",
+      "messageType",
+      "responseTopic",
+      "subscriberTopic",
+      "requestId",
+      "message"
+    ]
+  }

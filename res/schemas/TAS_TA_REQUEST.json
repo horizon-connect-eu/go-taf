@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TA_REQUEST /",
+    "title": "TAS_TA_REQUEST ",
+    "type": "object",
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "query" : {
+        "type": "object",
+        "description" : "The query selector",      
+        "properties": {
+          "filter": {
+            "type": "array",
+            "description" : "A potentially empty list of targets",
+            "items": {
+                "type": "string"
+              },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "filter"
+        ]
+      },
+      "allowCache" : {
+        "type" : "boolean",
+        "description" : "If false, the TAF will recalculate all results without usings its cache."
+      }
+    },
+    "required": [
+      "sessionId", "query"
+    ]
+  }

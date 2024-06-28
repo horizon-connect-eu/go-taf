@@ -1,0 +1,84 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_NOTIFY/",
+	"title": "AIV_NOTIFY",
+	"type": "object",
+	"properties": {
+		"subscriptionId": {
+			"description":"The unique identifier used for linking notifications with a specific subscription.",
+			"type": "string" 
+		},
+		"trusteeReports": {
+			"description": "",
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"trusteeID": {
+						"description": "The identifier of the trustee from which claims should be reported.",
+						"type": "string"
+					},
+					"attestationReport": {
+						"description": "A list of specific claims that are requested. If empty, all available claims should be reported.",
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"claim": {
+									"description": "",
+									"type": "string"
+								},
+								"timestamp": {
+									"description": "Date",
+									"type": "string"
+								},
+								"appraisal": {
+									"description": "AIV verification status",
+									"type": "integer"
+								}
+							},
+							"required": [
+								"claim",
+								"appraisal",
+								"timestamp"
+							]
+						},
+						"minItems": 0
+					}
+				}
+			}
+		},
+		"aivEvidence": {
+			"type": "object",
+			"properties": {
+				"timestamp": {
+					"type": "string"
+				},
+				"nonce": {
+					"description": "In Hex.",
+					"type": "string"
+				},
+				"signatureAlgorithmType": {
+					"type": "string"
+				},
+				"signature": {
+					"type": "string"
+				},
+				"keyRef": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"timestamp",
+				"nonce",
+				"signatureAlgorithmType",
+				"signature",
+				"keyRef"
+			]
+		}
+	},
+	"required": [
+		"trusteeReports",
+		"aivEvidence"
+	]
+}

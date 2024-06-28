@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Ntm",
+    "definitions": {
+        "Ntm": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "v2xSourceSet": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/V2XSourceSet"
+                    }
+                }
+            },
+            "required": [
+                "v2xSourceSet"
+            ],
+            "title": "Ntm"
+        },
+        "V2XSourceSet": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "v2xSourceId": {
+                    "type": "integer"
+                },
+                "opinion": {
+                    "$ref": "#/definitions/Opinion"
+                }
+            },
+            "required": [
+                "opinion",
+                "v2xSourceId"
+            ],
+            "title": "V2XSourceSet"
+        },
+        "Opinion": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "belief": {
+                    "type": "number"
+                },
+                "disbelief": {
+                    "type": "number"
+                },
+                "uncertainty": {
+                    "type": "number"
+                },
+                "baseRate": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "baseRate",
+                "belief",
+                "disbelief",
+                "uncertainty"
+            ],
+            "title": "Opinion"
+        }
+    }
+}
