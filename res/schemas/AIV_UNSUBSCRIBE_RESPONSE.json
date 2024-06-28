@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_UNSUBSCRIBE_REQUEST/",
+    "title": "AIV_UNSUBSCRIBE_REQUEST",
+    "type": "object",
+    "properties": {
+      "subscriptionId": {
+        "type": "string"
+      },
+      "attestationCertificate" : {
+        "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "subscriptionId",
+      "attestationCertificate"
+    ]
+  }

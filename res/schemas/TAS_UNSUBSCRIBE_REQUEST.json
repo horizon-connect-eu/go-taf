@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_REQUEST/",
+    "title": "TAS_UNSUBSCRIBE_REQUEST",
+    "type": "object",
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "subscriptionId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sessionId", "subscriptionId"
+    ]
+  }

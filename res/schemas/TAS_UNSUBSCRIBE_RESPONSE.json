@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_RESPONSE/",
+    "title": "TAS_UNSUBSCRIBE_RESPONSE",
+    "type": "object",
+    "properties": {
+      "sessionId": {
+        "type": "string"
+      },
+      "success": {
+        "type": "string"
+      },
+      "error": {
+        "type": "string"
+      },
+      "attestationCertificate" : {
+        "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
+        "type": "string"
+      }
+    },
+    "oneOf": [
+      {
+        "required": [
+          "sessionId",
+          "error",
+          "attestationCertificate"
+        ]
+      },
+      {
+        "required": [
+          "sessionId",
+          "success",
+          "attestationCertificate"
+        ]
+      }
+    ]
+  }

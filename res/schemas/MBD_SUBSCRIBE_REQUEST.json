@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/MBD_SUBSCRIBE_REQUEST/",
+    "title": "MBD_SUBSCRIBE_REQUEST",
+    "type": "object",
+    "properties": {
+      "subscribe": {  "type": "boolean" },
+      "attestationCertificate" : {
+        "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "subscribe",
+      "attestationCertificate"
+    ]
+  }

@@ -1,0 +1,140 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "V2X_CPM",
+    "type": "object",
+    "properties": {
+      "sourceId": {
+        "type": "number"
+      },
+      "referenceTime": {
+        "type": "number"
+      },
+      "longitude": {
+        "type": "number"
+      },
+      "latitude": {
+        "type": "number"
+      },
+      "semiMajorConfidence": {
+        "type": "number"
+      },
+      "semiMinorConfidence": {
+        "type": "number"
+      },
+      "semiMajorOrientation": {
+        "type": "number"
+      },
+      "orientationAngle": {
+        "type": "number"
+      },
+      "orientationAngleConfidence": {
+        "type": "number"
+      },
+      "PerceivedObjectContainer": {
+        "type": "object",
+        "properties": {
+          "numberOfPerceivedObjects": {
+            "type": "number"
+          },
+          "objects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "objectId": {
+                  "type": "number"
+                },
+                "measurementDeltaTime": {
+                  "type": "number"
+                },
+                "position_xCoordinate": {
+                  "type": "number"
+                },
+                "position_xCoordinateConfidence": {
+                  "type": "number"
+                },
+                "position_yCoordinate": {
+                  "type": "number"
+                },
+                "position_yCoordinateConfidence": {
+                  "type": "number"
+                },
+                "velocityMagnitudeValue": {
+                  "type": "number"
+                },
+                "velocityMagnitudeValueConfidence": {
+                  "type": "number"
+                },
+                "velocityDirection": {
+                  "type": "number"
+                },
+                "velocityDirectionConfidence": {
+                  "type": "number"
+                },
+                "accelerationMagnitudeValue": {
+                  "type": "number"
+                },
+                "accelerationMagnitudeValueConfidence": {
+                  "type": "number"
+                },
+                "accelerationDirection": {
+                  "type": "number"
+                },
+                "accelerationDirectionConfidence": {
+                  "type": "number"
+                },
+                "zAngularVelocity": {
+                  "type": "number"
+                },
+                "zAngularVelocityConfidence": {
+                  "type": "number"
+                },
+                "zAngle": {
+                  "type": "number"
+                },
+                "zAngleConfidence": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "objectId",
+                "measurementDeltaTime",
+                "position_xCoordinate",
+                "position_xCoordinateConfidence",
+                "position_yCoordinate",
+                "position_yCoordinateConfidence",
+                "velocityMagnitudeValue",
+                "velocityMagnitudeValueConfidence",
+                "velocityDirection",
+                "velocityDirectionConfidence",
+                "accelerationMagnitudeValue",
+                "accelerationMagnitudeValueConfidence",
+                "accelerationDirection",
+                "accelerationDirectionConfidence",
+                "zAngularVelocity",
+                "zAngularVelocityConfidence",
+                "zAngle",
+                "zAngleConfidence"
+              ]
+            }
+          }
+        },
+        "required": [
+          "numberOfPerceivedObjects",
+          "objects"
+        ]
+      }
+    },
+    "required": [
+      "sourceId",
+      "referenceTime",
+      "longitude",
+      "latitude",
+      "semiMajorConfidence",
+      "semiMinorConfidence",
+      "semiMajorOrientation",
+      "orientationAngle",
+      "orientationAngleConfidence",
+      "PerceivedObjectContainer"
+    ]
+  }
