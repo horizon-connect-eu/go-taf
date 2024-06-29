@@ -8,7 +8,7 @@ import (
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/validator"
 	"github.com/vs-uulm/go-taf/pkg/config"
-	message2 "github.com/vs-uulm/go-taf/pkg/message"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
@@ -69,7 +69,7 @@ func saramaConsume() {
 
 	client, err := sarama.NewConsumerGroup(brokers, "cg"+fmt.Sprint(rand.IntN(1000000)), config)
 	if err != nil {
-		logger.Warn(fmt.Sprintf("unable to create kafka consumer group: %v", err))
+		logger.Error(fmt.Sprintf("unable to create kafka consumer group: %v", err))
 	}
 	defer client.Close()
 
@@ -88,7 +88,7 @@ func saramaConsume() {
 		for {
 			err := client.Consume(ctx, WATCH_TOPICS, handler)
 			if err != nil {
-				logger.Warn(fmt.Sprintf("Error from consumer: %v", err))
+				logger.Error(fmt.Sprintf("Error from consumer: %v", err))
 			}
 
 			select {
@@ -123,8 +123,8 @@ func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 			slog.String("Key", string(msg.Key)),
 			slog.String("Value", string(msg.Value)),
 		)
-		sess.MarkMessage(msg, "")
 		checkMessage(string(msg.Value))
+		sess.MarkMessage(msg, "")
 	}
 	return nil
 }
@@ -143,16 +143,16 @@ func checkMessage(message string) {
 
 	//Parse message tpye-agnostically to get type and later unmarshal correct type
 	if err := json.Unmarshal([]byte(message), &rawMsg); err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error while unmarshalling JSON: " + err.Error())
 	}
 
-	schema, exists := message2.SchemaMap[rawMsg.MessageType]
+	schema, exists := messages.SchemaMap[rawMsg.MessageType]
 	if !exists {
 		logger.Error("Unknown message type: " + rawMsg.MessageType)
 	} else {
 		valid, w, err := validator.Validate(schema, string(msg))
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error while trying to validate: " + err.Error())
 		} else if !valid {
 			logger.Error("Error validating document", "Errors", w)
 		} else {
@@ -160,55 +160,55 @@ func checkMessage(message string) {
 
 			var err error
 			switch schema {
-			case message2.AIV_NOTIFY:
+			case messages.AIV_NOTIFY:
 				_, err = aivmsg.UnmarshalAivNotify(msg)
-			case message2.AIV_REQUEST:
+			case messages.AIV_REQUEST:
 				_, err = aivmsg.UnmarshalAivRequest(msg)
-			case message2.AIV_RESPONSE:
+			case messages.AIV_RESPONSE:
 				_, err = aivmsg.UnmarshalAivResponse(msg)
-			case message2.AIV_SUBSCRIBE_REQUEST:
+			case messages.AIV_SUBSCRIBE_REQUEST:
 				_, err = aivmsg.UnmarshalAivSubscribeRequest(msg)
-			case message2.AIV_SUBSCRIBE_RESPONSE:
+			case messages.AIV_SUBSCRIBE_RESPONSE:
 				_, err = aivmsg.UnmarshalAivSubscribeResponse(msg)
-			case message2.AIV_UNSUBSCRIBE_REQUEST:
+			case messages.AIV_UNSUBSCRIBE_REQUEST:
 				_, err = aivmsg.UnmarshalAivUnsubscribeRequest(msg)
-			case message2.AIV_UNSUBSCRIBE_RESPONSE:
+			case messages.AIV_UNSUBSCRIBE_RESPONSE:
 				_, err = aivmsg.UnmarshalAivUnsubscribeResponse(msg)
-			case message2.MBD_NOTIFY:
+			case messages.MBD_NOTIFY:
 				_, err = mbdmsg.UnmarshalMBDNotify(msg)
-			case message2.MBD_SUBSCRIBE_REQUEST:
+			case messages.MBD_SUBSCRIBE_REQUEST:
 				_, err = mbdmsg.UnmarshalMBDSubscribeRequest(msg)
-			case message2.MBD_SUBSCRIBE_RESPONSE:
+			case messages.MBD_SUBSCRIBE_RESPONSE:
 				_, err = mbdmsg.UnmarshalMBDSubscribeResponse(msg)
-			case message2.MBD_UNSUBSCRIBE_REQUEST:
+			case messages.MBD_UNSUBSCRIBE_REQUEST:
 				_, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
-			case message2.MBD_UNSUBSCRIBE_RESPONSE:
+			case messages.MBD_UNSUBSCRIBE_RESPONSE:
 				_, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
-			case message2.TAS_INIT_REQUEST:
+			case messages.TAS_INIT_REQUEST:
 				_, err = tasmsg.UnmarshalTasInitRequest(msg)
-			case message2.TAS_INIT_RESPONSE:
+			case messages.TAS_INIT_RESPONSE:
 				_, err = tasmsg.UnmarshalTasInitResponse(msg)
-			case message2.TAS_NOTIFY:
+			case messages.TAS_NOTIFY:
 				_, err = tasmsg.UnmarshalTasNotify(msg)
-			case message2.TAS_SUBSCRIBE_REQUEST:
+			case messages.TAS_SUBSCRIBE_REQUEST:
 				_, err = tasmsg.UnmarshalTasSubscribeRequest(msg)
-			case message2.TAS_SUBSCRIBE_RESPONSE:
+			case messages.TAS_SUBSCRIBE_RESPONSE:
 				_, err = tasmsg.UnmarshalTasSubscribeResponse(msg)
-			case message2.TAS_TA_REQUEST:
+			case messages.TAS_TA_REQUEST:
 				_, err = tasmsg.UnmarshalTasTaRequest(msg)
-			case message2.TAS_TA_RESPONSE:
+			case messages.TAS_TA_RESPONSE:
 				_, err = tasmsg.UnmarshalTasTaResponse(msg)
-			case message2.TAS_TEARDOWN_REQUEST:
+			case messages.TAS_TEARDOWN_REQUEST:
 				_, err = tasmsg.UnmarshalTasTeardownRequest(msg)
-			case message2.TAS_TEARDOWN_RESPONSE:
+			case messages.TAS_TEARDOWN_RESPONSE:
 				_, err = tasmsg.UnmarshalTasTeardownResponse(msg)
-			case message2.TAS_UNSUBSCRIBE_REQUEST:
+			case messages.TAS_UNSUBSCRIBE_REQUEST:
 				_, err = tasmsg.UnmarshalTasUnsubscribeRequest(msg)
-			case message2.TAS_UNSUBSCRIBE_RESPONSE:
+			case messages.TAS_UNSUBSCRIBE_RESPONSE:
 				_, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
-			case message2.V2X_CPM:
+			case messages.V2X_CPM:
 				_, err = v2xmsg.UnmarshalV2XCpm(msg)
-			case message2.V2X_NTM:
+			case messages.V2X_NTM:
 				_, err = v2xmsg.UnmarshalV2XNtm(msg)
 			}
 			if err != nil {
