@@ -1,5 +1,13 @@
 package main
 
+/*
+Example messages to input into the CLI KAFAK producer:
+
+{  "sender": "a77b29bac8f1-taf",  "serviceType": "TAS",  "messageType": "TAS_INIT_REQUEST",  "responseId": "4c54a50f8e43",  "message" : {  "trustModelTemplate":"TRUSTMODEL@0.0.1"}}
+
+{  "sender": "a77b29bac8f1-aiv",  "serviceType": "ECI",  "messageType": "AIV_RESPONSE",  "responseId": "4c54a50f8e42",  "message" : {"trusteeReports": [{"trusteeID": "Zonal Controller 1","attestationReport": [{"claim": "secure-boot-integrity","timestamp": "2024-05-16T15:30:45Z","appraisal": 1},{"claim": "runtime-integrity","timestamp": "2024-05-16T15:35:22Z","appraisal": 0}]}],"aivEvidence": {    "timestamp": "2024-05-16T15:30:45Z",    "nonce": "d78080092edf3633e6933f67ddfe6744",    "signatureAlgorithmType": "ECDSA-SHA256",    "signature":"30440220655e8f8b6f96a6c3a21257aab77c1e5c13ae8acf94dabc6b6e13416d2ff3477a022033d5d7dab3f516cd7367e8d637ab4b956aaa080f3c236b78edbd7f5c2ca1a86767",    "keyRef":"ecdsa_public_key_71"  }}}
+
+*/
 import (
 	"context"
 	"encoding/json"
@@ -18,6 +26,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
@@ -52,20 +61,23 @@ func main() {
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
-	go saramaConsume()
+	go saramaConsume(tafConfig.CommunicationConfiguration.Kafka)
 
 	WaitForCtrlC()
 
 }
 
-func saramaConsume() {
+/*
+ * The functions registers for the WATCH_TOPICS at the Kafka broker and checks every message it consumes.
+ */
+func saramaConsume(kafkaConfig config.KafkaConfig) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
 	config.Consumer.Offsets.AutoCommit.Enable = true
 	config.Consumer.Offsets.AutoCommit.Interval = 1 * time.Second
 
-	brokers := []string{"localhost:9092"}
+	brokers := []string{kafkaConfig.Broker}
 
 	client, err := sarama.NewConsumerGroup(brokers, "cg"+fmt.Sprint(rand.IntN(1000000)), config)
 	if err != nil {
@@ -159,66 +171,68 @@ func checkMessage(message string) {
 			logger.Info("Successfully validated JSON with schema " + string(schema) + ".")
 
 			var err error
+			var extractedStruct interface{}
+
 			switch schema {
 			case messages.AIV_NOTIFY:
-				_, err = aivmsg.UnmarshalAivNotify(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivNotify(msg)
 			case messages.AIV_REQUEST:
-				_, err = aivmsg.UnmarshalAivRequest(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivRequest(msg)
 			case messages.AIV_RESPONSE:
-				_, err = aivmsg.UnmarshalAivResponse(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivResponse(msg)
 			case messages.AIV_SUBSCRIBE_REQUEST:
-				_, err = aivmsg.UnmarshalAivSubscribeRequest(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivSubscribeRequest(msg)
 			case messages.AIV_SUBSCRIBE_RESPONSE:
-				_, err = aivmsg.UnmarshalAivSubscribeResponse(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivSubscribeResponse(msg)
 			case messages.AIV_UNSUBSCRIBE_REQUEST:
-				_, err = aivmsg.UnmarshalAivUnsubscribeRequest(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivUnsubscribeRequest(msg)
 			case messages.AIV_UNSUBSCRIBE_RESPONSE:
-				_, err = aivmsg.UnmarshalAivUnsubscribeResponse(msg)
+				extractedStruct, err = aivmsg.UnmarshalAivUnsubscribeResponse(msg)
 			case messages.MBD_NOTIFY:
-				_, err = mbdmsg.UnmarshalMBDNotify(msg)
+				extractedStruct, err = mbdmsg.UnmarshalMBDNotify(msg)
 			case messages.MBD_SUBSCRIBE_REQUEST:
-				_, err = mbdmsg.UnmarshalMBDSubscribeRequest(msg)
+				extractedStruct, err = mbdmsg.UnmarshalMBDSubscribeRequest(msg)
 			case messages.MBD_SUBSCRIBE_RESPONSE:
-				_, err = mbdmsg.UnmarshalMBDSubscribeResponse(msg)
+				extractedStruct, err = mbdmsg.UnmarshalMBDSubscribeResponse(msg)
 			case messages.MBD_UNSUBSCRIBE_REQUEST:
-				_, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
+				extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
 			case messages.MBD_UNSUBSCRIBE_RESPONSE:
-				_, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
+				extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
 			case messages.TAS_INIT_REQUEST:
-				_, err = tasmsg.UnmarshalTasInitRequest(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasInitRequest(msg)
 			case messages.TAS_INIT_RESPONSE:
-				_, err = tasmsg.UnmarshalTasInitResponse(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasInitResponse(msg)
 			case messages.TAS_NOTIFY:
-				_, err = tasmsg.UnmarshalTasNotify(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasNotify(msg)
 			case messages.TAS_SUBSCRIBE_REQUEST:
-				_, err = tasmsg.UnmarshalTasSubscribeRequest(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasSubscribeRequest(msg)
 			case messages.TAS_SUBSCRIBE_RESPONSE:
-				_, err = tasmsg.UnmarshalTasSubscribeResponse(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasSubscribeResponse(msg)
 			case messages.TAS_TA_REQUEST:
-				_, err = tasmsg.UnmarshalTasTaRequest(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasTaRequest(msg)
 			case messages.TAS_TA_RESPONSE:
-				_, err = tasmsg.UnmarshalTasTaResponse(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasTaResponse(msg)
 			case messages.TAS_TEARDOWN_REQUEST:
-				_, err = tasmsg.UnmarshalTasTeardownRequest(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasTeardownRequest(msg)
 			case messages.TAS_TEARDOWN_RESPONSE:
-				_, err = tasmsg.UnmarshalTasTeardownResponse(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasTeardownResponse(msg)
 			case messages.TAS_UNSUBSCRIBE_REQUEST:
-				_, err = tasmsg.UnmarshalTasUnsubscribeRequest(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeRequest(msg)
 			case messages.TAS_UNSUBSCRIBE_RESPONSE:
-				_, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
+				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
 			case messages.V2X_CPM:
-				_, err = v2xmsg.UnmarshalV2XCpm(msg)
+				extractedStruct, err = v2xmsg.UnmarshalV2XCpm(msg)
 			case messages.V2X_NTM:
-				_, err = v2xmsg.UnmarshalV2XNtm(msg)
+				extractedStruct, err = v2xmsg.UnmarshalV2XNtm(msg)
+
 			}
 			if err != nil {
 				logger.Error(err.Error())
 			} else {
-				logger.Info("Successfully unmarshalled struct of type " + string(schema) + ".")
+				extractedType := fmt.Sprintf("%s", reflect.TypeOf(extractedStruct))
+				logger.Info("Successfully unmarshalled JSON of type " + string(schema) + " to struct of type " + extractedType + ".")
 			}
 		}
 	}
-
-	//{  "sender": "a77b29bac8f1-taf",  "serviceType": "TAS",  "messageType": "TAS_INIT_REQUEST",  "responseId": "4c54a50f8e43",  "message" : {  "trustModelTemplate":"TRUSTMODEL@0.0.1"}}
 
 }

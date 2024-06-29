@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
 	"log/slog"
@@ -79,6 +80,15 @@ func main() {
 	tmts := map[string]int{}
 
 	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
+
+	incomingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+
+	communicationInterface, err := communication.New(tafContext, incomingMessageChannel, outgoingMessageChannel)
+	if err != nil {
+		logger.Error("Error creating communication interface", err)
+	}
+	communicationInterface.Run(tafContext)
 
 	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
 	if err != nil {

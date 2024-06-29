@@ -3,6 +3,8 @@
 // 2024-06-28 20:05:17.131611446 +0200 CEST m=+0.005398034
 package main
 
+import _ "github.com/vs-uulm/go-taf/plugins/communication/filebased"
+import _ "github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 import _ "github.com/vs-uulm/go-taf/plugins/evidencecollection/attestation"
 import _ "github.com/vs-uulm/go-taf/plugins/tam/add"
 import _ "github.com/vs-uulm/go-taf/plugins/tam/mult"
