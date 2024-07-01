@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
@@ -17,8 +16,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/vs-uulm/go-taf/pkg/evidencecollection"
 
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
@@ -78,13 +75,14 @@ func main() {
 	}
 	communicationInterface.Run(tafContext)
 
-	time.Sleep(5 * time.Second)
-	outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f1-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
-	outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f2-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
-
+	/*
+		time.Sleep(5 * time.Second)
+		outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f1-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
+		outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f2-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
+	*/
 	WaitForCtrlC()
 
-	return
+	//	return
 
 	//Create main channels
 	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
@@ -94,19 +92,11 @@ func main() {
 	//c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
 	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
-	eci2tsm := make(chan message.EvidenceCollectionMessage, tafConfig.ChanBufSize)
 	tsm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
 
 	tmts := map[string]int{}
 
 	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
-
-	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
-	if err != nil {
-		//LOG: log.Fatal(err)
-	}
-	//go evidenceCollection.Run(ctx)
-	util.UNUSED(evidenceCollection)
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts)
 	if err != nil {
@@ -115,7 +105,7 @@ func main() {
 	go trustAssessmentManager.Run(tmm2tamChannel, tsm2tamChannel)
 
 	go trustmodel.Run(ctx, tmm2tamChannel)
-	go trustsource.Run(ctx, c2, eci2tsm, tsm2tamChannel)
+	go trustsource.Run(ctx, c2, tsm2tamChannel)
 
 	WaitForCtrlC()
 

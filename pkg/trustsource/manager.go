@@ -9,7 +9,6 @@ import (
 
 func Run(ctx context.Context,
 	inputV2X chan message.InternalMessage,
-	inputEvidenceCollection <-chan message.EvidenceCollectionMessage,
 	output chan trustassessment.Command) {
 	// Cleanup function:
 	defer func() {
@@ -25,11 +24,13 @@ func Run(ctx context.Context,
 		case <-ctx.Done():
 			return
 
-		case received := <-inputEvidenceCollection:
-			//LOG: log.Printf("[TSM], received %+v from evidence collection\n", received)
-			//TODO: handle incoming evidence and generate update command
-			cmd := trustassessment.CreateUpdateTOCommand(uint64(received.TrustModelID), "TAF", received.Trustee, received.TS_ID, received.Evidence)
-			output <- cmd
+			/*
+				case received := <-inputEvidenceCollection:
+					//LOG: log.Printf("[TSM], received %+v from evidence collection\n", received)
+					//TODO: handle incoming evidence and generate update command
+					cmd := trustassessment.CreateUpdateTOCommand(uint64(received.TrustModelID), "TAF", received.Trustee, received.TS_ID, received.Evidence)
+					output <- cmd
+			*/
 		}
 
 	}

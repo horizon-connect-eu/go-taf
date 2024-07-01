@@ -12,7 +12,6 @@ type Configuration struct {
 	ChanBufSize                int
 	V2X                        V2XConfiguration
 	TAM                        TAMConfiguration
-	EvidenceCollection         EvidenceCollectionConfiguration
 	CommunicationConfiguration CommunicationConfiguration
 	TLEE                       TLEEConfig
 }
@@ -44,16 +43,6 @@ type TAMConfiguration struct {
 	UpdateResultsOp          string
 }
 
-// TAMConfiguration stores the config of the [tam.tam].
-type EvidenceCollectionConfiguration struct {
-	Adapters []AdapterConfig
-}
-
-type AdapterConfig struct {
-	Name   string
-	Params map[string]string
-}
-
 type TLEEConfig struct {
 	UseInternalTLEE bool
 }
@@ -76,13 +65,8 @@ var (
 			UpdateResultsOp:          "add",
 			UpdateStateOp:            "TODO", //TODO
 		},
-		EvidenceCollection: EvidenceCollectionConfiguration{
-			Adapters: []AdapterConfig{
-				{"filebased", map[string]string{"path": "res/file_based_evidence_1.csv"}},
-			},
-		},
 		CommunicationConfiguration: CommunicationConfiguration{
-			Handler: "file-based",
+			Handler: "kafka-based",
 			Kafka: KafkaConfig{
 				Broker: "localhost:9092",
 				Topics: []string{"taf"},

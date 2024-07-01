@@ -80,6 +80,9 @@ func checkForPluginImportStatements() error {
 		if strings.HasSuffix(path, "plugin_loader.go") {
 			return nil
 		}
+		if strings.HasSuffix(path, "playback.go") {
+			return nil
+		}
 		if !d.IsDir() && strings.HasSuffix(path, ".go") {
 			err = checkFile(filepath.FromSlash("../" + path))
 			if err != nil {

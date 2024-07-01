@@ -2,6 +2,7 @@ package communication
 
 import (
 	"errors"
+	"fmt"
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
@@ -19,8 +20,16 @@ type CommunicationInterface struct {
 }
 
 func New(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message) (CommunicationInterface, error) {
+	return NewWithHandler(tafContext, incomingMessageChannel, outgoingMessageChannel, tafContext.Configuration.CommunicationConfiguration.Handler)
+}
 
-	handlerName := tafContext.Configuration.CommunicationConfiguration.Handler
+func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message, handlerName string) (CommunicationInterface, error) {
+
+	incomingMessageChannel = make(chan Message, tafContext.Configuration.ChanBufSize)
+	outgoingMessageChannel = make(chan Message, tafContext.Configuration.ChanBufSize)
+
+	tafContext.Logger.Warn(fmt.Sprintf("%+v", handlers))
+
 	handler, okay := handlers[handlerName]
 	if !okay {
 		tafContext.Logger.Error("Error creating communication handler '" + handlerName + "'")
