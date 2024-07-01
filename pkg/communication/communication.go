@@ -15,8 +15,10 @@ func RegisterCommunicationHandler(name string, f CommunicationHandler) {
 type CommunicationInterface struct {
 	tafContext             core.RuntimeContext
 	communicationHandler   CommunicationHandler
-	incomingMessageChannel chan<- Message
-	outgoingMessageChannel <-chan Message
+	incomingMessageChannel chan<- Message //message from outside world to TAF internals (proxied by CommunicationInterface)
+	outgoingMessageChannel <-chan Message //message from TAF internals to outer world (proxied by CommunicationInterface)
+	internalInbox          <-chan Message //message from outside world to CommunicationInterface
+	internalOutbox         chan<- Message //message from CommunicationInterface to outside world
 }
 
 func New(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message) (CommunicationInterface, error) {
@@ -24,9 +26,6 @@ func New(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, 
 }
 
 func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message, handlerName string) (CommunicationInterface, error) {
-
-	incomingMessageChannel = make(chan Message, tafContext.Configuration.ChanBufSize)
-	outgoingMessageChannel = make(chan Message, tafContext.Configuration.ChanBufSize)
 
 	tafContext.Logger.Warn(fmt.Sprintf("%+v", handlers))
 
@@ -39,8 +38,11 @@ func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<
 	communicationHandler := CommunicationInterface{
 		tafContext:             tafContext,
 		incomingMessageChannel: incomingMessageChannel,
+		internalInbox:          make(chan Message, tafContext.Configuration.ChanBufSize),
 		outgoingMessageChannel: outgoingMessageChannel,
-		communicationHandler:   handler,
+		internalOutbox:         make(chan Message, tafContext.Configuration.ChanBufSize),
+
+		communicationHandler: handler,
 	}
 
 	return communicationHandler, nil
@@ -48,6 +50,25 @@ func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<
 
 func (ch CommunicationInterface) Run(tafContext core.RuntimeContext) {
 	go ch.communicationHandler(ch.tafContext, ch.incomingMessageChannel, ch.outgoingMessageChannel)
+
+	go func() {
+		for {
+			select {
+			case msg := <-ch.outgoingMessageChannel:
+				ch.internalOutbox <- msg
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case msg := <-ch.internalInbox:
+				ch.incomingMessageChannel <- msg
+			}
+		}
+
+	}()
 
 	defer func() {
 		//TODO: shutdown

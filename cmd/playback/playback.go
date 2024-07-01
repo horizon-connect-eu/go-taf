@@ -9,6 +9,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 	"log"
 	"log/slog"
 	"os"
@@ -17,11 +18,6 @@ import (
 	"strconv"
 	"time"
 )
-
-import _ "github.com/vs-uulm/go-taf/plugins/communication/filebased"
-import _ "github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
-import _ "github.com/vs-uulm/go-taf/plugins/tam/add"
-import _ "github.com/vs-uulm/go-taf/plugins/tam/mult"
 
 /*
 A helper command to play back test workloads via Kafka.
@@ -58,13 +54,16 @@ func main() {
 		Identifier:    "playback",
 	}
 
-	communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
+	/*
+		communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
+		if err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
+		communicationInterface.Run(tafContext)
+	*/
 
-	communicationInterface.Run(tafContext)
+	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
 
 	events, err := ReadFiles(filepath.FromSlash(testcase), logger)
 	if err != nil {
