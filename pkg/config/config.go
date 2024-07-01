@@ -8,11 +8,23 @@ import (
 
 // Configuration of the TAF, including its subcomponents.
 type Configuration struct {
-	Logging            LogConfiguration
-	ChanBufSize        int
-	V2X                V2XConfiguration
-	TAM                TAMConfiguration
-	EvidenceCollection EvidenceCollectionConfiguration
+	Logging                    LogConfiguration
+	ChanBufSize                int
+	V2X                        V2XConfiguration
+	TAM                        TAMConfiguration
+	EvidenceCollection         EvidenceCollectionConfiguration
+	CommunicationConfiguration CommunicationConfiguration
+	TLEE                       TLEEConfig
+}
+
+type CommunicationConfiguration struct {
+	Handler string
+	Kafka   KafkaConfig
+}
+
+type KafkaConfig struct {
+	Broker string
+	Topics []string
 }
 
 type LogConfiguration struct {
@@ -42,6 +54,10 @@ type AdapterConfig struct {
 	Params map[string]string
 }
 
+type TLEEConfig struct {
+	UseInternalTLEE bool
+}
+
 var (
 	// Default configuration of the TAF.
 	// This configuration will be used if no configuration
@@ -64,6 +80,16 @@ var (
 			Adapters: []AdapterConfig{
 				{"filebased", map[string]string{"path": "res/file_based_evidence_1.csv"}},
 			},
+		},
+		CommunicationConfiguration: CommunicationConfiguration{
+			Handler: "kafka-based",
+			Kafka: KafkaConfig{
+				Broker: "localhost:9092",
+				Topics: []string{"taf"},
+			},
+		},
+		TLEE: TLEEConfig{
+			UseInternalTLEE: true,
 		},
 	}
 )

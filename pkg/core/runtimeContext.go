@@ -11,4 +11,5 @@ type RuntimeContext struct {
 	Configuration config.Configuration
 	Logger        *slog.Logger
 	Context       context.Context
+	Identifier    string
 }

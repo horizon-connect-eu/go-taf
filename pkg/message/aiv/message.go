@@ -18,6 +18,9 @@
 //
 //    aivUnsubscribeRequest, err := UnmarshalAivUnsubscribeRequest(bytes)
 //    bytes, err = aivUnsubscribeRequest.Marshal()
+//
+//    aivUnsubscribeResponse, err := UnmarshalAivUnsubscribeResponse(bytes)
+//    bytes, err = aivUnsubscribeResponse.Marshal()
 
 package aivmsg
 
@@ -80,6 +83,16 @@ func UnmarshalAivUnsubscribeRequest(data []byte) (AivUnsubscribeRequest, error) 
 }
 
 func (r *AivUnsubscribeRequest) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalAivUnsubscribeResponse(data []byte) (AivUnsubscribeResponse, error) {
+	var r AivUnsubscribeResponse
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *AivUnsubscribeResponse) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -225,4 +238,9 @@ type AivUnsubscribeRequest struct {
 	// of the TAF within an enclave.
 	AttestationCertificate string `json:"attestationCertificate"`
 	SubscriptionID         string `json:"subscriptionId"`
+}
+
+type AivUnsubscribeResponse struct {
+	Error   *string `json:"error,omitempty"`
+	Success *string `json:"success,omitempty"`
 }

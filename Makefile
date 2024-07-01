@@ -64,7 +64,7 @@ PLUGIN_FILES = $(shell find plugins/ -type f -name '*.go')
 cmd/plugin_loader.go: $(PLUGIN_FILES)
 	go generate cmd/main.go
 
-PROJECT_NAME = taf-brussels-demo
+PROJECT_NAME = go-taf
 
 docs:
 	pkgsite >/dev/null 2>&1 & sleep 5
@@ -83,3 +83,11 @@ PHONY:docs
 run: build
 	TAF_CONFIG=res/taf.json out/main
 .PHONY:run
+
+build-watch:
+	mkdir -p out
+	go build -o out ./cmd/watch/watch.go
+.PHONY:build-watch
+
+run-watch: build-watch
+	TAF_CONFIG=res/taf.json out/watch
