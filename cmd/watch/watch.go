@@ -4,6 +4,7 @@ package main
 Example messages to input into the CLI KAFAK producer:
 
 {  "sender": "a77b29bac8f1-taf",  "serviceType": "TAS",  "messageType": "TAS_INIT_REQUEST",  "responseId": "4c54a50f8e43",  "message" : {  "trustModelTemplate":"TRUSTMODEL@0.0.1"}}
+{  "sender": "a77b29bac8f1-taf",  "serviceType": "TAS",  "messageType": "TAS_INIT_REQUEST",  "responseId": "4c54a50f8e43",  "message" : {  "trustModelTemplateee":"TRUSTMODEL@0.0.1"}}
 
 {  "sender": "a77b29bac8f1-aiv",  "serviceType": "ECI",  "messageType": "AIV_RESPONSE",  "responseId": "4c54a50f8e42",  "message" : {"trusteeReports": [{"trusteeID": "Zonal Controller 1","attestationReport": [{"claim": "secure-boot-integrity","timestamp": "2024-05-16T15:30:45Z","appraisal": 1},{"claim": "runtime-integrity","timestamp": "2024-05-16T15:35:22Z","appraisal": 0}]}],"aivEvidence": {    "timestamp": "2024-05-16T15:30:45Z",    "nonce": "d78080092edf3633e6933f67ddfe6744",    "signatureAlgorithmType": "ECDSA-SHA256",    "signature":"30440220655e8f8b6f96a6c3a21257aab77c1e5c13ae8acf94dabc6b6e13416d2ff3477a022033d5d7dab3f516cd7367e8d637ab4b956aaa080f3c236b78edbd7f5c2ca1a86767",    "keyRef":"ecdsa_public_key_71"  }}}
 

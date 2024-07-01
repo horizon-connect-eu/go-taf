@@ -82,7 +82,7 @@ var (
 			},
 		},
 		CommunicationConfiguration: CommunicationConfiguration{
-			Handler: "kafka-based",
+			Handler: "file-based",
 			Kafka: KafkaConfig{
 				Broker: "localhost:9092",
 				Topics: []string{"taf"},
