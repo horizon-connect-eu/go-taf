@@ -1,6 +1,7 @@
 package trustassessment
 
 import (
+	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"context"
 	"fmt"
 	logger "github.com/vs-uulm/go-taf/internal/logger"
@@ -12,9 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	//actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	tlee2 "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 )
