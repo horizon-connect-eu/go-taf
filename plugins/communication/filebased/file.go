@@ -8,6 +8,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -23,33 +24,29 @@ func NewFileBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- com
 	logger := logging.CreateChildLogger(tafContext.Logger, "File Communication Handler")
 	logger.Info("Starting file-based communication handler.")
 
-	go handleOutgoingMessages(tafContext, outboxChannel)
-	go handleIncomingMessages(tafContext, inboxChannel)
+	go handleOutgoingMessages(tafContext, logger, outboxChannel)
+	go handleIncomingMessages(tafContext, logger, inboxChannel)
 }
 
 /*
 Print message content to console.
 */
-func handleOutgoingMessages(tafContext core.RuntimeContext, outboxChannel <-chan communication.Message) {
+func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, outboxChannel <-chan communication.Message) {
 	for {
 		select {
 		case msg := <-outboxChannel:
-			fmt.Printf("Outgoing message from %s to %s:", msg.Source(), msg.Destination())
-			fmt.Println(string(msg.Bytes()))
+			logger.Info(fmt.Sprintf("Outgoing message from %s to %s:", msg.Source(), msg.Destination()))
 		}
 	}
 }
 
-func handleIncomingMessages(tafContext core.RuntimeContext, inboxChannel chan<- communication.Message) {
-	//TODO: read local messages from local file and send them into inbox
+func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, inboxChannel chan<- communication.Message) {
 
-	logger := tafContext.Logger
 	testcase := projectpath.Root + "/res/workloads/example" //TODO: make CLI flag: https://gobyexample.com/command-line-flags
 
-	events, err := readFiles(filepath.FromSlash(testcase))
+	events, err := ReadFiles(filepath.FromSlash(testcase), logger)
 	if err != nil {
 		logger.Error(err.Error())
-		os.Exit(1)
 	}
 
 	// send all messages at the appropriate time
@@ -66,7 +63,7 @@ func handleIncomingMessages(tafContext core.RuntimeContext, inboxChannel chan<- 
 	}
 }
 
-func readFiles(pathDir string) ([]Event, error) {
+func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 	csvFile, err := os.Open(pathDir + "/script.csv")
 	if err != nil {
 		return nil, err
@@ -83,7 +80,7 @@ func readFiles(pathDir string) ([]Event, error) {
 	for lineNr, rawEvent := range rawEvents {
 		timestamp, err := strconv.Atoi(rawEvent[0])
 		if err != nil {
-			log.Printf("filebased evidence collector plugin: error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err)
+			logger.Error(fmt.Sprintf("error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err))
 		}
 		event := Event{}
 		kafkaTopic := rawEvent[1]
@@ -91,7 +88,7 @@ func readFiles(pathDir string) ([]Event, error) {
 
 		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
 		if err != nil {
-			continue
+			logger.Error(fmt.Sprintf("Error reading file '%s': %s", messagePath, err.Error()))
 		}
 
 		event.Timestamp = timestamp

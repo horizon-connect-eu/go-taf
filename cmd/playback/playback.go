@@ -2,20 +2,18 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/projectpath"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/plugins/communication/filebased"
 	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"slices"
-	"strconv"
 	"time"
 )
 
@@ -56,7 +54,7 @@ func main() {
 
 	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
 
-	events, err := readFiles(filepath.FromSlash(testcase))
+	events, err := filebased.ReadFiles(filepath.FromSlash(testcase), logger)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -75,51 +73,4 @@ func main() {
 		outgoingMessageChannel <- communication.NewMessage(event.Message, "", event.Topic)
 	}
 
-}
-
-func readFiles(pathDir string) ([]Event, error) {
-	csvFile, err := os.Open(pathDir + "/script.csv")
-	if err != nil {
-		return nil, err
-	}
-	defer csvFile.Close()
-	csvReader := csv.NewReader(csvFile)
-
-	rawEvents, err := csvReader.ReadAll()
-	events := make([]Event, 0)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	for lineNr, rawEvent := range rawEvents {
-		timestamp, err := strconv.Atoi(rawEvent[0])
-		if err != nil {
-			log.Printf("filebased evidence collector plugin: error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err)
-		}
-		event := Event{}
-		kafkaTopic := rawEvent[1]
-		messagePath := rawEvent[2]
-
-		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
-		if err != nil {
-			continue
-		}
-
-		event.Timestamp = timestamp
-		event.Topic = kafkaTopic
-		event.Path = messagePath
-		event.Message = message
-		events = append(events, event)
-	}
-
-	// Sort messages by timestamp
-	slices.SortFunc(events, func(a, b Event) int { return a.Timestamp - b.Timestamp })
-	return events, nil
-}
-
-type Event struct {
-	Timestamp int
-	Topic     string
-	Path      string
-	Message   []byte
 }
