@@ -1,16 +1,18 @@
 // # main package
 //
-// TODO
+// The main TAF application
 package main
 
 import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
 	"log/slog"
+	"math/rand/v2"
 	"os"
 	"os/signal"
 	"syscall"
@@ -57,14 +59,32 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
+	tafId := fmt.Sprintf("taf-%000000d", rand.IntN(999999))
 	tafContext := core.RuntimeContext{
 		Configuration: tafConfig,
 		Logger:        logger,
 		Context:       ctx,
+		Identifier:    tafId,
 	}
 
-	logger.Debug("Running with following configuration",
-		slog.String("CTX", fmt.Sprintf("%+v", tafContext)))
+	logger.Info("Starting TAF with ID " + tafId)
+
+	incomingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+
+	communicationInterface, err := communication.New(tafContext, incomingMessageChannel, outgoingMessageChannel)
+	if err != nil {
+		logger.Error("Error creating communication interface", err)
+	}
+	communicationInterface.Run(tafContext)
+
+	time.Sleep(5 * time.Second)
+	outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f1-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
+	outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f2-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
+
+	WaitForCtrlC()
+
+	return
 
 	//Create main channels
 	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
@@ -81,20 +101,12 @@ func main() {
 
 	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
 
-	incomingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
-	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
-
-	communicationInterface, err := communication.New(tafContext, incomingMessageChannel, outgoingMessageChannel)
-	if err != nil {
-		logger.Error("Error creating communication interface", err)
-	}
-	communicationInterface.Run(tafContext)
-
 	evidenceCollection, err := evidencecollection.New(eci2tsm, tafConfig)
 	if err != nil {
 		//LOG: log.Fatal(err)
 	}
-	go evidenceCollection.Run(ctx)
+	//go evidenceCollection.Run(ctx)
+	util.UNUSED(evidenceCollection)
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts)
 	if err != nil {

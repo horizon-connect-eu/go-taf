@@ -24,6 +24,7 @@ type CommunicationConfiguration struct {
 
 type KafkaConfig struct {
 	Broker string
+	Topics []string
 }
 
 type LogConfiguration struct {
@@ -84,6 +85,7 @@ var (
 			Handler: "kafka-based",
 			Kafka: KafkaConfig{
 				Broker: "localhost:9092",
+				Topics: []string{"taf"},
 			},
 		},
 		TLEE: TLEEConfig{
