@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/message"
 	"log"
 	"log/slog"
 	"os"
@@ -40,12 +38,14 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	readFiles("./res/workloads")
+	testcase := "example" //specification of testcase -> directory name in workloads folder
+
+	sendMessages("./res/workloads" + "/" + testcase)
 
 }
 
-func readEvents(path string) ([]Event, error) {
-	csvFile, err := os.Open(path)
+func readFiles(pathDir string) ([]Event, error) {
+	csvFile, err := os.Open(pathDir + "/script.csv")
 	if err != nil {
 		return nil, err
 	}
@@ -59,59 +59,47 @@ func readEvents(path string) ([]Event, error) {
 		log.Fatal(err)
 	}
 	for lineNr, rawEvent := range rawEvents {
-		delay, err := strconv.Atoi(rawEvent[0])
+		timestamp, err := strconv.Atoi(rawEvent[0])
 		if err != nil {
 			log.Printf("filebased evidence collector plugin: error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err)
 		}
 		event := Event{}
-		err = json.Unmarshal([]byte(rawEvent[1]), &event)
+		kafkaTopic := rawEvent[1]
+		messagePath := rawEvent[2]
+
+		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
 		if err != nil {
-			log.Printf("filebased evidence collector plugin: error reading event in line %d (%s): %+v", lineNr, rawEvent[1], err)
+			continue
 		}
 
-		event.Timestamp = delay
+		event.Timestamp = timestamp
+		event.Topic = kafkaTopic
+		event.Path = messagePath
+		event.Message = string(message)
 		events = append(events, event)
 	}
 
 	// Sort messages by timestamp
-	slices.SortFunc(events, func(a, b message.EvidenceCollectionMessage) int { return a.Timestamp - b.Timestamp })
+	slices.SortFunc(events, func(a, b Event) int { return a.Timestamp - b.Timestamp })
 	return events, nil
 }
 
-func readFiles(pathTestCases string) {
-	testcases, ok := os.ReadDir(pathTestCases)
+func sendMessages(pathScript string) {
+	events, err := readFiles(filepath.FromSlash(pathScript))
 
-	if ok != nil {
-		log.Fatal(ok)
+	if err != nil {
+		log.Fatal(err)
 	}
+	// send all messages at the appropriate time
+	internalTime := 0
+	for _, event := range events {
+		// Sleep until the next event is due
+		sleepFor := event.Timestamp - internalTime
+		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
+		internalTime = event.Timestamp
 
-	//iterate over all directories in the provided path -> Each directory should represent here one test case
-	for _, e := range testcases {
-		pathScript := pathTestCases + e.Name() + "script.csv"
-		_, ok := os.Stat(pathScript)
-
-		if ok != nil {
-			continue
-		}
-
-		events, err := readEvents(filepath.FromSlash(pathScript))
-
-		if err != nil {
-			log.Fatal(err)
-		}
-		// send all messages at the appropriate time
-		internalTime := 0
-		for _, event := range events {
-			// Sleep until the next event is due
-			sleepFor := event.Timestamp - internalTime
-			time.Sleep(time.Duration(sleepFor) * time.Millisecond)
-			internalTime = event.Timestamp
-
-			// Send the next event
-			//LOG: log.Printf("filebased evidence collector plugin: sending %+v\n", event)
-			//LOG: log.Printf("filebased evidence collector plugin: sent %+v\n", event)
-		}
-
+		// Send the next event
+		//LOG: log.Printf("filebased evidence collector plugin: sending %+v\n", event)
+		//LOG: log.Printf("filebased evidence collector plugin: sent %+v\n", event)
 	}
-
 }
