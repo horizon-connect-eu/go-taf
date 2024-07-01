@@ -37,7 +37,7 @@ make run
 
 ## Configuration
 
-The TAF uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file located at `res/taf.json`.
+The TAF uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in `res/taf.json`) and specify the actual file location in the environment variable `TAF_CONFIG`.
 
 
 ## Watch Application for Debugging
