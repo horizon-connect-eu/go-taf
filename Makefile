@@ -91,3 +91,12 @@ build-watch:
 
 run-watch: build-watch
 	TAF_CONFIG=res/taf.json out/watch
+
+build-playback:
+	mkdir -p out
+	go build -o out ./cmd/playback/playback.go
+.PHONY:build-playback
+
+
+run-playback: build-playback
+	TAF_CONFIG=res/taf.json out/playback

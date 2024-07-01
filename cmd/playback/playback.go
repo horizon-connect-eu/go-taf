@@ -5,7 +5,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/projectpath"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 	"log"
 	"log/slog"
 	"os"
@@ -34,13 +38,42 @@ func main() {
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
-	_, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	testcase := "example" //specification of testcase -> directory name in workloads folder
+	//specification of testcase -> directory name in workloads folder
+	testcase := projectpath.Root + "/res/workloads/example" //TODO: make CLI flag: https://gobyexample.com/command-line-flags
 
-	sendMessages("./res/workloads" + "/" + testcase)
+	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+
+	tafContext := core.RuntimeContext{
+		Configuration: tafConfig,
+		Logger:        logger,
+		Context:       ctx,
+		Identifier:    "playback",
+	}
+
+	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
+
+	events, err := readFiles(filepath.FromSlash(testcase))
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	// send all messages at the appropriate time
+	internalTime := 0
+	for _, event := range events {
+		// Sleep until the next event is due
+		sleepFor := event.Timestamp - internalTime
+		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
+		internalTime = event.Timestamp
+
+		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
+
+		outgoingMessageChannel <- communication.NewMessage(event.Message, "", event.Topic)
+	}
 
 }
 
@@ -75,7 +108,7 @@ func readFiles(pathDir string) ([]Event, error) {
 		event.Timestamp = timestamp
 		event.Topic = kafkaTopic
 		event.Path = messagePath
-		event.Message = string(message)
+		event.Message = message
 		events = append(events, event)
 	}
 
@@ -84,22 +117,9 @@ func readFiles(pathDir string) ([]Event, error) {
 	return events, nil
 }
 
-func sendMessages(pathScript string) {
-	events, err := readFiles(filepath.FromSlash(pathScript))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	// send all messages at the appropriate time
-	internalTime := 0
-	for _, event := range events {
-		// Sleep until the next event is due
-		sleepFor := event.Timestamp - internalTime
-		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
-		internalTime = event.Timestamp
-
-		// Send the next event
-		//LOG: log.Printf("filebased evidence collector plugin: sending %+v\n", event)
-		//LOG: log.Printf("filebased evidence collector plugin: sent %+v\n", event)
-	}
+type Event struct {
+	Timestamp int
+	Topic     string
+	Path      string
+	Message   []byte
 }

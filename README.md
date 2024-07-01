@@ -40,7 +40,7 @@ make run
 The TAF uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in `res/taf.json`) and specify the actual file location in the environment variable `TAF_CONFIG`.
 
 
-## Watch Application for Debugging
+## Watch Application for Testing/Debugging
 
 To debug incoming Kafka communication from the perspective of the TAF, this repository provides a helper application that emulates the Kafka topic consumption behavior of the TAF and validates and checks incoming messages. To build this helper, use:
 
@@ -59,6 +59,35 @@ For each consumed message, the application will do the following:
  * check whether the message is valid JSON
  * check whether the message is valid according to its Schema
  * create a struct according to the type of message (unmarshalling)
+
+## Playback Application for Testing/Debugging
+
+To induce a workload on the TAF, it provides another helper application that creates Kafka messages based on a folder specifying the worklaod.  
+To build this helper, use:
+
+```shell
+make build-playback
+```
+
+And to run it:
+
+```shell
+make run-playback
+```
+
+The playback helper takes the input from `res/workloads/example` (subject to change, will be configurable) and produces according Kafka messages.
+
+A workload folder consists of two main components: (1) a `script.csv` file that orchestrates the workload and list of JSON files that represent messages to be sent as a record `value`of a Kafka message.
+The CSV file uses the following structure:
+
+| Rel. Timestamp since Start (in milliseconds) | Destination Topic Name | JSON File to use as Message Content |
+|----------------------------------------------|------------------------|-------------------------------------|
+
+```csv
+1000,"taf","001-init.json"
+```
+
+In the given example entry, after 1000 ms, the playback components sends a message to the topic "taf" and uses the file content of "001-init.json" as record value. 
 
 ## Updating Message Schema and Auto-Generating Go Structs
 
