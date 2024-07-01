@@ -2,14 +2,13 @@ package trustsource
 
 import (
 	"context"
-	"github.com/vs-uulm/go-taf/pkg/trustassessment"
-
+	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/message"
 )
 
 func Run(ctx context.Context,
 	inputV2X chan message.InternalMessage,
-	output chan trustassessment.Command) {
+	output chan command.Command) {
 	// Cleanup function:
 	defer func() {
 		//log.Println("TSM: shutting down")

@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"log"
 	"log/slog"
 	"math/rand/v2"
@@ -19,7 +21,6 @@ import (
 
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/message"
-	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/trustsource"
 )
@@ -34,7 +35,7 @@ func WaitForCtrlC() {
 }
 
 /*
-The main TAF application thats tarts all the components of the application and waits for a signal to stop the application.
+The main TAF application that starts all the components of the application and waits for a signal to stop the application.
 */
 func main() {
 	tafConfig := config.DefaultConfig
@@ -57,23 +58,34 @@ func main() {
 	defer cancelFunc()
 
 	tafId := fmt.Sprintf("taf-%000000d", rand.IntN(999999))
+
+	//Channels
+	//TAM Inbox:
+	tamChan := make(chan command.Command, tafConfig.ChanBufSize)
+	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+
 	tafContext := core.RuntimeContext{
 		Configuration: tafConfig,
 		Logger:        logger,
 		Context:       ctx,
 		Identifier:    tafId,
+		TAMChan:       tamChan,
+		//OutgoingMessageChannel: outgoingMessageChannel,
 	}
 
 	logger.Info("Starting TAF with ID " + tafId)
 
-	incomingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
-	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
-
-	communicationInterface, err := communication.New(tafContext, incomingMessageChannel, outgoingMessageChannel)
+	communicationInterface, err := communication.New(tafContext, outgoingMessageChannel)
 	if err != nil {
 		logger.Error("Error creating communication interface", err)
 	}
 	communicationInterface.Run(tafContext)
+
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext)
+	if err != nil {
+		logger.Error("Error creating communication interface", err)
+	}
+	go trustAssessmentManager.Run(outgoingMessageChannel)
 
 	/*
 		time.Sleep(5 * time.Second)
@@ -91,18 +103,10 @@ func main() {
 	//c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 	//c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
 
-	tmm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
-	tsm2tamChannel := make(chan trustassessment.Command, tafConfig.ChanBufSize)
-
-	tmts := map[string]int{}
+	tmm2tamChannel := make(chan command.Command, tafConfig.ChanBufSize)
+	tsm2tamChannel := make(chan command.Command, tafConfig.ChanBufSize)
 
 	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
-
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tmts)
-	if err != nil {
-		//LOG: log.Fatal(err)
-	}
-	go trustAssessmentManager.Run(tmm2tamChannel, tsm2tamChannel)
 
 	go trustmodel.Run(ctx, tmm2tamChannel)
 	go trustsource.Run(ctx, c2, tsm2tamChannel)

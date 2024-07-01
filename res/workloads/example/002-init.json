@@ -2,9 +2,9 @@
   "sender": "application",
   "serviceType": "TAS",
   "messageType": "TAS_INIT_REQUEST",
-  "responseTopic": "todo",
+  "responseTopic": "application.ccam",
   "requestId": "1235",
   "message" : {
-    "trustModelTemplate": "TRUSTMODEL@0.0.1"
+    "trustModelTemplate": "EXAMPLE@0.0.1"
   }
 }

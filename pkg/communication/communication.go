@@ -1,9 +1,12 @@
 package communication
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
+	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
 var handlers = map[string]CommunicationHandler{}
@@ -15,19 +18,16 @@ func RegisterCommunicationHandler(name string, f CommunicationHandler) {
 type CommunicationInterface struct {
 	tafContext             core.RuntimeContext
 	communicationHandler   CommunicationHandler
-	incomingMessageChannel chan<- Message //message from outside world to TAF internals (proxied by CommunicationInterface)
-	outgoingMessageChannel <-chan Message //message from TAF internals to outer world (proxied by CommunicationInterface)
-	internalInbox          <-chan Message //message from outside world to CommunicationInterface
-	internalOutbox         chan<- Message //message from CommunicationInterface to outside world
+	outgoingMessageChannel chan Message //message from TAF internals to outer world (proxied by CommunicationInterface)
+	internalInbox          chan Message //message from outside world to CommunicationInterface
+	internalOutbox         chan Message //message from CommunicationInterface to outside world
 }
 
-func New(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message) (CommunicationInterface, error) {
-	return NewWithHandler(tafContext, incomingMessageChannel, outgoingMessageChannel, tafContext.Configuration.CommunicationConfiguration.Handler)
+func New(tafContext core.RuntimeContext, outgoingMessageChannel chan Message) (CommunicationInterface, error) {
+	return NewWithHandler(tafContext, outgoingMessageChannel, tafContext.Configuration.CommunicationConfiguration.Handler)
 }
 
-func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<- Message, outgoingMessageChannel <-chan Message, handlerName string) (CommunicationInterface, error) {
-
-	tafContext.Logger.Warn(fmt.Sprintf("%+v", handlers))
+func NewWithHandler(tafContext core.RuntimeContext, outgoingMessageChannel chan Message, handlerName string) (CommunicationInterface, error) {
 
 	handler, okay := handlers[handlerName]
 	if !okay {
@@ -37,7 +37,6 @@ func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<
 
 	communicationHandler := CommunicationInterface{
 		tafContext:             tafContext,
-		incomingMessageChannel: incomingMessageChannel,
 		internalInbox:          make(chan Message, tafContext.Configuration.ChanBufSize),
 		outgoingMessageChannel: outgoingMessageChannel,
 		internalOutbox:         make(chan Message, tafContext.Configuration.ChanBufSize),
@@ -49,28 +48,69 @@ func NewWithHandler(tafContext core.RuntimeContext, incomingMessageChannel chan<
 }
 
 func (ch CommunicationInterface) Run(tafContext core.RuntimeContext) {
-	go ch.communicationHandler(ch.tafContext, ch.incomingMessageChannel, ch.outgoingMessageChannel)
+	go ch.communicationHandler(ch.tafContext, ch.internalInbox, ch.internalOutbox)
 
 	go func() {
 		for {
 			select {
 			case msg := <-ch.outgoingMessageChannel:
+				ch.tafContext.Logger.Info("Msg rcvd:", "Msg", string(msg.Bytes()))
 				ch.internalOutbox <- msg
 			}
 		}
 	}()
 
-	go func() {
-		for {
-			select {
-			case msg := <-ch.internalInbox:
-				ch.incomingMessageChannel <- msg
-			}
-		}
-
-	}()
+	go ch.handleIncomingMessages()
 
 	defer func() {
 		//TODO: shutdown
 	}()
+}
+
+/*
+Type with all potential JSON fields of the header structure
+*/
+type GenericJSONHeaderMessage struct {
+	Sender          string
+	ServiceType     string
+	MessageType     string
+	Message         interface{}
+	RequestId       string
+	ResponseId      string
+	ResponseTopic   string
+	SubscriberTopic string
+}
+
+func (ch CommunicationInterface) handleIncomingMessages() {
+	for {
+		select {
+		case rcvdMsg := <-ch.internalInbox:
+
+			var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshaled using the correct type.
+			rawMsg := GenericJSONHeaderMessage{
+				Message: &msg,
+			}
+
+			//Parse message tpye-agnostically to get type and later unmarshal correct type
+			if err := json.Unmarshal(rcvdMsg.Bytes(), &rawMsg); err != nil {
+				ch.tafContext.Logger.Error("Error while unmarshalling JSON: " + err.Error())
+			}
+
+			schema, exists := messages.SchemaMap[rawMsg.MessageType]
+			if !exists {
+				ch.tafContext.Logger.Error("Unknown message type: " + rawMsg.MessageType)
+			}
+			switch schema {
+			case messages.TAS_INIT_REQUEST:
+
+				tasInitReq, err := tasmsg.UnmarshalTasInitRequest(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_INIT_REQUEST: " + err.Error())
+				}
+				cmd := command.CreateTasInitRequest(tasInitReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+				ch.tafContext.TAMChan <- cmd
+			}
+
+		}
+	}
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 )
 
-type TrustModelInstance struct {
+type OldExampleTrustModelInstance struct {
 	Id          int
 	Tmt         string
 	Omega1      subjectivelogic.Opinion
@@ -22,7 +22,7 @@ type TrustModelInstance struct {
 	RTL2        subjectivelogic.Opinion
 }
 
-func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
+func NewTrustModelInstance(id int, tmt string) OldExampleTrustModelInstance {
 
 	dti1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 	dti2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
@@ -33,7 +33,7 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 	rtl1, _ := subjectivelogic.NewOpinion(0.7, 0.2, 0.1, 0.5)
 	rtl2, _ := subjectivelogic.NewOpinion(0.65, 0.25, 0.1, 0.5)
 
-	return TrustModelInstance{
+	return OldExampleTrustModelInstance{
 		Id:          id,
 		Tmt:         tmt,
 		Omega_DTI_1: dti1,
@@ -51,7 +51,7 @@ func NewTrustModelInstance(id int, tmt string) TrustModelInstance {
 }
 
 // structure parameter for runTLEE
-func (i *TrustModelInstance) GetTrustGraphStructure() trustmodelstructure.TrustGraphStructure {
+func (i *OldExampleTrustModelInstance) GetTrustGraphStructure() trustmodelstructure.TrustGraphStructure {
 	return internaltrustmodelstructure.NewTrustGraphDTO("NONE", []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("TAF", []string{"ECU1", "ECU2"}),
 	})
@@ -59,7 +59,7 @@ func (i *TrustModelInstance) GetTrustGraphStructure() trustmodelstructure.TrustG
 }
 
 // Values parameter for runTLEE
-func (i *TrustModelInstance) GetTrustRelationships() map[string][]trustmodelstructure.TrustRelationship {
+func (i *OldExampleTrustModelInstance) GetTrustRelationships() map[string][]trustmodelstructure.TrustRelationship {
 
 	return map[string][]trustmodelstructure.TrustRelationship{
 		"ECU1": []trustmodelstructure.TrustRelationship{
@@ -71,6 +71,6 @@ func (i *TrustModelInstance) GetTrustRelationships() map[string][]trustmodelstru
 	}
 }
 
-func (i *TrustModelInstance) GetId() int {
+func (i *OldExampleTrustModelInstance) GetId() int {
 	return i.Id
 }

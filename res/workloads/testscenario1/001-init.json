@@ -5,6 +5,6 @@
   "responseTopic": "todo",
   "requestId": "1234",
   "message" : {
-    "trustModelTemplate": "TRUSTMODEL@0.0.1"
+    "trustModelTemplate": "EXAMPLE@0.0.1"
   }
 }

@@ -1,0 +1,12 @@
+package command
+
+type CommandType int64
+
+const (
+	UNDEFINED CommandType = iota
+	HANDLE_TAS_INIT_REQUEST
+)
+
+type Command interface {
+	Type() CommandType
+}
