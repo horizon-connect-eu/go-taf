@@ -1,0 +1,10 @@
+{
+  "sender": "application",
+  "serviceType": "TAS",
+  "messageType": "TAS_TEARDOWN_REQUEST",
+  "responseTopic": "application.ccam",
+  "requestId": "4711",
+  "message" : {
+    "sessionId": "sessionId"
+  }
+}
