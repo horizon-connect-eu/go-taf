@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"crypto-library-interface/pkg/crypto"
 	"context"
 	"encoding/csv"
 	"fmt"
@@ -23,6 +25,7 @@ import (
 A helper command to play back test workloads via Kafka.
 */
 func main() {
+	crypto.Init()
 	tafConfig := config.DefaultConfig
 	// First, see whether a config file path has been specified
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
@@ -74,13 +77,19 @@ func main() {
 	// send all messages at the appropriate time
 	internalTime := 0
 	for _, event := range events {
+		var jsonMap map[string]interface{}
+		json.Unmarshal(event.Message, &jsonMap)
 		// Sleep until the next event is due
+		evidence, _ := crypto.GenerateEvidence()
+		
+		jsonMap["message"].(map[string]interface{})["evidence"] = evidence
+
 		sleepFor := event.Timestamp - internalTime
 		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
 		internalTime = event.Timestamp
 
 		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
-
+		event.Message, _ = json.Marshal(jsonMap)
 		outgoingMessageChannel <- communication.NewMessage(event.Message, "", event.Topic)
 	}
 
@@ -110,9 +119,13 @@ func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 		messagePath := rawEvent[2]
 
 		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
+		// str_message := string(message) // just pass the file name
+
 		if err != nil {
 			logger.Error(fmt.Sprintf("Error reading file '%s': %s", messagePath, err.Error()))
 		}
+
+
 
 		event.Timestamp = timestamp
 		event.Topic = kafkaTopic

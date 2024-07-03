@@ -1,10 +1,23 @@
 {
-  "sender": "application",
-  "serviceType": "TAS",
-  "messageType": "TAS_INIT_REQUEST",
-  "responseTopic": "application.ccam",
-  "requestId": "1234",
-  "message" : {
-    "trustModelTemplate": "DOESNOTEXIST@6.6.6"
+  "sender": "0242ac120002-application",
+  "serviceType": "ECI",
+  "messageType": "AIV_REQUEST",
+  "responseTopic": "0242ac120002",
+  "requestId": "4c54a50f8e43",
+  "message": {
+    "attestationCertificate": "MIIBZDCCAQqgAwIBAgIBATAKBggqhkjOPQQDAjAgMRAwDgYDVQQKEwdDT05ORUNUMQwwCgYDVQQDEwN0YWYwHhcNMjQwNzAxMTM1NzA1WhcNMjUwNzAxMTM1NzA1WjAgMRAwDgYDVQQKEwdDT05ORUNUMQwwCgYDVQQDEwN0YWYwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARMqk33LWsn4GUtzDUTMvGuSkgkAFki0X+AGY71V7f4eLF+eU66LYgR5xYkyQ2y7dtSZImE+q6GOfn/i0XbhOj2ozUwMzAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAKBggqhkjOPQQDAgNIADBFAiAhQQKjy5e/DHHGk+24pLKA/C6m9fDSSDytvPG3ftNu9AIhAJLrOBkacMbc9IG0OdF9G/G81shI1qQLdWuCtGqnYl2r",
+    "evidence": {
+      "keyRef": "ecdsa_public_key",
+      "nonce": "1aa9723b221618fd81284d3ff9f3c9faa7c57826899e5e447b8cea50a01472e5",
+      "signature": "3045022100c4083f935fa4d083e1c8323b327f5c340b48ff070d72b71a4935fb9cd752f4c6022048c5cfaf41535ca0c1daba365eb70a528ea5b2c796f05c4beac098cbc6de9de0",
+      "signatureAlgorithmType": "ECDSA",
+      "timestamp": "2024-07-01T16:57:05+03:00"
+    },
+    "query": [
+      {
+        "requestedClaims": [],
+        "TrusteeID": "Zonal Controller 1"
+      }
+    ]
   }
 }
