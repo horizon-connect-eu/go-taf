@@ -5,6 +5,6 @@
   "responseTopic": "application.ccam",
   "requestId": "1234",
   "message" : {
-    "trustModelTemplate": "DOESNOTEXIST@6.6.6"
+    "trustModelTemplate": "IMA@0.0.1"
   }
 }
