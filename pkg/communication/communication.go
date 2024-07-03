@@ -102,12 +102,18 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 			}
 			switch schema {
 			case messages.TAS_INIT_REQUEST:
-
 				tasInitReq, err := tasmsg.UnmarshalTasInitRequest(msg)
 				if err != nil {
 					ch.tafContext.Logger.Error("Error unmarshalling TAS_INIT_REQUEST: " + err.Error())
 				}
 				cmd := command.CreateTasInitRequest(tasInitReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+				ch.tafContext.TAMChan <- cmd
+			case messages.TAS_TEARDOWN_REQUEST:
+				tasTeardownReq, err := tasmsg.UnmarshalTasTeardownRequest(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_TEARDOWN_REQUEST: " + err.Error())
+				}
+				cmd := command.CreateTasTeardownRequest(tasTeardownReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
 				ch.tafContext.TAMChan <- cmd
 			}
 
