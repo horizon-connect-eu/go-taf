@@ -36,3 +36,38 @@ func (receiver HandleTasInitRequest) RequestID() string {
 func (receiver HandleTasInitRequest) ResponseTopic() string {
 	return receiver.responseTopic
 }
+
+type HandleTasTeardownRequest struct {
+	msg           tasmsg.TasTeardownRequest
+	sender        string
+	requestID     string
+	responseTopic string
+}
+
+func (receiver HandleTasTeardownRequest) Type() CommandType {
+	return HANDLE_TAS_TEARDOWN_REQUEST
+}
+
+func CreateTasTeardownRequest(msg tasmsg.TasTeardownRequest, sender string, requestID string, responseTopic string) HandleTasTeardownRequest {
+	return HandleTasTeardownRequest{
+		msg:           msg,
+		sender:        sender,
+		requestID:     requestID,
+		responseTopic: responseTopic,
+	}
+}
+func (receiver HandleTasTeardownRequest) Request() tasmsg.TasTeardownRequest {
+	return receiver.msg
+}
+
+func (receiver HandleTasTeardownRequest) Sender() string {
+	return receiver.sender
+}
+
+func (receiver HandleTasTeardownRequest) RequestID() string {
+	return receiver.requestID
+}
+
+func (receiver HandleTasTeardownRequest) ResponseTopic() string {
+	return receiver.responseTopic
+}
