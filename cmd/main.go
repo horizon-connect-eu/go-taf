@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
@@ -58,6 +59,8 @@ func main() {
 	defer cancelFunc()
 
 	tafId := fmt.Sprintf("taf-%000000d", rand.IntN(999999))
+
+	crypto.Init()
 
 	//Channels
 	//TAM Inbox:

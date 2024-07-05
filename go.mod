@@ -15,6 +15,7 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
+	crypto-library-interface v0.0.0-00010101000000-000000000000 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dominikbraun/graph v0.23.0 // indirect
@@ -51,4 +52,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-replace connect.informatik.uni-ulm.de/coordination/tlee-implementation => ../tlee-implementation
+replace (
+	connect.informatik.uni-ulm.de/coordination/tlee-implementation => ../tlee-implementation
+	crypto-library-interface => ../crypto-library-interface
+)

@@ -2,6 +2,7 @@ package trustassessment
 
 import (
 	"context"
+	"crypto-library-interface/pkg/crypto"
 	"encoding/json"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
@@ -160,6 +161,12 @@ func (t *trustAssessmentManager) createSessionId() string {
 
 func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitRequest) {
 	t.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request().TrustModelTemplate)
+
+	attestationCertificate, err := crypto.LoadAttestationCertificateInBase64()
+	if err != nil {
+		t.logger.Error("Error marshalling response", "Error", err)
+	}
+
 	//Check whether Trust Model is known
 	tmt, exists := t.tmts[cmd.Request().TrustModelTemplate]
 	if !exists {
@@ -167,7 +174,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 
 		errorMsg := "Trust model template '" + cmd.Request().TrustModelTemplate + "' could not be resolved."
 		response := tasmsg.TasInitResponse{
-			AttestationCertificate: "", //TODO add crypto library call
+			AttestationCertificate: attestationCertificate,
 			Error:                  &errorMsg,
 			SessionID:              nil,
 			Success:                nil,
@@ -202,8 +209,9 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 	t.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	success := "Session with trust model template '" + newTMI.Template() + "' created."
+
 	response := tasmsg.TasInitResponse{
-		AttestationCertificate: "", //TODO add crypto library call
+		AttestationCertificate: attestationCertificate, //TODO add crypto library call
 		Error:                  nil,
 		SessionID:              &sessionId,
 		Success:                &success,
