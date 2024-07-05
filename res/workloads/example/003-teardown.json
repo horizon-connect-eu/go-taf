@@ -1,10 +1,10 @@
 {
   "sender": "application",
   "serviceType": "TAS",
-  "messageType": "TAS_INIT_REQUEST",
+  "messageType": "TAS_TEARDOWN_REQUEST",
   "responseTopic": "application.ccam",
-  "requestId": "1234",
+  "requestId": "4711",
   "message" : {
-    "trustModelTemplate": "IMA@0.0.1"
+    "sessionId": "sessionId"
   }
 }

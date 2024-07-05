@@ -17,7 +17,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 	"log/slog"
-	"math/rand/v2"
 )
 
 // Holds the available functions for updating
@@ -143,11 +142,21 @@ func (t *trustAssessmentManager) Run(outbox chan communication.Message) {
 				t.handleTasInitRequest(cmd)
 			//			case command.UpdateTOCommand:
 			//				t.handleUpdateTOCommand(cmd)
+			case command.HandleTasTeardownRequest:
+				t.handleTasTeardownRequest(cmd)
 			default:
 				t.logger.Warn("Unknown message received from TMM", "message", fmt.Sprintf("%+v", cmd))
 			}
 		}
 	}
+}
+
+func (t *trustAssessmentManager) createSessionId() string {
+
+	//sessionId := fmt.Sprintf("session-%000000d", rand.IntN(999999))
+	sessionId := "sessionId"
+
+	return sessionId
 }
 
 func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitRequest) {
@@ -179,7 +188,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 		return
 	}
 	//create session ID for client
-	sessionId := fmt.Sprintf("session-%000000d", rand.IntN(999999))
+	sessionId := t.createSessionId()
 	//create Session
 	newSession := session.NewInstance(sessionId, cmd.Sender())
 	//put session into session map
@@ -215,6 +224,45 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 	//Send response message
 	t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
 	return
+}
+
+func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasTeardownRequest) {
+	t.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request().SessionID)
+	_, exists := t.sessions[cmd.Request().SessionID]
+	if !exists {
+		errorMsg := "Session ID '" + cmd.Request().SessionID + "' not found."
+
+		response := tasmsg.TasTeardownResponse{
+			AttestationCertificate: "", //TODO add crypto library call
+			Error:                  &errorMsg,
+			Success:                nil,
+		}
+		bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID(), response)
+		if err != nil {
+			t.logger.Error("Error marshalling response", "error", err)
+		}
+		//Send error message
+		t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+		return
+	}
+
+	//TODO: remove session-related data
+
+	success := "Session with ID '" + cmd.Request().SessionID + "' successfully terminated."
+	response := tasmsg.TasTeardownResponse{
+		AttestationCertificate: "", //TODO add crypto library call
+		Error:                  nil,
+		Success:                &success,
+	}
+
+	bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID(), response)
+	if err != nil {
+		t.logger.Error("Error marshalling response", "error", err)
+	}
+	//Send response message
+	t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+	return
+
 }
 
 type GenericResponseWrapper struct {

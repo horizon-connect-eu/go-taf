@@ -13,7 +13,7 @@ type ExampleTrustModelTemplate struct {
 	version string
 }
 
-func CreateExampleTrustModelTemplate(name string, version string) trustmodeltemplate.TrustModelTemplate {
+func CreateTrustModelTemplate(name string, version string) trustmodeltemplate.TrustModelTemplate {
 	return ExampleTrustModelTemplate{
 		name:    name,
 		version: version,
