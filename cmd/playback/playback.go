@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"crypto-library-interface/pkg/crypto"
 	"context"
+	"crypto-library-interface/pkg/crypto"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/projectpath"
@@ -80,9 +80,12 @@ func main() {
 		var jsonMap map[string]interface{}
 		json.Unmarshal(event.Message, &jsonMap)
 		// Sleep until the next event is due
-		evidence, _ := crypto.GenerateEvidence()
-		
-		jsonMap["message"].(map[string]interface{})["evidence"] = evidence
+
+		/*
+			TODO: fix undeliberate usage of evidence
+			evidence, _ := crypto.GenerateEvidence()
+			jsonMap["message"].(map[string]interface{})["evidence"] = evidence
+		*/
 
 		sleepFor := event.Timestamp - internalTime
 		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
@@ -124,8 +127,6 @@ func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 		if err != nil {
 			logger.Error(fmt.Sprintf("Error reading file '%s': %s", messagePath, err.Error()))
 		}
-
-
 
 		event.Timestamp = timestamp
 		event.Topic = kafkaTopic

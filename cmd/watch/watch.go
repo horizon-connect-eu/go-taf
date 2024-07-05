@@ -12,12 +12,12 @@ Example messages to input into the CLI KAFAK producer:
 import (
 	"context"
 	"encoding/json"
-	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	"github.com/IBM/sarama"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/validator"
 	"github.com/vs-uulm/go-taf/pkg/config"
+	"github.com/vs-uulm/go-taf/pkg/crypto"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
@@ -32,7 +32,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"strings"
 )
 
 var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam"}
@@ -44,23 +43,6 @@ func WaitForCtrlC() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 }
-
-func verifyAivRespose(aivResposeBytestream []byte, trusteeReportByteStream []byte) {
-	var jsonMap map[string]interface{}
-	json.Unmarshal(aivResposeBytestream, &jsonMap)
-	
-	nonceByteArray, err := crypto.FromHexToByteArray(jsonMap["nonce"].(string))
-	if err != nil {
-		fmt.Errorf("failed to convert hex to bytes: %w", err)
-	}
-
-	byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
-
-	verificationResult, _ := crypto.Verify(byteStreamToBeSigned, jsonMap["signature"].(string), "/home/stef/workspace/connect/aiv/"+jsonMap["keyRef"].(string)+".pem")
-	
-	fmt.Printf("AIV_REQUEST verification status is [ %v ]\n", verificationResult)
-}
-
 
 /*
 A helper command to watch and check Kafka topics
@@ -155,20 +137,19 @@ func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 			slog.String("Key", string(msg.Key)),
 			slog.String("Value", string(msg.Value)),
 		)
-		checkMessage(string(msg.Value))
-		var MapMessage map[string]interface{}
-		json.Unmarshal(msg.Value, &MapMessage)
-		logger.Info(string(msg.Value))
-		if(strings.Contains(string(msg.Value),"AIV_RESPONSE")){
+		messageType := checkMessage(string(msg.Value))
+
+		/*
+			TODO: Fix AIV_RESPONSE HANDLING
+		*/
+		if messageType == messages.AIV_RESPONSE {
+			logger.Info("Is AIV_RESPONSE")
+			var MapMessage map[string]interface{}
+			json.Unmarshal(msg.Value, &MapMessage)
 			AivResponse, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["aivEvidence"])
 			trusteeReportByteStream, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["trusteeReports"])
-			
-			logger.Info("Verify")
-			verifyAivRespose(AivResponse, trusteeReportByteStream)
-		} else {
-			logger.Info("Ignore message")
+			crypto.VerifyAivResponse(AivResponse, trusteeReportByteStream, logger)
 		}
-		logger.Info("Proceed")
 		sess.MarkMessage(msg, "")
 	}
 	return nil
@@ -180,8 +161,8 @@ type GenericMessage struct {
 	Message     interface{}
 }
 
-func checkMessage(message string) {
-	var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshaled using the correct type.
+func checkMessage(message string) messages.MessageSchema {
+	var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshalled using the correct type.
 	rawMsg := GenericMessage{
 		Message: &msg,
 	}
@@ -267,5 +248,5 @@ func checkMessage(message string) {
 			}
 		}
 	}
-
+	return schema
 }
