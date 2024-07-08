@@ -1,4 +1,4 @@
-package command
+package core
 
 type CommandType int64
 

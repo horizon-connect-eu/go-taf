@@ -2,10 +2,26 @@ package trustmodel
 
 import (
 	"context"
-	"github.com/vs-uulm/go-taf/pkg/command"
+	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"log/slog"
 )
 
-func Run(ctx context.Context, output chan command.Command) {
+type trustModelManager struct {
+	tafContext core.RuntimeContext
+	channels   core.TafChannels
+	logger     *slog.Logger
+}
+
+func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustModelManager, error) {
+	tmm := trustModelManager{
+		tafContext: tafContext,
+		channels:   channels,
+		logger:     logging.CreateChildLogger(tafContext.Logger, "TMM")}
+	return tmm, nil
+}
+
+func (tmm trustModelManager) Run() {
 	// Cleanup function:
 	defer func() {
 		//log.Println("TMM: shutting down")
@@ -22,11 +38,11 @@ func Run(ctx context.Context, output chan command.Command) {
 	// Do nothing until end
 	for {
 		// Each iteration, check whether we've been cancelled.
-		if err := context.Cause(ctx); err != nil {
+		if err := context.Cause(tmm.tafContext.Context); err != nil {
 			return
 		}
 		select {
-		case <-ctx.Done():
+		case <-tmm.tafContext.Context.Done():
 			return
 
 		}

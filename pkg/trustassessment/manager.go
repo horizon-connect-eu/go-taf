@@ -7,7 +7,6 @@ import (
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
-	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/message"
@@ -47,27 +46,29 @@ type trustAssessmentManager struct {
 	//	mkResultsDatabase ResultsFactory
 	//	updateState       StateUpdater
 	//	updateResults ResultsUpdater
-	tmts       map[string]trustmodeltemplate.TrustModelTemplate
-	conf       config.Configuration
-	channels   []chan command.Command
-	logger     *slog.Logger
-	tafContext core.RuntimeContext
-	sessions   map[string]*session.Session
-	tMIs       map[string]*trustmodelinstance.TrustModelInstance
-	outbox     chan communication.Message
+	tmts        map[string]trustmodeltemplate.TrustModelTemplate
+	conf        config.Configuration
+	channels    []chan core.Command
+	logger      *slog.Logger
+	tafContext  core.RuntimeContext
+	tafChannels core.TafChannels
+	sessions    map[string]*session.Session
+	tMIs        map[string]*trustmodelinstance.TrustModelInstance
+	outbox      chan core.Message
 }
 
-func NewManager(tafContext core.RuntimeContext) (trustAssessmentManager, error) {
-	retTam := trustAssessmentManager{
+func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustAssessmentManager, error) {
+	tam := trustAssessmentManager{
 		//		mkResultsDatabase: func() Results { return make(map[int]int) },
 		//		updateState:       updateWorkerState,
-		tmts:       trustmodel.KnownTemplates,
-		conf:       tafContext.Configuration,
-		tafContext: tafContext,
-		sessions:   make(map[string]*session.Session),
-		tMIs:       make(map[string]*trustmodelinstance.TrustModelInstance),
+		tmts:        trustmodel.KnownTemplates,
+		conf:        tafContext.Configuration,
+		tafContext:  tafContext,
+		tafChannels: channels,
+		sessions:    make(map[string]*session.Session),
+		tMIs:        make(map[string]*trustmodelinstance.TrustModelInstance),
+		logger:      logging.CreateChildLogger(tafContext.Logger, "TAM"),
 	}
-	retTam.logger = logging.CreateChildLogger(tafContext.Logger, "TAM")
 
 	var err error
 	//	f, err := getUpdateResultFunc(tafContext.Configuration.TAM.UpdateResultsOp)
@@ -76,7 +77,7 @@ func NewManager(tafContext core.RuntimeContext) (trustAssessmentManager, error) 
 	}
 	//	retTam.updateResults = f
 
-	return retTam, nil
+	return tam, nil
 }
 
 func updateWorkerState(msg message.InternalMessage) {
@@ -106,17 +107,17 @@ func (t *trustAssessmentManager) getShardWorkerById(id int) int {
 }
 
 // Runs the trust assessment trustAssessmentManager
-func (t *trustAssessmentManager) Run(outbox chan communication.Message) {
+func (t *trustAssessmentManager) Run() {
 
 	defer func() {
 		t.logger.Info("Shutting down")
 	}()
 
-	t.outbox = outbox
+	t.outbox = t.tafChannels.OutgoingMessageChannel
 
-	t.channels = make([]chan command.Command, 0, t.conf.TAM.TrustModelInstanceShards)
+	t.channels = make([]chan core.Command, 0, t.conf.TAM.TrustModelInstanceShards)
 	for i := range t.conf.TAM.TrustModelInstanceShards {
-		ch := make(chan command.Command, 1_000)
+		ch := make(chan core.Command, 1_000)
 		t.channels = append(t.channels, ch)
 
 		worker := t.SpawnNewWorker(i, ch, t.tafContext)
@@ -135,7 +136,7 @@ func (t *trustAssessmentManager) Run(outbox chan communication.Message) {
 				continue
 			}*/
 			return
-		case incomingCmd := <-t.tafContext.TAMChan:
+		case incomingCmd := <-t.tafChannels.TAMChan:
 
 			switch cmd := incomingCmd.(type) {
 			case command.HandleTasInitRequest:
@@ -184,7 +185,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 			t.logger.Error("Error marshalling response", "error", err)
 		}
 		//Send error message
-		t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
 		return
 	}
 	//create session ID for client
@@ -222,7 +223,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 		t.logger.Error("Error marshalling response", "error", err)
 	}
 	//Send response message
-	t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
 	return
 }
 
@@ -242,7 +243,7 @@ func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasT
 			t.logger.Error("Error marshalling response", "error", err)
 		}
 		//Send error message
-		t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
 		return
 	}
 
@@ -260,7 +261,7 @@ func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasT
 		t.logger.Error("Error marshalling response", "error", err)
 	}
 	//Send response message
-	t.outbox <- communication.NewMessage(bytes, "", cmd.ResponseTopic())
+	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
 	return
 
 }

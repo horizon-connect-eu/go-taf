@@ -20,7 +20,7 @@ func init() {
 	communication.RegisterCommunicationHandler("file-based", NewFileBasedHandler)
 }
 
-func NewFileBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- communication.Message, outboxChannel <-chan communication.Message) {
+func NewFileBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- core.Message, outboxChannel <-chan core.Message) {
 	logger := logging.CreateChildLogger(tafContext.Logger, "File Communication Handler")
 	logger.Info("Starting file-based communication handler.")
 
@@ -31,7 +31,7 @@ func NewFileBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- com
 /*
 Print message content to console.
 */
-func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, outboxChannel <-chan communication.Message) {
+func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, outboxChannel <-chan core.Message) {
 	for {
 		select {
 		case msg := <-outboxChannel:
@@ -40,7 +40,7 @@ func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 	}
 }
 
-func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, inboxChannel chan<- communication.Message) {
+func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, inboxChannel chan<- core.Message) {
 
 	testcase := projectpath.Root + "/res/workloads/example" //TODO: make CLI flag: https://gobyexample.com/command-line-flags
 
@@ -59,7 +59,7 @@ func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 
 		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
 
-		inboxChannel <- communication.NewMessage(event.Message, "", event.Topic)
+		inboxChannel <- core.NewMessage(event.Message, "", event.Topic)
 	}
 }
 

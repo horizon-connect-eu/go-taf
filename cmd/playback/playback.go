@@ -8,7 +8,6 @@ import (
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/projectpath"
-	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
@@ -48,7 +47,7 @@ func main() {
 	//specification of testcase -> directory name in workloads folder
 	testcase := projectpath.Root + "/res/workloads/example" //TODO: make CLI flag: https://gobyexample.com/command-line-flags
 
-	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
+	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
 
 	tafContext := core.RuntimeContext{
 		Configuration: tafConfig,
@@ -93,7 +92,7 @@ func main() {
 
 		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
 		event.Message, _ = json.Marshal(jsonMap)
-		outgoingMessageChannel <- communication.NewMessage(event.Message, "", event.Topic)
+		outgoingMessageChannel <- core.NewMessage(event.Message, "", event.Topic)
 	}
 
 }

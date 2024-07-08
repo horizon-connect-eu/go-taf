@@ -18,7 +18,7 @@ func init() {
 	communication.RegisterCommunicationHandler("kafka-based", NewKafkaBasedHandler)
 }
 
-func NewKafkaBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- communication.Message, outboxChannel <-chan communication.Message) {
+func NewKafkaBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- core.Message, outboxChannel <-chan core.Message) {
 	logger := logging.CreateChildLogger(tafContext.Logger, "Kafka Communication Handler")
 	logger.Info("Starting kafka-based communication handler.")
 
@@ -54,7 +54,7 @@ func NewKafkaBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- co
 	wg.Wait() //TODO: fix for orderly shutdown
 }
 
-func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, producer sarama.AsyncProducer, outboxChannel <-chan communication.Message) {
+func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, producer sarama.AsyncProducer, outboxChannel <-chan core.Message) {
 	for {
 		select {
 		case msg := <-outboxChannel:
@@ -76,7 +76,7 @@ func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 	}
 }
 
-func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, consumer sarama.ConsumerGroup, inboxChannel chan<- communication.Message) {
+func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, consumer sarama.ConsumerGroup, inboxChannel chan<- core.Message) {
 
 	//TODO: fix context usage
 	ctx, cancel := context.WithCancel(context.Background())
@@ -103,7 +103,7 @@ func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 }
 
 type consumerHandler struct {
-	inboxChannel chan<- communication.Message
+	inboxChannel chan<- core.Message
 	logger       *slog.Logger
 }
 
@@ -118,7 +118,7 @@ func (h *consumerHandler) Cleanup(sarama.ConsumerGroupSession) error {
 func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 		//convert Kafka message to internally wrapped message
-		internalMsg := communication.NewMessage(msg.Value, msg.Topic, "")
+		internalMsg := core.NewMessage(msg.Value, msg.Topic, "")
 		h.logger.Info("Received message", "Message:", string(msg.Value))
 		h.inboxChannel <- internalMsg
 		sess.MarkMessage(msg, "")

@@ -1,4 +1,4 @@
-package communication
+package core
 
 type Message interface {
 	Source() string

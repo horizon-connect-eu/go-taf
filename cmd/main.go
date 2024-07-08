@@ -8,7 +8,6 @@ import (
 	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
@@ -21,7 +20,6 @@ import (
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/trustsource"
 )
@@ -62,57 +60,48 @@ func main() {
 
 	crypto.Init()
 
-	//Channels
-	//TAM Inbox:
-	tamChan := make(chan command.Command, tafConfig.ChanBufSize)
-	outgoingMessageChannel := make(chan communication.Message, tafConfig.ChanBufSize)
-
 	tafContext := core.RuntimeContext{
 		Configuration: tafConfig,
 		Logger:        logger,
 		Context:       ctx,
 		Identifier:    tafId,
-		TAMChan:       tamChan,
-		//OutgoingMessageChannel: outgoingMessageChannel,
+	}
+
+	//Channels
+	tafChannels := core.TafChannels{
+		TAMChan:                make(chan core.Command, tafConfig.ChanBufSize),
+		TSMChan:                make(chan core.Command, tafConfig.ChanBufSize),
+		TMMChan:                make(chan core.Command, tafConfig.ChanBufSize),
+		OutgoingMessageChannel: make(chan core.Message, tafConfig.ChanBufSize),
 	}
 
 	logger.Info("Starting TAF with ID " + tafId)
 
-	communicationInterface, err := communication.New(tafContext, outgoingMessageChannel)
+	communicationInterface, err := communication.NewInterface(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating communication interface", err)
 	}
-	communicationInterface.Run(tafContext)
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext)
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating communication interface", err)
+		logger.Error("Error creating TAM", err)
 	}
-	go trustAssessmentManager.Run(outgoingMessageChannel)
 
-	/*
-		time.Sleep(5 * time.Second)
-		outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f1-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
-		outgoingMessageChannel <- communication.NewMessage([]byte("{  \"sender\": \"a77b29bac8f2-taf\",  \"serviceType\": \"TAS\",  \"messageType\": \"TAS_INIT_REQUEST\",  \"responseId\": \"4c54a50f8e43\",  \"message\" : {  \"trustModelTemplate\":\"TRUSTMODEL@0.0.1\"}}"), "", "taf")
-	*/
-	WaitForCtrlC()
+	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
+	if err != nil {
+		logger.Error("Error creating TMM", err)
+	}
 
-	//	return
+	trustSourceManager, err := trustsource.NewManager(tafContext, tafChannels)
+	if err != nil {
+		logger.Error("Error creating TMM", err)
+	}
 
-	//Create main channels
-	//c1 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-	c2 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-
-	//c3 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-	//c4 := make(chan message.InternalMessage, tafConfig.ChanBufSize)
-
-	tmm2tamChannel := make(chan command.Command, tafConfig.ChanBufSize)
-	tsm2tamChannel := make(chan command.Command, tafConfig.ChanBufSize)
-
-	//	go v2xlistener.Run(ctx, tafConfig.V2X, []chan message.InternalMessage{c1, c2})
-
-	go trustmodel.Run(ctx, tmm2tamChannel)
-	go trustsource.Run(ctx, c2, tsm2tamChannel)
+	//Let's go
+	go communicationInterface.Run()
+	go trustAssessmentManager.Run()
+	go trustModelManager.Run()
+	go trustSourceManager.Run()
 
 	WaitForCtrlC()
 

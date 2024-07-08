@@ -2,13 +2,27 @@ package trustsource
 
 import (
 	"context"
-	"github.com/vs-uulm/go-taf/pkg/command"
-	"github.com/vs-uulm/go-taf/pkg/message"
+	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"log/slog"
 )
 
-func Run(ctx context.Context,
-	inputV2X chan message.InternalMessage,
-	output chan command.Command) {
+type trustSourceManager struct {
+	tafContext core.RuntimeContext
+	channels   core.TafChannels
+	logger     *slog.Logger
+}
+
+func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustSourceManager, error) {
+	tsm := trustSourceManager{
+		tafContext: tafContext,
+		channels:   channels,
+		logger:     logging.CreateChildLogger(tafContext.Logger, "TSM"),
+	}
+	return tsm, nil
+}
+
+func (tsm trustSourceManager) Run() {
 	// Cleanup function:
 	defer func() {
 		//log.Println("TSM: shutting down")
@@ -16,11 +30,11 @@ func Run(ctx context.Context,
 
 	for {
 		// Each iteration, check whether we've been cancelled.
-		if err := context.Cause(ctx); err != nil {
+		if err := context.Cause(tsm.tafContext.Context); err != nil {
 			return
 		}
 		select {
-		case <-ctx.Done():
+		case <-tsm.tafContext.Context.Done():
 			return
 
 			/*

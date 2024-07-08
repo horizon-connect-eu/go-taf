@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"log/slog"
 )
@@ -13,6 +12,4 @@ type RuntimeContext struct {
 	Logger        *slog.Logger
 	Context       context.Context
 	Identifier    string
-	TAMChan       chan command.Command
-	//OutgoingMessageChannel chan communication.Message
 }

@@ -16,12 +16,12 @@ import (
 type Worker struct {
 	tafContext core.RuntimeContext
 	id         int
-	inputs     <-chan command.Command
+	inputs     <-chan core.Command
 	logger     *slog.Logger
 	//	states     State
 }
 
-func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan command.Command, tafContext core.RuntimeContext) Worker {
+func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.RuntimeContext) Worker {
 	return Worker{
 		tafContext: tafContext,
 		id:         id,
@@ -76,7 +76,7 @@ func (w *Worker) Run() {
 //	}
 //}
 
-func (w *Worker) processCommand(cmd command.Command) {
+func (w *Worker) processCommand(cmd core.Command) {
 
 	var doRunTlee = false
 

@@ -1,6 +1,9 @@
 package command
 
-import tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+import (
+	"github.com/vs-uulm/go-taf/pkg/core"
+	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+)
 
 type HandleTasInitRequest struct {
 	msg           tasmsg.TasInitRequest
@@ -9,8 +12,8 @@ type HandleTasInitRequest struct {
 	responseTopic string
 }
 
-func (receiver HandleTasInitRequest) Type() CommandType {
-	return HANDLE_TAS_INIT_REQUEST
+func (receiver HandleTasInitRequest) Type() core.CommandType {
+	return core.HANDLE_TAS_INIT_REQUEST
 }
 
 func CreateTasInitRequest(msg tasmsg.TasInitRequest, sender string, requestID string, responseTopic string) HandleTasInitRequest {
@@ -44,8 +47,8 @@ type HandleTasTeardownRequest struct {
 	responseTopic string
 }
 
-func (receiver HandleTasTeardownRequest) Type() CommandType {
-	return HANDLE_TAS_TEARDOWN_REQUEST
+func (receiver HandleTasTeardownRequest) Type() core.CommandType {
+	return core.HANDLE_TAS_TEARDOWN_REQUEST
 }
 
 func CreateTasTeardownRequest(msg tasmsg.TasTeardownRequest, sender string, requestID string, responseTopic string) HandleTasTeardownRequest {
