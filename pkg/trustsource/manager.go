@@ -25,7 +25,7 @@ func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trus
 func (tsm trustSourceManager) Run() {
 	// Cleanup function:
 	defer func() {
-		//log.Println("TSM: shutting down")
+		tsm.logger.Info("Shutting down")
 	}()
 
 	for {

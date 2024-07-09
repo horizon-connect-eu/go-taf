@@ -1,6 +1,7 @@
 package communication
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/vs-uulm/go-taf/internal/util"
@@ -51,6 +52,9 @@ func NewInterfaceWithHandler(tafContext core.RuntimeContext, tafChannels core.Ta
 }
 
 func (ch CommunicationInterface) Run() {
+	defer func() {
+		ch.tafContext.Logger.Info("Shutting down Communication Interface.")
+	}()
 
 	go ch.communicationHandler(ch.tafContext, ch.internalInbox, ch.internalOutbox)
 
@@ -66,9 +70,17 @@ func (ch CommunicationInterface) Run() {
 
 	go ch.handleIncomingMessages()
 
-	defer func() {
-		//TODO: shutdown
-	}()
+	for {
+		// Each iteration, check whether we've been cancelled.
+		if err := context.Cause(ch.tafContext.Context); err != nil {
+			return
+		}
+		select {
+		case <-ch.tafContext.Context.Done():
+			return
+
+		}
+	}
 }
 
 /*
