@@ -46,9 +46,18 @@ func main() {
 	defer cancelFunc()
 
 	//specification of testcase -> directory name in workloads folder
-	testcase := flag.String("story", "example", "a string")
+	testcase := flag.String("story", "example", "a string") //default testcase is example
+
+	//specification of target
+	target := flag.Bool("target", false, "a bool")
+	var targetEntities []string
+
 	flag.Parse()
 	absPathTestCases := projectpath.Root + "/res/workloads/" + *testcase
+
+	if *target == true {
+		targetEntities = flag.Args()
+	}
 
 	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
 
@@ -70,7 +79,7 @@ func main() {
 
 	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
 
-	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), logger)
+	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), targetEntities, *target, logger)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -100,7 +109,7 @@ func main() {
 
 }
 
-func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
+func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slog.Logger) ([]Event, error) {
 	csvFile, err := os.Open(pathDir + "/script.csv")
 	if err != nil {
 		return nil, err
@@ -123,6 +132,17 @@ func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 		kafkaTopic := rawEvent[2]
 		messagePath := rawEvent[3]
 
+		if target == true {
+			if !checkStringInArray(kafkaTopic, targetEntities) {
+				continue
+			} else {
+				sourceEntity := rawEvent[1]
+				if checkStringInArray(sourceEntity, targetEntities) { // If source entity is also target entity, this entity is under test and will produce the messages on its own, therefore this message does not have to be replayed
+					continue
+				}
+			}
+		}
+
 		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
 		// str_message := string(message) // just pass the file name
 
@@ -140,6 +160,15 @@ func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 	// Sort messages by timestamp
 	slices.SortFunc(events, func(a, b Event) int { return a.Timestamp - b.Timestamp })
 	return events, nil
+}
+
+func checkStringInArray(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 type Event struct {
