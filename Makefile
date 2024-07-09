@@ -30,7 +30,11 @@ generate-v2x-structs:
 	mkdir -p pkg/message/v2x
 	quicktype res/schemas/V2X_*.json --src-lang schema -l golang --package v2xmsg -o pkg/message/v2x/message.go
 
-generate-structs: generate-aiv-structs generate-generic-structs generate-mbd-structs generate-tas-structs generate-v2x-structs
+generate-tch-structs:
+	mkdir -p pkg/message/tch
+	quicktype res/schemas/TCH_*.json --src-lang schema -l golang --package tchmsg -o pkg/message/tch/message.go
+
+generate-structs: generate-aiv-structs generate-generic-structs generate-mbd-structs generate-tas-structs generate-v2x-structs generate-tch-structs
 .PHONY:generate-structs
 
 remove-generic-structs:
@@ -48,7 +52,10 @@ remove-tas-structs:
 remove-v2x-structs:
 	rm pkg/message/v2x/message.go
 
-clean-structs: remove-generic-structs remove-aiv-structs remove-mbd-structs remove-tas-structs remove-v2x-structs
+remove-tch-structs:
+	rm pkg/message/tch/message.go
+
+clean-structs: remove-generic-structs remove-aiv-structs remove-mbd-structs remove-tas-structs remove-v2x-structs remove-tch-structs
 
 
 check: format
