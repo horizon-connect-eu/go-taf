@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto-library-interface/pkg/crypto"
 	"encoding/csv"
 	"encoding/json"
 	"flag"
@@ -24,7 +23,7 @@ import (
 A helper command to play back test workloads via Kafka.
 */
 func main() {
-	crypto.Init()
+	//crypto.Init()
 	tafConfig := config.DefaultConfig
 	// First, see whether a config file path has been specified
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
@@ -41,6 +40,19 @@ func main() {
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
+
+	tafContext := core.RuntimeContext{
+		Configuration: tafConfig,
+		Logger:        logger,
+		Context:       ctx,
+		Identifier:    "playback",
+	}
+	go kafkabased.NewKafkaBasedHandler(tafContext, make(chan core.Message, tafContext.Configuration.ChanBufSize), outgoingMessageChannel)
+
+	time.Sleep(2 * time.Second)
+
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
@@ -59,15 +71,6 @@ func main() {
 		targetEntities = flag.Args()
 	}
 
-	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
-
-	tafContext := core.RuntimeContext{
-		Configuration: tafConfig,
-		Logger:        logger,
-		Context:       ctx,
-		Identifier:    "playback",
-	}
-
 	/*
 		communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
 		if err != nil {
@@ -76,8 +79,6 @@ func main() {
 		}
 		communicationInterface.Run(tafContext)
 	*/
-
-	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
 
 	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), targetEntities, *target, logger)
 	if err != nil {
@@ -106,6 +107,8 @@ func main() {
 		event.Message, _ = json.Marshal(jsonMap)
 		outgoingMessageChannel <- core.NewMessage(event.Message, event.Sender, event.Topic)
 	}
+
+	time.Sleep(time.Duration(5000) * time.Millisecond)
 
 }
 

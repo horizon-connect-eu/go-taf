@@ -123,8 +123,7 @@ func (h *consumerHandler) Cleanup(sarama.ConsumerGroupSession) error {
 func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 		//convert Kafka message to internally wrapped message
-		internalMsg := core.NewMessage(msg.Value, msg.Topic, "")
-		h.logger.Info("Received message", "Message:", string(msg.Value))
+		internalMsg := core.NewMessage(msg.Value, "", msg.Topic)
 		h.inboxChannel <- internalMsg
 		sess.MarkMessage(msg, "")
 	}
