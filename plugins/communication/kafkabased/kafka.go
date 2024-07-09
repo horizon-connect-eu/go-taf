@@ -71,7 +71,9 @@ func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 
 			select {
 			case success := <-producer.Successes():
-				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
+				//				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
+				msgAsStr := string(msg.Bytes())
+				logger.Info("Message sent", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message Excerpt:", msgAsStr[0:min(20, len(msgAsStr)-1)], "Offset", success.Offset)
 			case err := <-producer.Errors():
 				logger.Error(fmt.Sprintf("Failed to send message: %v", err))
 			}

@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/projectpath"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
@@ -53,7 +52,8 @@ func main() {
 	var targetEntities []string
 
 	flag.Parse()
-	absPathTestCases := projectpath.Root + "/res/workloads/" + *testcase
+	absPathTestCases := *testcase
+	logger.Debug("Storyline path:" + absPathTestCases)
 
 	if *target == true {
 		targetEntities = flag.Args()
@@ -104,7 +104,7 @@ func main() {
 
 		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
 		event.Message, _ = json.Marshal(jsonMap)
-		outgoingMessageChannel <- core.NewMessage(event.Message, "", event.Topic)
+		outgoingMessageChannel <- core.NewMessage(event.Message, event.Sender, event.Topic)
 	}
 
 }
@@ -128,12 +128,15 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 		if err != nil {
 			logger.Error(fmt.Sprintf("error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err))
 		}
-		event := Event{}
-		kafkaTopic := rawEvent[2]
-		messagePath := rawEvent[3]
+		event := Event{
+			Timestamp: timestamp,
+			Sender:    rawEvent[1],
+			Topic:     rawEvent[2],
+			Path:      rawEvent[3],
+		}
 
 		if target == true {
-			if !checkStringInArray(kafkaTopic, targetEntities) {
+			if !checkStringInArray(event.Topic, targetEntities) {
 				continue
 			} else {
 				sourceEntity := rawEvent[1]
@@ -143,16 +146,13 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 			}
 		}
 
-		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
+		message, err := os.ReadFile(pathDir + "/" + event.Path) // just pass the file name
 		// str_message := string(message) // just pass the file name
 
 		if err != nil {
-			logger.Error(fmt.Sprintf("Error reading file '%s': %s", messagePath, err.Error()))
+			logger.Error(fmt.Sprintf("Error reading file '%s': %s", event.Path, err.Error()))
 		}
 
-		event.Timestamp = timestamp
-		event.Topic = kafkaTopic
-		event.Path = messagePath
 		event.Message = message
 		events = append(events, event)
 	}
@@ -173,6 +173,7 @@ func checkStringInArray(a string, list []string) bool {
 
 type Event struct {
 	Timestamp int
+	Sender    string
 	Topic     string
 	Path      string
 	Message   []byte
