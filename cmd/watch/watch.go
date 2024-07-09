@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam"}
+var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam", "application"}
 var logger *slog.Logger
 
 // Blocks until the process receives SIGTERM (or equivalent).

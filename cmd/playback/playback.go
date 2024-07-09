@@ -117,8 +117,8 @@ func ReadFiles(pathDir string, logger *slog.Logger) ([]Event, error) {
 			logger.Error(fmt.Sprintf("error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err))
 		}
 		event := Event{}
-		kafkaTopic := rawEvent[1]
-		messagePath := rawEvent[2]
+		kafkaTopic := rawEvent[2]
+		messagePath := rawEvent[3]
 
 		message, err := os.ReadFile(pathDir + "/" + messagePath) // just pass the file name
 		// str_message := string(message) // just pass the file name
