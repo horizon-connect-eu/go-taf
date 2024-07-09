@@ -139,7 +139,7 @@ func (t *trustAssessmentManager) createSessionId() string {
 }
 
 func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitRequest) {
-	t.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request().TrustModelTemplate)
+	t.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request.TrustModelTemplate)
 
 	attestationCertificate, err := crypto.LoadAttestationCertificateInBase64()
 	if err != nil {
@@ -147,36 +147,36 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 	}
 
 	//Check whether Trust Model is known
-	tmt, exists := t.tmts[cmd.Request().TrustModelTemplate]
+	tmt, exists := t.tmts[cmd.Request.TrustModelTemplate]
 	if !exists {
-		t.logger.Warn("Unknown Trust Model Template or Version:" + cmd.Request().TrustModelTemplate)
+		t.logger.Warn("Unknown Trust Model Template or Version:" + cmd.Request.TrustModelTemplate)
 
-		errorMsg := "Trust model template '" + cmd.Request().TrustModelTemplate + "' could not be resolved."
+		errorMsg := "Trust model template '" + cmd.Request.TrustModelTemplate + "' could not be resolved."
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: attestationCertificate,
 			Error:                  &errorMsg,
 			SessionID:              nil,
 			Success:                nil,
 		}
-		bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID(), response)
+		bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
 		if err != nil {
 			t.logger.Error("Error marshalling response", "error", err)
 		}
 		//Send error message
-		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
+		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 		return
 	}
 	//create session ID for client
 	sessionId := t.createSessionId()
 	//create Session
-	newSession := session.NewInstance(sessionId, cmd.Sender())
+	newSession := session.NewInstance(sessionId, cmd.Sender)
 	//put session into session map
 	t.sessions[sessionId] = &newSession
 
 	t.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
-	newTMI := tmt.Spawn(cmd.Request().Params)
+	newTMI := tmt.Spawn(cmd.Request.Params)
 
 	//add new TMI to session
 	tMIs := newSession.TrustModelInstances()
@@ -196,50 +196,50 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 		Success:                &success,
 	}
 
-	bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID(), response)
+	bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
 	if err != nil {
 		t.logger.Error("Error marshalling response", "error", err)
 	}
 	//Send response message
-	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
+	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	return
 }
 
 func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasTeardownRequest) {
-	t.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request().SessionID)
-	_, exists := t.sessions[cmd.Request().SessionID]
+	t.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID)
+	_, exists := t.sessions[cmd.Request.SessionID]
 	if !exists {
-		errorMsg := "Session ID '" + cmd.Request().SessionID + "' not found."
+		errorMsg := "Session ID '" + cmd.Request.SessionID + "' not found."
 
 		response := tasmsg.TasTeardownResponse{
 			AttestationCertificate: "", //TODO add crypto library call
 			Error:                  &errorMsg,
 			Success:                nil,
 		}
-		bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID(), response)
+		bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
 		if err != nil {
 			t.logger.Error("Error marshalling response", "error", err)
 		}
 		//Send error message
-		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
+		t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 		return
 	}
 
 	//TODO: remove session-related data
 
-	success := "Session with ID '" + cmd.Request().SessionID + "' successfully terminated."
+	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."
 	response := tasmsg.TasTeardownResponse{
 		AttestationCertificate: "", //TODO add crypto library call
 		Error:                  nil,
 		Success:                &success,
 	}
 
-	bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID(), response)
+	bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
 	if err != nil {
 		t.logger.Error("Error marshalling response", "error", err)
 	}
 	//Send response message
-	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic())
+	t.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	return
 
 }

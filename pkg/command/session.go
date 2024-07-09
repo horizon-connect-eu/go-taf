@@ -7,10 +7,10 @@ import (
 
 // HandleTasInitRequest  Internal command for handling a received TAS_INIT_REQUEST
 type HandleTasInitRequest struct {
-	msg           tasmsg.TasInitRequest
-	sender        string
-	requestID     string
-	responseTopic string
+	Request       tasmsg.TasInitRequest
+	Sender        string
+	RequestID     string
+	ResponseTopic string
 }
 
 func (receiver HandleTasInitRequest) Type() core.CommandType {
@@ -19,33 +19,18 @@ func (receiver HandleTasInitRequest) Type() core.CommandType {
 
 func CreateTasInitRequest(msg tasmsg.TasInitRequest, sender string, requestID string, responseTopic string) HandleTasInitRequest {
 	return HandleTasInitRequest{
-		msg:           msg,
-		sender:        sender,
-		requestID:     requestID,
-		responseTopic: responseTopic,
+		Request:       msg,
+		Sender:        sender,
+		RequestID:     requestID,
+		ResponseTopic: responseTopic,
 	}
-}
-func (receiver HandleTasInitRequest) Request() tasmsg.TasInitRequest {
-	return receiver.msg
-}
-
-func (receiver HandleTasInitRequest) Sender() string {
-	return receiver.sender
-}
-
-func (receiver HandleTasInitRequest) RequestID() string {
-	return receiver.requestID
-}
-
-func (receiver HandleTasInitRequest) ResponseTopic() string {
-	return receiver.responseTopic
 }
 
 type HandleTasTeardownRequest struct {
-	msg           tasmsg.TasTeardownRequest
-	sender        string
-	requestID     string
-	responseTopic string
+	Request       tasmsg.TasTeardownRequest
+	Sender        string
+	RequestID     string
+	ResponseTopic string
 }
 
 func (receiver HandleTasTeardownRequest) Type() core.CommandType {
@@ -54,24 +39,30 @@ func (receiver HandleTasTeardownRequest) Type() core.CommandType {
 
 func CreateTasTeardownRequest(msg tasmsg.TasTeardownRequest, sender string, requestID string, responseTopic string) HandleTasTeardownRequest {
 	return HandleTasTeardownRequest{
-		msg:           msg,
-		sender:        sender,
-		requestID:     requestID,
-		responseTopic: responseTopic,
+		Request:       msg,
+		Sender:        sender,
+		RequestID:     requestID,
+		ResponseTopic: responseTopic,
 	}
 }
-func (receiver HandleTasTeardownRequest) Request() tasmsg.TasTeardownRequest {
-	return receiver.msg
+
+// HandleTasTaRequest  Internal command for handling a received TAS_TA_REQUEST
+type HandleTasTaRequest struct {
+	Request       tasmsg.TasTaRequest
+	Sender        string
+	RequestID     string
+	ResponseTopic string
 }
 
-func (receiver HandleTasTeardownRequest) Sender() string {
-	return receiver.sender
+func (receiver HandleTasTaRequest) Type() core.CommandType {
+	return core.HANDLE_TAS_TA_REQUEST
 }
 
-func (receiver HandleTasTeardownRequest) RequestID() string {
-	return receiver.requestID
-}
-
-func (receiver HandleTasTeardownRequest) ResponseTopic() string {
-	return receiver.responseTopic
+func CreateHandleTasTaRequest(msg tasmsg.TasTaRequest, sender string, requestID string, responseTopic string) HandleTasTaRequest {
+	return HandleTasTaRequest{
+		Request:       msg,
+		Sender:        sender,
+		RequestID:     requestID,
+		ResponseTopic: responseTopic,
+	}
 }

@@ -3,9 +3,12 @@ package communication
 import (
 	"encoding/json"
 	"errors"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
+	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
+	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
@@ -55,7 +58,7 @@ func (ch CommunicationInterface) Run() {
 		for {
 			select {
 			case msg := <-ch.tafChannels.OutgoingMessageChannel:
-				ch.tafContext.Logger.Info("Msg rcvd:", "Msg", string(msg.Bytes()))
+				ch.tafContext.Logger.Info("Msg to be sent:", "Msg", string(msg.Bytes()))
 				ch.internalOutbox <- msg
 			}
 		}
@@ -106,17 +109,99 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 				tasInitReq, err := tasmsg.UnmarshalTasInitRequest(msg)
 				if err != nil {
 					ch.tafContext.Logger.Error("Error unmarshalling TAS_INIT_REQUEST: " + err.Error())
+				} else {
+					cmd := command.CreateTasInitRequest(tasInitReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+					ch.tafChannels.TAMChan <- cmd
 				}
-				cmd := command.CreateTasInitRequest(tasInitReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
-				ch.tafChannels.TAMChan <- cmd
 			case messages.TAS_TEARDOWN_REQUEST:
 				tasTeardownReq, err := tasmsg.UnmarshalTasTeardownRequest(msg)
 				if err != nil {
 					ch.tafContext.Logger.Error("Error unmarshalling TAS_TEARDOWN_REQUEST: " + err.Error())
+				} else {
+					cmd := command.CreateTasTeardownRequest(tasTeardownReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+					ch.tafChannels.TAMChan <- cmd
 				}
-				cmd := command.CreateTasTeardownRequest(tasTeardownReq, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
-				ch.tafChannels.TAMChan <- cmd
+			case messages.TAS_TA_REQUEST:
+				tasTaRequest, err := tasmsg.UnmarshalTasTaRequest(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_TA_REQUEST: " + err.Error())
+				} else {
+					util.UNUSED(tasTaRequest) //TODO
+				}
+			case messages.TAS_SUBSCRIBE_REQUEST:
+				tasSubscribeRequest, err := tasmsg.UnmarshalTasSubscribeRequest(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_SUBSCRIBE_REQUEST: " + err.Error())
+				} else {
+					util.UNUSED(tasSubscribeRequest) //TODO
+				}
+			case messages.TAS_UNSUBSCRIBE_REQUEST:
+				tasUnsubscribeRequest, err := tasmsg.UnmarshalTasUnsubscribeRequest(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_UNSUBSCRIBE_REQUEST: " + err.Error())
+				} else {
+					util.UNUSED(tasUnsubscribeRequest) //TODO
+				}
+			case messages.AIV_RESPONSE:
+				aivResponse, err := aivmsg.UnmarshalAivResponse(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling AIV_RESPONSE: " + err.Error())
+				} else {
+					util.UNUSED(aivResponse) //TODO
+				}
+			case messages.AIV_SUBSCRIBE_RESPONSE:
+				aivSubscribeResponse, err := aivmsg.UnmarshalAivSubscribeResponse(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling AIV_SUBSCRIBE_RESPONSE: " + err.Error())
+				} else {
+					util.UNUSED(aivSubscribeResponse) //TODO
+				}
+			case messages.AIV_UNSUBSCRIBE_RESPONSE:
+				aivUnsubscribeResponse, err := aivmsg.UnmarshalAivUnsubscribeResponse(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling AIV_UNSUBSCRIBE_RESPONSE: " + err.Error())
+				} else {
+					util.UNUSED(aivUnsubscribeResponse) //TODO
+				}
+			case messages.AIV_NOTIFY:
+				aivNotify, err := aivmsg.UnmarshalAivNotify(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling AIV_NOTIFY: " + err.Error())
+				} else {
+					util.UNUSED(aivNotify) //TODO
+				}
+			case messages.MBD_SUBSCRIBE_RESPONSE:
+				mbdSubscribeResponse, err := mbdmsg.UnmarshalMBDSubscribeResponse(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling MBD_SUBSCRIBE_RESPONSE: " + err.Error())
+				} else {
+					util.UNUSED(mbdSubscribeResponse) //TODO
+				}
+			case messages.MBD_UNSUBSCRIBE_RESPONSE:
+				mbdUnsubscribeResponse, err := mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling MBD_UNSUBSCRIBE_RESPONSE: " + err.Error())
+				} else {
+					util.UNUSED(mbdUnsubscribeResponse) //TODO
+				}
+			case messages.MBD_NOTIFY:
+				mbdNotify, err := mbdmsg.UnmarshalMBDNotify(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling MBD_NOTIFY: " + err.Error())
+				} else {
+					util.UNUSED(mbdNotify) //TODO
+				}
+			case messages.TCH_NOTIFY:
+				tchNotify, err := mbdmsg.UnmarshalMBDNotify(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TCH_NOTIFY: " + err.Error())
+				} else {
+					util.UNUSED(tchNotify) //TODO
+				}
+			default:
+				ch.tafContext.Logger.Warn("Received message of type: " + rawMsg.MessageType + ". No processing implemented (yet) for this type of message.")
 			}
+			//TODO: Add V2X_CAM, V2X_CPM, V2X_NTM
 
 		}
 	}
