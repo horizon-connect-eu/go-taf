@@ -49,7 +49,9 @@ func main() {
 		Context:       ctx,
 		Identifier:    "playback",
 	}
-	go kafkabased.NewKafkaBasedHandler(tafContext, make(chan core.Message, tafContext.Configuration.ChanBufSize), outgoingMessageChannel)
+
+	incomingMessageChannel := make(chan core.Message, tafContext.Configuration.ChanBufSize) // TODO: make go routine that empties channel and ignores message
+	go kafkabased.NewKafkaBasedHandler(tafContext, incomingMessageChannel, outgoingMessageChannel)
 
 	time.Sleep(2 * time.Second)
 
