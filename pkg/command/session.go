@@ -5,6 +5,7 @@ import (
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
+// HandleTasInitRequest  Internal command for handling a received TAS_INIT_REQUEST
 type HandleTasInitRequest struct {
 	msg           tasmsg.TasInitRequest
 	sender        string
