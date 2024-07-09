@@ -32,6 +32,7 @@ const (
 	TAS_TEARDOWN_RESPONSE         = "TAS_TEARDOWN_RESPONSE.json"
 	TAS_UNSUBSCRIBE_REQUEST       = "TAS_UNSUBSCRIBE_REQUEST.json"
 	TAS_UNSUBSCRIBE_RESPONSE      = "TAS_UNSUBSCRIBE_RESPONSE.json"
+	TCH_NOTIFY                    = "TCH_NOTIFY.json"
 	TEST_MESSAGE                  = "TEST_MESSAGE.json"
 	V2X_CPM                       = "V2X_CPM.json"
 	V2X_NTM                       = "V2X_NTM.json"
@@ -67,6 +68,7 @@ var SchemaMap = map[string]MessageSchema{
 	"TAS_TEARDOWN_RESPONSE":         TAS_TEARDOWN_RESPONSE,
 	"TAS_UNSUBSCRIBE_REQUEST":       TAS_UNSUBSCRIBE_REQUEST,
 	"TAS_UNSUBSCRIBE_RESPONSE":      TAS_UNSUBSCRIBE_RESPONSE,
+	"TCH_NOTIFY":                    TCH_NOTIFY,
 	"TEST_MESSAGE":                  TEST_MESSAGE,
 	"V2X_CPM":                       V2X_CPM,
 	"V2X_NTM":                       V2X_NTM}
