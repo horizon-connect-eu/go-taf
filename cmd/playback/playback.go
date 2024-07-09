@@ -5,6 +5,7 @@ import (
 	"crypto-library-interface/pkg/crypto"
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/projectpath"
@@ -45,7 +46,9 @@ func main() {
 	defer cancelFunc()
 
 	//specification of testcase -> directory name in workloads folder
-	testcase := projectpath.Root + "/res/workloads/example" //TODO: make CLI flag: https://gobyexample.com/command-line-flags
+	testcase := flag.String("story", "example", "a string")
+	flag.Parse()
+	absPathTestCases := projectpath.Root + "/res/workloads/" + *testcase
 
 	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
 
@@ -67,7 +70,7 @@ func main() {
 
 	go kafkabased.NewKafkaBasedHandler(tafContext, nil, outgoingMessageChannel)
 
-	events, err := ReadFiles(filepath.FromSlash(testcase), logger)
+	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), logger)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
