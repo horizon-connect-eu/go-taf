@@ -9,7 +9,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/message"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
@@ -78,27 +77,6 @@ func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trus
 	//	retTam.updateResults = f
 
 	return tam, nil
-}
-
-func updateWorkerState(msg message.InternalMessage) {
-	/*
-		_, ok := tmt[msg.Type]
-		//value, ok := tmt[msg.Type]
-		if !ok {
-			//log.Println("Error")
-			return
-		}
-
-			_, ok = state[msg.ID]
-			if !ok {
-				state[msg.ID] = make([]int, 0, value+1)
-			}
-			state[msg.ID] = append(state[msg.ID], msg.Value)
-			if len(state[msg.ID]) > value {
-				state[msg.ID] = state[msg.ID][1:]
-			}
-	*/
-	//log.Printf("Current state for ID %d: %+v\n", msg.ID, state[msg.ID])
 }
 
 // Get shard worker based on provided ID and configured number of shards
