@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
@@ -34,9 +35,7 @@ func main() {
 
 	if *testcase == "" {
 		fmt.Fprintln(os.Stderr, "Story parameter is missing - please use the story parameter to specify the directory of the story line")
-		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target target list]")
-		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
-		os.Exit(1)
+		printUsage()
 	}
 
 	absPathTestCases := *testcase
@@ -49,11 +48,8 @@ func main() {
 		tafConfig, err = config.LoadJSON(*configPath)
 
 		if err != nil {
-			//log.Fatalf("main: error reading config file %s: %s\n", configFile, err.Error())
 			fmt.Fprintln(os.Stderr, "Config parameter is incorrect - specified file "+*configPath+" not found")
-			fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target target list]")
-			fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
-			os.Exit(1)
+			printUsage()
 		}
 	} else if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
 		var err error
@@ -70,9 +66,6 @@ func main() {
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
-	logger.Info("Configuration loaded")
-	logger.Debug("Running with following configuration",
-		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
@@ -113,12 +106,13 @@ func main() {
 
 	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), targetEntities, *target, logger)
 	if err != nil {
-		logger.Error(err.Error())
 		fmt.Fprintln(os.Stderr, "Invalid input for the story parameter - Please make sure you enter a correct path and the directory contains a script.csv file")
-		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target targetlist]")
-		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
-		os.Exit(1)
+		printUsage()
 	}
+
+	logger.Info("Configuration loaded")
+	logger.Debug("Running with following configuration",
+		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
 	// send all messages at the appropriate time
 	internalTime := 0
@@ -142,8 +136,7 @@ func main() {
 		outgoingMessageChannel <- core.NewMessage(event.Message, event.Sender, event.Topic)
 	}
 
-	time.Sleep(time.Duration(5000) * time.Millisecond)
-
+	time.Sleep(time.Duration(2000) * time.Millisecond) //wait optimistically until last Kafka message is sent
 }
 
 func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slog.Logger) ([]Event, error) {
@@ -164,7 +157,7 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 	for lineNr, rawEvent := range rawEvents {
 		timestamp, err := strconv.Atoi(rawEvent[0])
 		if err != nil {
-			logger.Error(fmt.Sprintf("error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err))
+			return nil, errors.New(fmt.Sprintf("error reading delay in line %d (%s): %+v", lineNr, rawEvent[0], err))
 		}
 		event := Event{
 			Timestamp: timestamp,
@@ -185,7 +178,6 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 		}
 
 		message, err := os.ReadFile(pathDir + "/" + event.Path) // just pass the file name
-		// str_message := string(message) // just pass the file name
 
 		if err != nil {
 			logger.Error(fmt.Sprintf("Error reading file '%s': %s", event.Path, err.Error()))
@@ -216,4 +208,12 @@ type Event struct {
 	Topic     string
 	Path      string
 	Message   []byte
+}
+
+func printUsage() {
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "Usage:   ./playback -story=path [-config=path] [-target target list]")
+	fmt.Fprintln(os.Stderr, "Example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
+	fmt.Fprintln(os.Stderr, "")
+	os.Exit(1)
 }
