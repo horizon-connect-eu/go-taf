@@ -23,16 +23,23 @@ import (
 A helper command to play back test workloads via Kafka.
 */
 func main() {
-	//specification of testcase -> directory name in workloads folder
+	//specification of userstory
 	testcase := flag.String("story", "", "path to the directory with the storyline specification - should include a script.csv file and the single json messages")
-
+	//specification of config path
 	configPath := flag.String("config", "", "path to the file with the configuration specification")
-
-	//specification of target
+	//specification of targets
 	target := flag.Bool("target", false, "list of targets can be specified - if targets are provided, messages are send from the playback tool only to these targets (all other messages are filtered out)")
-	var targetEntities []string
 
 	flag.Parse()
+
+	if *testcase == "" {
+		fmt.Fprintln(os.Stderr, "Story parameter is missing - please use the story parameter to specify the directory of the story line")
+		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target target list]")
+		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
+		os.Exit(1)
+	}
+
+	absPathTestCases := *testcase
 
 	//crypto.Init()
 	tafConfig := config.DefaultConfig
@@ -55,6 +62,11 @@ func main() {
 			//log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
 			fmt.Fprintln(os.Stderr, "Environment variable is incorrect - specified file "+filepath+" not found")
 		}
+	}
+
+	var targetEntities []string
+	if *target == true {
+		targetEntities = flag.Args()
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
@@ -89,20 +101,6 @@ func main() {
 
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
-
-	if *testcase == "" {
-		fmt.Fprintln(os.Stderr, "Story parameter is missing - please use the story parameter to specify the directory of the story line")
-		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target target list]")
-		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
-		os.Exit(1)
-	}
-
-	absPathTestCases := *testcase
-	logger.Debug("Storyline path:" + absPathTestCases)
-
-	if *target == true {
-		targetEntities = flag.Args()
-	}
 
 	/*
 		communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
