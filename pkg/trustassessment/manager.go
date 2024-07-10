@@ -120,7 +120,7 @@ func (t *trustAssessmentManager) Run() {
 			case command.HandleRequest[tasmsg.TasTeardownRequest]:
 				t.handleTasTeardownRequest(cmd)
 			default:
-				t.logger.Warn("Command with no associated handling logic received by TSM", "Command Type", cmd.Type())
+				t.logger.Warn("Command with no associated handling logic received by TAM", "Command Type", cmd.Type())
 			}
 		}
 	}
