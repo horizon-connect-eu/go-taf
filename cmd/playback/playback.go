@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
@@ -50,10 +51,19 @@ func main() {
 		Identifier:    "playback",
 	}
 
-	incomingMessageChannel := make(chan core.Message, tafContext.Configuration.ChanBufSize) // TODO: make go routine that empties channel and ignores message
+	//Dummy channel for received messages from the communication interface.
+	//As we will receive (at least some of) the messages sent by ourselves, we consume and ignore them in a separate go-routine.
+	incomingMessageChannel := make(chan core.Message, tafContext.Configuration.ChanBufSize)
+	go func() {
+		for {
+			select {
+			case msg := <-incomingMessageChannel:
+				util.UNUSED(msg)
+			}
+		}
+	}()
+	//Directly create Kafka-based Communication Interface Handler.
 	go kafkabased.NewKafkaBasedHandler(tafContext, incomingMessageChannel, outgoingMessageChannel)
-
-	time.Sleep(2 * time.Second)
 
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
