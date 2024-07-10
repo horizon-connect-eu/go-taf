@@ -69,13 +69,21 @@ func main() {
 	defer cancelFunc()
 
 	//specification of testcase -> directory name in workloads folder
-	testcase := flag.String("story", "example", "a string") //default testcase is example
+	testcase := flag.String("story", "", "path to the directory with the storyline specification - should include a script.csv file and the single json messages") //default testcase is example
 
 	//specification of target
-	target := flag.Bool("target", false, "a bool")
+	target := flag.Bool("target", false, "list of targets can be specified - if targets are provided, messages are send from the playback tool only to these targets (all other messages are filtered out)")
 	var targetEntities []string
 
 	flag.Parse()
+
+	if *testcase == "" {
+		fmt.Fprintln(os.Stderr, "Story parameter is missing - please use the story parameter to specify the directory of the story line")
+		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target target list]")
+		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
+		os.Exit(1)
+	}
+
 	absPathTestCases := *testcase
 	logger.Debug("Storyline path:" + absPathTestCases)
 
@@ -95,6 +103,9 @@ func main() {
 	events, err := ReadFiles(filepath.FromSlash(absPathTestCases), targetEntities, *target, logger)
 	if err != nil {
 		logger.Error(err.Error())
+		fmt.Fprintln(os.Stderr, "Invalid input for the story parameter - Please make sure you enter a correct path and the directory contains a script.csv file")
+		fmt.Fprintln(os.Stderr, "usage:   ./playback -story=path [-config=path] [-target targetlist]")
+		fmt.Fprintln(os.Stderr, "example: ./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd")
 		os.Exit(1)
 	}
 
@@ -136,7 +147,8 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 	events := make([]Event, 0)
 
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
+		return nil, err
 	}
 	for lineNr, rawEvent := range rawEvents {
 		timestamp, err := strconv.Atoi(rawEvent[0])
@@ -166,6 +178,7 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 
 		if err != nil {
 			logger.Error(fmt.Sprintf("Error reading file '%s': %s", event.Path, err.Error()))
+			return nil, err
 		}
 
 		event.Message = message
