@@ -71,7 +71,9 @@ func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 
 			select {
 			case success := <-producer.Successes():
-				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
+				//				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
+				msgAsStr := string(msg.Bytes())
+				logger.Info("Message sent", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message Excerpt:", msgAsStr[0:min(20, len(msgAsStr)-1)], "Offset", success.Offset)
 			case err := <-producer.Errors():
 				logger.Error(fmt.Sprintf("Failed to send message: %v", err))
 			}
@@ -121,8 +123,7 @@ func (h *consumerHandler) Cleanup(sarama.ConsumerGroupSession) error {
 func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 		//convert Kafka message to internally wrapped message
-		internalMsg := core.NewMessage(msg.Value, msg.Topic, "")
-		h.logger.Info("Received message", "Message:", string(msg.Value))
+		internalMsg := core.NewMessage(msg.Value, "", msg.Topic)
 		h.inboxChannel <- internalMsg
 		sess.MarkMessage(msg, "")
 	}
