@@ -3,10 +3,11 @@ package trustassessment
 import (
 	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"fmt"
-	logger "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
@@ -81,7 +82,7 @@ func (w *Worker) processCommand(cmd core.Command) {
 	var doRunTlee = false
 
 	switch cmd := cmd.(type) {
-	case command.HandleTasInitRequest:
+	case command.HandleRequest[tasmsg.TasInitRequest]:
 		w.logger.Debug("Got HandleTasInitRequest")
 		/*
 			case command.InitTMICommand:

@@ -3,7 +3,9 @@ package trustsource
 import (
 	"context"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	"log/slog"
 )
 
@@ -22,7 +24,7 @@ func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trus
 	return tsm, nil
 }
 
-func (tsm trustSourceManager) Run() {
+func (tsm *trustSourceManager) Run() {
 	// Cleanup function:
 	defer func() {
 		tsm.logger.Info("Shutting down")
@@ -35,16 +37,22 @@ func (tsm trustSourceManager) Run() {
 		}
 		select {
 		case <-tsm.tafContext.Context.Done():
+			if len(tsm.channels.TMMChan) != 0 || len(tsm.channels.TAMChan) != 0 || len(tsm.channels.TSMChan) != 0 {
+				continue
+			}
 			return
+		case incomingCmd := <-tsm.channels.TSMChan:
 
-			/*
-				case received := <-inputEvidenceCollection:
-					//LOG: log.Printf("[TSM], received %+v from evidence collection\n", received)
-					//TODO: handle incoming evidence and generate update command
-					cmd := trustassessment.CreateUpdateTOCommand(uint64(received.TrustModelID), "TAF", received.Trustee, received.TS_ID, received.Evidence)
-					output <- cmd
-			*/
+			switch cmd := incomingCmd.(type) {
+			case command.HandleResponse[aivmsg.AivResponse]:
+				tsm.handleAivResponse(cmd)
+			default:
+				tsm.logger.Warn("Command with no associated handling logic received by TSM", "Command Type", cmd.Type())
+			}
 		}
-
 	}
+}
+
+func (t *trustSourceManager) handleAivResponse(cmd command.HandleResponse[aivmsg.AivResponse]) {
+	t.logger.Info("TODO: handle AIV_RESPONSE: " + cmd.Response.AivEvidence.KeyRef)
 }

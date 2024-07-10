@@ -1,35 +1,37 @@
 package communication
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-type genericRequestWrapper struct {
-	sender        string      `json:"sender"`
-	serviceType   string      `json:"serviceType"`
-	messageType   string      `json:"messageType"`
-	responseTopic string      `json:"responseTopic"`
-	requestId     string      `json:"requestId"`
-	message       interface{} `json:"message"`
+type GenericRequestWrapper struct {
+	Sender        string      `json:"sender"`
+	ServiceType   string      `json:"serviceType"`
+	MessageType   string      `json:"messageType"`
+	ResponseTopic string      `json:"responseTopic"`
+	RequestId     string      `json:"requestId"`
+	Message       interface{} `json:"message"`
 }
 
-type genericResponseWrapper struct {
-	sender      string      `json:"sender"`
-	serviceType string      `json:"serviceType"`
-	messageType string      `json:"messageType"`
-	responseId  string      `json:"responseId"`
-	message     interface{} `json:"message"`
+type GenericResponseWrapper struct {
+	Sender      string      `json:"sender"`
+	ServiceType string      `json:"serviceType"`
+	MessageType string      `json:"messageType"`
+	ResponseId  string      `json:"responseId"`
+	Message     interface{} `json:"message"`
 }
 
 /*
 Function builds a byte representation of a JSON response by filling the header fields and
 */
 func BuildRequest(sender string, serviceType string, messageType string, responseTopic string, message interface{}) ([]byte, error) {
-	responseWrapper := genericRequestWrapper{
-		sender:        sender,
-		serviceType:   serviceType,
-		messageType:   messageType,
-		requestId:     generateRequestId(),
-		responseTopic: responseTopic,
-		message:       message,
+	responseWrapper := GenericRequestWrapper{
+		Sender:        sender,
+		ServiceType:   serviceType,
+		MessageType:   messageType,
+		RequestId:     generateRequestId(),
+		ResponseTopic: responseTopic,
+		Message:       message,
 	}
 	return json.Marshal(responseWrapper)
 }
@@ -42,12 +44,12 @@ func generateRequestId() string {
 Function builds a byte representation of a JSON response by filling the header fields and
 */
 func BuildResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
-	responseWrapper := genericResponseWrapper{
-		sender:      sender,
-		serviceType: serviceType,
-		messageType: messageType,
-		responseId:  responseId,
-		message:     message,
+	responseWrapper := GenericResponseWrapper{
+		Sender:      sender,
+		ServiceType: serviceType,
+		MessageType: messageType,
+		ResponseId:  responseId,
+		Message:     message,
 	}
 	return json.Marshal(responseWrapper)
 }

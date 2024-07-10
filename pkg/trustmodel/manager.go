@@ -21,21 +21,12 @@ func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trus
 	return tmm, nil
 }
 
-func (tmm trustModelManager) Run() {
+func (tmm *trustModelManager) Run() {
 	// Cleanup function:
 	defer func() {
 		tmm.logger.Info("Shutting down")
 	}()
 
-	/*
-		// Create single TMI
-		cmd := trustassessment.CreateInitTMICommand("demoModel", 1139)
-
-		// Send initialization message to TAM
-		output <- cmd
-	*/
-
-	// Do nothing until end
 	for {
 		// Each iteration, check whether we've been cancelled.
 		if err := context.Cause(tmm.tafContext.Context); err != nil {
@@ -43,8 +34,19 @@ func (tmm trustModelManager) Run() {
 		}
 		select {
 		case <-tmm.tafContext.Context.Done():
+			if len(tmm.channels.TMMChan) != 0 || len(tmm.channels.TAMChan) != 0 || len(tmm.channels.TSMChan) != 0 {
+				continue
+			}
 			return
+		case incomingCmd := <-tmm.channels.TMMChan:
 
+			switch cmd := incomingCmd.(type) {
+
+			//case command.HandleResponse[aivmsg.AivResponse]:
+			//	tmm.handleAivResponse(cmd)
+			default:
+				tmm.logger.Warn("Command with no associated handling logic received by TMM", "Command Type", cmd.Type())
+			}
 		}
 	}
 }

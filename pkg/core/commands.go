@@ -1,6 +1,6 @@
 package core
 
-type CommandType int64
+type CommandType int32
 
 const (
 	UNDEFINED CommandType = iota
@@ -18,6 +18,23 @@ const (
 	HANDLE_MBD_UNSUBSCRIBE_RESPONSE
 	HANDLE_TCH_NOTIFY
 )
+
+func (c CommandType) String() string {
+	return [...]string{"UNDEFINED",
+		"HANDLE_TAS_INIT_REQUEST",
+		"HANDLE_TAS_TEARDOWN_REQUEST",
+		"HANDLE_TAS_TA_REQUEST",
+		"HANDLE_TAS_SUBSCRIBE_REQUEST",
+		"HANDLE_TAS_UNSUBSCRIBE_REQUEST",
+		"HANDLE_AIV_RESPONSE",
+		"HANDLE_AIV_SUBSCRIBE_RESPONSE",
+		"HANDLE_AIV_UNSUBSCRIBE_RESPONSE",
+		"HANDLE_AIV_NOTIFY",
+		"HANDLE_MBD_SUBSCRIBE_RESPONSE",
+		"HANDLE_MBD_NOTIFY",
+		"HANDLE_MBD_UNSUBSCRIBE_RESPONSE",
+		"HANDLE_TCH_NOTIFY"}[c]
+}
 
 type Command interface {
 	Type() CommandType

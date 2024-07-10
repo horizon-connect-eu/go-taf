@@ -3,10 +3,9 @@ package trustassessment
 import (
 	"context"
 	"crypto-library-interface/pkg/crypto"
-	"encoding/json"
-	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
@@ -40,33 +39,33 @@ func getUpdateResultFunc(name string) (ResultsUpdater, error) {
 // later, we can make trustAssessmentManager generic, ie trustAssessmentManager[S stateT, R resultsT, M messageT]
 // where stateT, resultsT and messageT are suitable interfaces.
 // ToDo: make tmts fit in nicely
-// ToDo: decide what is included in the state, ie channels?
+// ToDo: decide what is included in the state, ie workerChannels?
 type trustAssessmentManager struct {
 	//	mkResultsDatabase ResultsFactory
 	//	updateState       StateUpdater
 	//	updateResults ResultsUpdater
-	tmts        map[string]trustmodeltemplate.TrustModelTemplate
-	conf        config.Configuration
-	channels    []chan core.Command
-	logger      *slog.Logger
-	tafContext  core.RuntimeContext
-	tafChannels core.TafChannels
-	sessions    map[string]*session.Session
-	tMIs        map[string]*trustmodelinstance.TrustModelInstance
-	outbox      chan core.Message
+	tmts           map[string]trustmodeltemplate.TrustModelTemplate
+	conf           config.Configuration
+	workerChannels []chan core.Command
+	logger         *slog.Logger
+	tafContext     core.RuntimeContext
+	channels       core.TafChannels
+	sessions       map[string]*session.Session
+	tMIs           map[string]*trustmodelinstance.TrustModelInstance
+	outbox         chan core.Message
 }
 
 func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustAssessmentManager, error) {
 	tam := trustAssessmentManager{
 		//		mkResultsDatabase: func() Results { return make(map[int]int) },
 		//		updateState:       updateWorkerState,
-		tmts:        trustmodel.KnownTemplates,
-		conf:        tafContext.Configuration,
-		tafContext:  tafContext,
-		tafChannels: channels,
-		sessions:    make(map[string]*session.Session),
-		tMIs:        make(map[string]*trustmodelinstance.TrustModelInstance),
-		logger:      logging.CreateChildLogger(tafContext.Logger, "TAM"),
+		tmts:       trustmodel.KnownTemplates,
+		conf:       tafContext.Configuration,
+		tafContext: tafContext,
+		channels:   channels,
+		sessions:   make(map[string]*session.Session),
+		tMIs:       make(map[string]*trustmodelinstance.TrustModelInstance),
+		logger:     logging.CreateChildLogger(tafContext.Logger, "TAM"),
 	}
 
 	var err error
@@ -84,19 +83,19 @@ func (t *trustAssessmentManager) getShardWorkerById(id int) int {
 	return id % t.conf.TAM.TrustModelInstanceShards
 }
 
-// Runs the trust assessment trustAssessmentManager
+// Run the trust assessment trustAssessmentManager
 func (t *trustAssessmentManager) Run() {
 
 	defer func() {
 		t.logger.Info("Shutting down")
 	}()
 
-	t.outbox = t.tafChannels.OutgoingMessageChannel
+	t.outbox = t.channels.OutgoingMessageChannel
 
-	t.channels = make([]chan core.Command, 0, t.conf.TAM.TrustModelInstanceShards)
+	t.workerChannels = make([]chan core.Command, 0, t.conf.TAM.TrustModelInstanceShards)
 	for i := range t.conf.TAM.TrustModelInstanceShards {
 		ch := make(chan core.Command, 1_000)
-		t.channels = append(t.channels, ch)
+		t.workerChannels = append(t.workerChannels, ch)
 
 		worker := t.SpawnNewWorker(i, ch, t.tafContext)
 
@@ -110,21 +109,21 @@ func (t *trustAssessmentManager) Run() {
 		}
 		select {
 		case <-t.tafContext.Context.Done():
-			/*if len(inputTMM) != 0 || len(inputTSM) != 0 {
+			if len(t.channels.TMMChan) != 0 || len(t.channels.TAMChan) != 0 || len(t.channels.TSMChan) != 0 {
 				continue
-			}*/
+			}
 			return
-		case incomingCmd := <-t.tafChannels.TAMChan:
+		case incomingCmd := <-t.channels.TAMChan:
 
 			switch cmd := incomingCmd.(type) {
-			case command.HandleTasInitRequest:
+			case command.HandleRequest[tasmsg.TasInitRequest]:
 				t.handleTasInitRequest(cmd)
 			//			case command.UpdateTOCommand:
 			//				t.handleUpdateTOCommand(cmd)
-			case command.HandleTasTeardownRequest:
+			case command.HandleRequest[tasmsg.TasTeardownRequest]:
 				t.handleTasTeardownRequest(cmd)
 			default:
-				t.logger.Warn("Unknown message received from TMM", "message", fmt.Sprintf("%+v", cmd))
+				t.logger.Warn("Command with no associated handling logic received by TSM", "Command Type", cmd.Type())
 			}
 		}
 	}
@@ -138,7 +137,7 @@ func (t *trustAssessmentManager) createSessionId() string {
 	return sessionId
 }
 
-func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitRequest) {
+func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest]) {
 	t.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request.TrustModelTemplate)
 
 	attestationCertificate, err := crypto.LoadAttestationCertificateInBase64()
@@ -158,7 +157,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 			SessionID:              nil,
 			Success:                nil,
 		}
-		bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
+		bytes, err := communication.BuildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
 		if err != nil {
 			t.logger.Error("Error marshalling response", "error", err)
 		}
@@ -196,7 +195,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 		Success:                &success,
 	}
 
-	bytes, err := buildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
+	bytes, err := communication.BuildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
 	if err != nil {
 		t.logger.Error("Error marshalling response", "error", err)
 	}
@@ -205,7 +204,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleTasInitR
 	return
 }
 
-func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasTeardownRequest) {
+func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {
 	t.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID)
 	_, exists := t.sessions[cmd.Request.SessionID]
 	if !exists {
@@ -216,7 +215,7 @@ func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasT
 			Error:                  &errorMsg,
 			Success:                nil,
 		}
-		bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
+		bytes, err := communication.BuildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
 		if err != nil {
 			t.logger.Error("Error marshalling response", "error", err)
 		}
@@ -234,7 +233,7 @@ func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasT
 		Success:                &success,
 	}
 
-	bytes, err := buildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
+	bytes, err := communication.BuildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
 	if err != nil {
 		t.logger.Error("Error marshalling response", "error", err)
 	}
@@ -243,47 +242,3 @@ func (t *trustAssessmentManager) handleTasTeardownRequest(cmd command.HandleTasT
 	return
 
 }
-
-type GenericResponseWrapper struct {
-	Sender      string      `json:"sender"`
-	ServiceType string      `json:"serviceType"`
-	MessageType string      `json:"messageType"`
-	ResponseId  string      `json:"responseId"`
-	Message     interface{} `json:"message"`
-}
-
-/*
-Function builds a byte representation of a JSON response by filling the header fields and
-*/
-func buildResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
-	responseWrapper := GenericResponseWrapper{
-		Sender:      sender,
-		ServiceType: serviceType,
-		MessageType: messageType,
-		ResponseId:  responseId,
-		Message:     message,
-	}
-	return json.Marshal(responseWrapper)
-}
-
-/*
-func prepareResponse() []byte {
-
-	return
-}
-
-*/
-
-/*
-func (t *trustAssessmentManager) handleInitTMICommand(cmd command.InitTMICommand) {
-	t.logger.Debug("Processing InitTMICommand", "Message", fmt.Sprintf("%+v", cmd))
-	workerId := t.getShardWorkerById(int(cmd.Identifier))
-	t.channels[workerId] <- cmd
-}
-
-func (t *trustAssessmentManager) handleUpdateTOCommand(cmd command.UpdateTOCommand) {
-	t.logger.Debug("processing UpdateATOCommand from TMM", "Message", fmt.Sprintf("%+v", cmd))
-	workerId := t.getShardWorkerById(int(cmd.Identifier))
-	t.channels[workerId] <- cmd
-}
-*/
