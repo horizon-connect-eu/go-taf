@@ -74,20 +74,34 @@ And to run it:
 ```shell
 make run-playback
 ```
+The playback application can take three inputs: `-story`, `-config` and `-target`. The `-story` input is mandatory, the other two inputs are optional. The `-target` input has to be specified as the last one.
+The order of the other two attributes does not matter. 
 
-The playback helper takes the input from `res/workloads/example` (subject to change, will be configurable) and produces according Kafka messages.
+The usage of the playback application is shown in the following:
 
-A workload folder consists of two main components: (1) a `script.csv` file that orchestrates the workload and list of JSON files that represent messages to be sent as a record `value`of a Kafka message.
+usage:   `./playback -story=path [-config=path] [-target targetlist]`
+
+example: `./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd`
+
+### Parameter: -story
+The playback application takes the input from a workload folder specified via the `-story` attribute and produces according Kafka messages. 
+A workload folder consists of two main components: (1) a `script.csv` file that orchestrates the workload and a list of JSON files that represent messages to be sent as a record `value`of a Kafka message.
 The CSV file uses the following structure:
 
-| Rel. Timestamp since Start (in milliseconds) | Destination Topic Name | JSON File to use as Message Content |
-|----------------------------------------------|------------------------|-------------------------------------|
+| Rel. Timestamp since Start (in milliseconds) | Sender Name | Destination Topic Name | JSON File to use as Message Content |
+|----------------------------------------------|-------------|------------------------|-------------------------------------|
 
 ```csv
-1000,"taf","001-init.json"
+1000,"application","taf","001-init.json"
 ```
 
-In the given example entry, after 1000 ms, the playback components sends a message to the topic "taf" and uses the file content of "001-init.json" as record value. 
+In the given example entry, after 1000 ms, the playback component sends a message from the "application" component to the topic "taf" and uses the file content of "001-init.json" as record value. 
+
+### Parameter: -config
+The playback application uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in res/taf.json) and specify the actual file location in the environment variable TAF_CONFIG or via the `-config` attribute.
+
+### Parameter: -target
+The playback application produces all Kafka messages specified in the workload folder. If not all messages should be produced, but messages are only sent to certain topics, the `-target` attribute can be used. Only messages whose topics are specified in the `-config` attribute are sent.
 
 ## Updating Message Schema and Auto-Generating Go Structs
 
