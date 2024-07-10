@@ -15,9 +15,9 @@ import (
 	"fmt"
 	"github.com/IBM/sarama"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/internal/validator"
 	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/crypto"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
@@ -34,7 +34,7 @@ import (
 	"time"
 )
 
-var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam"}
+var WATCH_TOPICS = []string{"taf", "tch", "aiv", "mbd", "application.ccam", "application"}
 var logger *slog.Logger
 
 // Blocks until the process receives SIGTERM (or equivalent).
@@ -142,14 +142,17 @@ func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 		/*
 			TODO: Fix AIV_RESPONSE HANDLING
 		*/
-		if messageType == messages.AIV_RESPONSE {
-			logger.Info("Is AIV_RESPONSE")
-			var MapMessage map[string]interface{}
-			json.Unmarshal(msg.Value, &MapMessage)
-			AivResponse, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["aivEvidence"])
-			trusteeReportByteStream, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["trusteeReports"])
-			crypto.VerifyAivResponse(AivResponse, trusteeReportByteStream, logger)
-		}
+		/*
+			if messageType == messages.AIV_RESPONSE {
+				logger.Info("Is AIV_RESPONSE")
+				var MapMessage map[string]interface{}
+				json.Unmarshal(msg.Value, &MapMessage)
+				AivResponse, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["aivEvidence"])
+				trusteeReportByteStream, _ := json.Marshal(MapMessage["message"].(map[string]interface{})["trusteeReports"])
+				crypto.VerifyAivResponse(AivResponse, trusteeReportByteStream, logger)
+			}
+		*/
+		util.UNUSED(messageType)
 		sess.MarkMessage(msg, "")
 	}
 	return nil

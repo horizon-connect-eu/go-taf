@@ -109,6 +109,9 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 		select {
 		case rcvdMsg := <-ch.internalInbox:
 
+			msgStr := string(rcvdMsg.Bytes())
+			ch.tafContext.Logger.Info("Received message", "Message:", msgStr[0:min(20, len(msgStr)-1)], "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
+
 			var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshaled using the correct type.
 			rawMsg := GenericJSONHeaderMessage{
 				Message: &msg,
