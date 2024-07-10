@@ -114,12 +114,9 @@ func (t *trustAssessmentManager) Run() {
 			}
 			return
 		case incomingCmd := <-t.channels.TAMChan:
-
 			switch cmd := incomingCmd.(type) {
 			case command.HandleRequest[tasmsg.TasInitRequest]:
 				t.handleTasInitRequest(cmd)
-			//			case command.UpdateTOCommand:
-			//				t.handleUpdateTOCommand(cmd)
 			case command.HandleRequest[tasmsg.TasTeardownRequest]:
 				t.handleTasTeardownRequest(cmd)
 			default:

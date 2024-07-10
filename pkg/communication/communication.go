@@ -182,7 +182,7 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.tafContext.Logger.Error("Incomplete message header for AIV_RESPONSE message: " + errs.Error())
 				} else {
 					cmd := command.CreateAivResponse(aivResponse, rawMsg.Sender, rawMsg.ResponseId)
-					util.UNUSED(cmd) //TODO
+					ch.channels.TSMChan <- cmd
 				}
 			case messages.AIV_SUBSCRIBE_RESPONSE:
 				aivSubscribeResponse, err := aivmsg.UnmarshalAivSubscribeResponse(msg)
@@ -212,7 +212,7 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.tafContext.Logger.Error("Incomplete message header for AIV_NOTIFY message: " + errs.Error())
 				} else {
 					cmd := command.CreateAivNotify(aivNotify, rawMsg.Sender)
-					util.UNUSED(cmd) //TODO
+					ch.channels.TSMChan <- cmd
 				}
 			case messages.MBD_SUBSCRIBE_RESPONSE:
 				mbdSubscribeResponse, err := mbdmsg.UnmarshalMBDSubscribeResponse(msg)
