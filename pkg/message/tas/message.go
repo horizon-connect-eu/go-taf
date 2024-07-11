@@ -191,13 +191,11 @@ type PurpleActualTrustworthinessLevel struct {
 }
 
 type PurpleOutput struct {
-	BaseRate    *float64    `json:"baseRate,omitempty"`
-	Belief      *float64    `json:"belief,omitempty"`
-	Disbelief   *float64    `json:"disbelief,omitempty"`
-	Uncertainty *float64    `json:"uncertainty,omitempty"`
-	Type        interface{} `json:"type"`
-	Output      interface{} `json:"output"`
-	Value       *float64    `json:"value,omitempty"`
+	BaseRate    *float64 `json:"baseRate,omitempty"`
+	Belief      *float64 `json:"belief,omitempty"`
+	Disbelief   *float64 `json:"disbelief,omitempty"`
+	Uncertainty *float64 `json:"uncertainty,omitempty"`
+	Value       *float64 `json:"value,omitempty"`
 }
 
 type TasSubscribeRequest struct {
@@ -269,13 +267,11 @@ type FluffyActualTrustworthinessLevel struct {
 }
 
 type FluffyOutput struct {
-	BaseRate    *float64    `json:"baseRate,omitempty"`
-	Belief      *float64    `json:"belief,omitempty"`
-	Disbelief   *float64    `json:"disbelief,omitempty"`
-	Uncertainty *float64    `json:"uncertainty,omitempty"`
-	Type        interface{} `json:"type"`
-	Output      interface{} `json:"output"`
-	Value       *float64    `json:"value,omitempty"`
+	BaseRate    *float64 `json:"baseRate,omitempty"`
+	Belief      *float64 `json:"belief,omitempty"`
+	Disbelief   *float64 `json:"disbelief,omitempty"`
+	Uncertainty *float64 `json:"uncertainty,omitempty"`
+	Value       *float64 `json:"value,omitempty"`
 }
 
 type TasTeardownRequest struct {

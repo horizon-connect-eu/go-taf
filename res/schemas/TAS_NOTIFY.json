@@ -55,7 +55,7 @@
                                       "type": "number"
                                     }
                                 },
-                                "required" : ["type", "output"]
+                                "required" : ["belief", "disbelief","uncertainty", "baseRate"]
                               }
                             },
                             "required" : ["type", "output"]
