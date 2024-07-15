@@ -26,13 +26,6 @@ import (
 
 //go:generate go run ../plugins/plugins.go
 
-// Blocks until the process receives SIGTERM (or equivalent).
-func WaitForCtrlC() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
-}
-
 /*
 The main TAF application that starts all the components of the application and waits for a signal to stop the application.
 */
@@ -105,4 +98,11 @@ func main() {
 
 	WaitForCtrlC()
 
+}
+
+// Blocks until the process receives SIGTERM (or equivalent).
+func WaitForCtrlC() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
 }

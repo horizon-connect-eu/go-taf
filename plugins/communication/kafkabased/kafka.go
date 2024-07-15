@@ -83,8 +83,7 @@ func handleOutgoingMessages(tafContext core.TafContext, logger *slog.Logger, pro
 
 func handleIncomingMessages(tafContext core.TafContext, logger *slog.Logger, consumer sarama.ConsumerGroup, inboxChannel chan<- core.Message) {
 
-	//TODO: fix context usage
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tafContext.Context)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 

@@ -14,9 +14,11 @@ import (
 	"github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 	"log/slog"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -93,7 +95,6 @@ func main() {
 	go kafkabased.NewKafkaBasedHandler(tafContext, incomingMessageChannel, outgoingMessageChannel)
 
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
-	defer cancelFunc()
 
 	/*
 		communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
@@ -114,29 +115,55 @@ func main() {
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
 
-	// send all messages at the appropriate time
-	internalTime := 0
-	for _, event := range events {
-		var jsonMap map[string]interface{}
-		json.Unmarshal(event.Message, &jsonMap)
-		// Sleep until the next event is due
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-		/*
-			TODO: fix undeliberate usage of evidence
-			evidence, _ := crypto.GenerateEvidence()
-			jsonMap["message"].(map[string]interface{})["evidence"] = evidence
-		*/
+	go func() {
+		defer wg.Done()
+		// send all messages at the appropriate time
+		internalTime := 0
+		for _, event := range events {
+			if ctx.Err() != nil {
+				return
+			}
+			var jsonMap map[string]interface{}
+			json.Unmarshal(event.Message, &jsonMap)
+			// Sleep until the next event is due
 
-		sleepFor := event.Timestamp - internalTime
-		time.Sleep(time.Duration(sleepFor) * time.Millisecond)
-		internalTime = event.Timestamp
+			/*
+				TODO: fix undeliberate usage of evidence
+				evidence, _ := crypto.GenerateEvidence()
+				jsonMap["message"].(map[string]interface{})["evidence"] = evidence
+			*/
 
-		logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
-		event.Message, _ = json.Marshal(jsonMap)
-		outgoingMessageChannel <- core.NewMessage(event.Message, event.Sender, event.Topic)
-	}
+			sleepFor := event.Timestamp - internalTime
+			time.Sleep(time.Duration(sleepFor) * time.Millisecond)
+			internalTime = event.Timestamp
 
-	time.Sleep(time.Duration(2000) * time.Millisecond) //wait optimistically until last Kafka message is sent
+			logger.Info(fmt.Sprintf("Sending message at timestamp %d ms to topic '%s'", event.Timestamp, event.Topic))
+			event.Message, _ = json.Marshal(jsonMap)
+			outgoingMessageChannel <- core.NewMessage(event.Message, event.Sender, event.Topic)
+		}
+
+		time.Sleep(time.Duration(2000) * time.Millisecond) //wait optimistically until last Kafka message is sent
+
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer func() {
+		signal.Stop(c)
+		cancelFunc()
+	}()
+	go func() {
+		select {
+		case <-c:
+			cancelFunc()
+		case <-ctx.Done():
+		}
+	}()
+
+	wg.Wait()
 }
 
 func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slog.Logger) ([]Event, error) {
