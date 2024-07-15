@@ -7,7 +7,7 @@ import (
 )
 
 // A context struct that captures several relevant properties needed by different subcomponents
-type RuntimeContext struct {
+type TafContext struct {
 	Configuration config.Configuration
 	Logger        *slog.Logger
 	Context       context.Context

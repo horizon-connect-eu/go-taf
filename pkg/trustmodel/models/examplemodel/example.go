@@ -2,6 +2,7 @@ package examplemodel
 
 import (
 	"fmt"
+	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
@@ -72,6 +73,11 @@ func (e *ExampleTrustModelInstance) Template() string {
 }
 
 func (e *ExampleTrustModelInstance) Update() {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e *ExampleTrustModelInstance) Init(ctx core.TafContext, channels core.TafChannels) {
 	//TODO implement me
 	panic("implement me")
 }

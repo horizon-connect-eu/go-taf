@@ -10,12 +10,12 @@ import (
 )
 
 type trustSourceManager struct {
-	tafContext core.RuntimeContext
+	tafContext core.TafContext
 	channels   core.TafChannels
 	logger     *slog.Logger
 }
 
-func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustSourceManager, error) {
+func NewManager(tafContext core.TafContext, channels core.TafChannels) (trustSourceManager, error) {
 	tsm := trustSourceManager{
 		tafContext: tafContext,
 		channels:   channels,

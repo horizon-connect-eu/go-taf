@@ -18,7 +18,7 @@ func init() {
 	communication.RegisterCommunicationHandler("kafka-based", NewKafkaBasedHandler)
 }
 
-func NewKafkaBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- core.Message, outboxChannel <-chan core.Message) {
+func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.Message, outboxChannel <-chan core.Message) {
 	logger := logging.CreateChildLogger(tafContext.Logger, "Kafka Communication Handler")
 	logger.Info("Starting kafka-based communication handler.")
 
@@ -57,7 +57,7 @@ func NewKafkaBasedHandler(tafContext core.RuntimeContext, inboxChannel chan<- co
 	wg.Wait() //TODO: fix for orderly shutdown
 }
 
-func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger, producer sarama.AsyncProducer, outboxChannel <-chan core.Message) {
+func handleOutgoingMessages(tafContext core.TafContext, logger *slog.Logger, producer sarama.AsyncProducer, outboxChannel <-chan core.Message) {
 	for {
 		select {
 		case msg := <-outboxChannel:
@@ -81,7 +81,7 @@ func handleOutgoingMessages(tafContext core.RuntimeContext, logger *slog.Logger,
 	}
 }
 
-func handleIncomingMessages(tafContext core.RuntimeContext, logger *slog.Logger, consumer sarama.ConsumerGroup, inboxChannel chan<- core.Message) {
+func handleIncomingMessages(tafContext core.TafContext, logger *slog.Logger, consumer sarama.ConsumerGroup, inboxChannel chan<- core.Message) {
 
 	//TODO: fix context usage
 	ctx, cancel := context.WithCancel(context.Background())

@@ -15,14 +15,14 @@ import (
 )
 
 type Worker struct {
-	tafContext core.RuntimeContext
+	tafContext core.TafContext
 	id         int
 	inputs     <-chan core.Command
 	logger     *slog.Logger
 	//	states     State
 }
 
-func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.RuntimeContext) Worker {
+func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.TafContext) Worker {
 	return Worker{
 		tafContext: tafContext,
 		id:         id,

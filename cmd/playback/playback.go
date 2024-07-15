@@ -71,7 +71,7 @@ func main() {
 
 	outgoingMessageChannel := make(chan core.Message, tafConfig.ChanBufSize)
 
-	tafContext := core.RuntimeContext{
+	tafContext := core.TafContext{
 		Configuration: tafConfig,
 		Logger:        logger,
 		Context:       ctx,

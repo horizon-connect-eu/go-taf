@@ -48,14 +48,14 @@ type trustAssessmentManager struct {
 	conf           config.Configuration
 	workerChannels []chan core.Command
 	logger         *slog.Logger
-	tafContext     core.RuntimeContext
+	tafContext     core.TafContext
 	channels       core.TafChannels
 	sessions       map[string]*session.Session
 	tMIs           map[string]*trustmodelinstance.TrustModelInstance
 	outbox         chan core.Message
 }
 
-func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustAssessmentManager, error) {
+func NewManager(tafContext core.TafContext, channels core.TafChannels) (trustAssessmentManager, error) {
 	tam := trustAssessmentManager{
 		//		mkResultsDatabase: func() Results { return make(map[int]int) },
 		//		updateState:       updateWorkerState,
@@ -173,15 +173,16 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleRequest[
 
 	//create new TMI for session //TODO: always possible for dynamic models?
 	newTMI := tmt.Spawn(cmd.Request.Params)
-
 	//add new TMI to session
 	tMIs := newSession.TrustModelInstances()
 	tMIs[sessionId] = newTMI
 
 	//add new TMI to list of all TMIs of the TAM
 	t.tMIs[sessionId] = &newTMI
-
 	t.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
+
+	//Initialize TMI
+	newTMI.Init(t.tafContext, t.channels)
 
 	success := "Session with trust model template '" + newTMI.Template() + "' created."
 

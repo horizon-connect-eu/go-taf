@@ -8,12 +8,12 @@ import (
 )
 
 type trustModelManager struct {
-	tafContext core.RuntimeContext
+	tafContext core.TafContext
 	channels   core.TafChannels
 	logger     *slog.Logger
 }
 
-func NewManager(tafContext core.RuntimeContext, channels core.TafChannels) (trustModelManager, error) {
+func NewManager(tafContext core.TafContext, channels core.TafChannels) (trustModelManager, error) {
 	tmm := trustModelManager{
 		tafContext: tafContext,
 		channels:   channels,

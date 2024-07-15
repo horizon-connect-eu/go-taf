@@ -23,18 +23,18 @@ func RegisterCommunicationHandler(name string, f CommunicationHandler) {
 }
 
 type CommunicationInterface struct {
-	tafContext           core.RuntimeContext
+	tafContext           core.TafContext
 	channels             core.TafChannels
 	communicationHandler CommunicationHandler
 	internalInbox        chan core.Message //message from outside world to CommunicationInterface
 	internalOutbox       chan core.Message //message from CommunicationInterface to outside world
 }
 
-func NewInterface(tafContext core.RuntimeContext, tafChannels core.TafChannels) (CommunicationInterface, error) {
+func NewInterface(tafContext core.TafContext, tafChannels core.TafChannels) (CommunicationInterface, error) {
 	return NewInterfaceWithHandler(tafContext, tafChannels, tafContext.Configuration.CommunicationConfiguration.Handler)
 }
 
-func NewInterfaceWithHandler(tafContext core.RuntimeContext, tafChannels core.TafChannels, handlerName string) (CommunicationInterface, error) {
+func NewInterfaceWithHandler(tafContext core.TafContext, tafChannels core.TafChannels, handlerName string) (CommunicationInterface, error) {
 
 	handler, okay := handlers[handlerName]
 	if !okay {
