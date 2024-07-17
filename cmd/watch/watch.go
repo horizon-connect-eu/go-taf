@@ -22,6 +22,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"log"
 	"log/slog"
@@ -237,6 +238,8 @@ func checkMessage(message string) messages.MessageSchema {
 				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeRequest(msg)
 			case messages.TAS_UNSUBSCRIBE_RESPONSE:
 				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
+			case messages.TCH_NOTIFY:
+				extractedStruct, err = tchmsg.UnmarshalMessage(msg)
 			case messages.V2X_CPM:
 				extractedStruct, err = v2xmsg.UnmarshalV2XCpm(msg)
 			case messages.V2X_NTM:
