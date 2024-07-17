@@ -74,17 +74,17 @@ And to run it:
 ```shell
 make run-playback
 ```
-The playback application can take three inputs: `-story`, `-config` and `-target`. The `-story` input is mandatory, the other two inputs are optional. The `-target` input has to be specified as the last one.
+The playback application can take three inputs: `--story`, `--config` and `--target`. The `--story` input is mandatory, the other two inputs are optional. The `--target` input has to be specified as the last one.
 The order of the other two attributes does not matter. 
 
 The usage of the playback application is shown in the following:
 
-usage:   `./playback -story=path [-config=path] [-target targetlist]`
+usage:   `./playback --story=path [--no-validation] [--config=path] [--target targetlist]`
 
-example: `./playback -story=storydirectory/storyline1 -config=configdirectory/config1.json -target taf aiv mbd`
+example: `./playback --story=storydirectory/storyline1 --config=configdirectory/config1.json --target taf aiv mbd`
 
-### Parameter: -story
-The playback application takes the input from a workload folder specified via the `-story` attribute and produces according Kafka messages. 
+### Parameter: `--story`
+The playback application takes the input from a workload folder specified via the `--story` attribute and produces according Kafka messages. 
 A workload folder consists of two main components: (1) a `script.csv` file that orchestrates the workload and a list of JSON files that represent messages to be sent as a record `value`of a Kafka message.
 The CSV file uses the following structure:
 
@@ -97,11 +97,17 @@ The CSV file uses the following structure:
 
 In the given example entry, after 1000 ms, the playback component sends a message from the "application" component to the topic "taf" and uses the file content of "001-init.json" as record value. 
 
-### Parameter: -config
-The playback application uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in res/taf.json) and specify the actual file location in the environment variable TAF_CONFIG or via the `-config` attribute.
+### Parameter: `--no-validation`
+By default, the playback application validates any message of the workload against the corresponding JSON schema file for the message type used.
+When using this flag, the validation will be skipped, allowing the use of invalid messages that do not follow their schema definition. 
 
-### Parameter: -target
-The playback application produces all Kafka messages specified in the workload folder. If not all messages should be produced, but messages are only sent to certain topics, the `-target` attribute can be used. Only messages whose topics are specified in the `-config` attribute are sent.
+### Parameter: `--config`
+The playback application uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in res/taf.json) and specify the actual file location in the environment variable TAF_CONFIG or via the `--config` attribute.
+
+### Parameter: `--target`
+The playback application sends by default all Kafka messages that are specified in the workload. 
+However, by using the `--target` attribute, the workload can be tailored and filtered for a set of specific targets.
+If on or more targets are set, then only messages to be sent to these targets will be emitted and messages sent by these targets will be omitted. 
 
 ## Updating Message Schema and Auto-Generating Go Structs
 

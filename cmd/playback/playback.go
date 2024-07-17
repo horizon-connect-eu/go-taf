@@ -96,10 +96,6 @@ func main() {
 			}
 		}
 	}()
-	//Directly create Kafka-based Communication Interface Handler.
-	go kafkabased.NewKafkaBasedHandler(tafContext, incomingMessageChannel, outgoingMessageChannel)
-
-	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 
 	/*
 		communicationInterface, err := communication.NewWithHandler(tafContext, nil, outgoingMessageChannel, "kafka-based")
@@ -117,9 +113,14 @@ func main() {
 		printUsage()
 	}
 
+	//Directly create Kafka-based Communication Interface Handler.
+	go kafkabased.NewKafkaBasedHandler(tafContext, incomingMessageChannel, outgoingMessageChannel)
+
+	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
+
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
-		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
+		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.CommunicationConfiguration.Kafka.Broker)))
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -226,6 +227,9 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 			if err := json.Unmarshal([]byte(message), &rawMsg); err != nil {
 				return nil, errors.New("Error while unmarshalling JSON " + event.Path + ": " + err.Error())
 			}
+			if rawMsg.Sender != event.Sender {
+				return nil, errors.New("Mismatch between CSV file and JSON regardind sender for file file " + event.Path + ".")
+			}
 			schema, exists := messages.SchemaMap[rawMsg.MessageType]
 			if !exists {
 				return nil, errors.New("Unknown message type: " + rawMsg.MessageType + " in file " + event.Path)
@@ -270,6 +274,7 @@ func checkStringInArray(a string, list []string) bool {
 }
 
 type GenericMessage struct {
+	Sender      string
 	ServiceType string
 	MessageType string
 	Message     interface{}
