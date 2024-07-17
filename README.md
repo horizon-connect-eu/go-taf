@@ -104,6 +104,17 @@ When using this flag, the validation will be skipped, allowing the use of invali
 ### Parameter: `--config`
 The playback application uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in res/taf.json) and specify the actual file location in the environment variable TAF_CONFIG or via the `--config` attribute.
 
+The following example shows a minimal configuration file that specifies the Kafka broker to be used:
+```json
+{
+	"CommunicationConfiguration":{
+		"Kafka" : {
+			"Broker" : "localhost:9092"
+		}
+	}
+}
+```
+
 ### Parameter: `--target`
 The playback application sends by default all Kafka messages that are specified in the workload. 
 However, by using the `--target` attribute, the workload can be tailored and filtered for a set of specific targets.
