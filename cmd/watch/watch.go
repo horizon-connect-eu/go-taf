@@ -17,13 +17,9 @@ import (
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/internal/validator"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
-	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
-	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
-	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
-	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
-	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"log"
 	"log/slog"
 	"math/rand/v2"
@@ -188,64 +184,7 @@ func checkMessage(message string) messages.MessageSchema {
 		} else {
 			logger.Info("Successfully validated JSON with schema " + string(schema) + ".")
 
-			var err error
-			var extractedStruct interface{}
-
-			switch schema {
-			case messages.AIV_NOTIFY:
-				extractedStruct, err = aivmsg.UnmarshalAivNotify(msg)
-			case messages.AIV_REQUEST:
-				extractedStruct, err = aivmsg.UnmarshalAivRequest(msg)
-			case messages.AIV_RESPONSE:
-				extractedStruct, err = aivmsg.UnmarshalAivResponse(msg)
-			case messages.AIV_SUBSCRIBE_REQUEST:
-				extractedStruct, err = aivmsg.UnmarshalAivSubscribeRequest(msg)
-			case messages.AIV_SUBSCRIBE_RESPONSE:
-				extractedStruct, err = aivmsg.UnmarshalAivSubscribeResponse(msg)
-			case messages.AIV_UNSUBSCRIBE_REQUEST:
-				extractedStruct, err = aivmsg.UnmarshalAivUnsubscribeRequest(msg)
-			case messages.AIV_UNSUBSCRIBE_RESPONSE:
-				extractedStruct, err = aivmsg.UnmarshalAivUnsubscribeResponse(msg)
-			case messages.MBD_NOTIFY:
-				extractedStruct, err = mbdmsg.UnmarshalMBDNotify(msg)
-			case messages.MBD_SUBSCRIBE_REQUEST:
-				extractedStruct, err = mbdmsg.UnmarshalMBDSubscribeRequest(msg)
-			case messages.MBD_SUBSCRIBE_RESPONSE:
-				extractedStruct, err = mbdmsg.UnmarshalMBDSubscribeResponse(msg)
-			case messages.MBD_UNSUBSCRIBE_REQUEST:
-				extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
-			case messages.MBD_UNSUBSCRIBE_RESPONSE:
-				extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
-			case messages.TAS_INIT_REQUEST:
-				extractedStruct, err = tasmsg.UnmarshalTasInitRequest(msg)
-			case messages.TAS_INIT_RESPONSE:
-				extractedStruct, err = tasmsg.UnmarshalTasInitResponse(msg)
-			case messages.TAS_NOTIFY:
-				extractedStruct, err = tasmsg.UnmarshalTasNotify(msg)
-			case messages.TAS_SUBSCRIBE_REQUEST:
-				extractedStruct, err = tasmsg.UnmarshalTasSubscribeRequest(msg)
-			case messages.TAS_SUBSCRIBE_RESPONSE:
-				extractedStruct, err = tasmsg.UnmarshalTasSubscribeResponse(msg)
-			case messages.TAS_TA_REQUEST:
-				extractedStruct, err = tasmsg.UnmarshalTasTaRequest(msg)
-			case messages.TAS_TA_RESPONSE:
-				extractedStruct, err = tasmsg.UnmarshalTasTaResponse(msg)
-			case messages.TAS_TEARDOWN_REQUEST:
-				extractedStruct, err = tasmsg.UnmarshalTasTeardownRequest(msg)
-			case messages.TAS_TEARDOWN_RESPONSE:
-				extractedStruct, err = tasmsg.UnmarshalTasTeardownResponse(msg)
-			case messages.TAS_UNSUBSCRIBE_REQUEST:
-				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeRequest(msg)
-			case messages.TAS_UNSUBSCRIBE_RESPONSE:
-				extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
-			case messages.TCH_NOTIFY:
-				extractedStruct, err = tchmsg.UnmarshalMessage(msg)
-			case messages.V2X_CPM:
-				extractedStruct, err = v2xmsg.UnmarshalV2XCpm(msg)
-			case messages.V2X_NTM:
-				extractedStruct, err = v2xmsg.UnmarshalV2XNtm(msg)
-
-			}
+			extractedStruct, err := communication.UnmarshallMessage(schema, msg)
 			if err != nil {
 				logger.Error(err.Error())
 			} else {
