@@ -13,7 +13,7 @@ func VerifyAivResponse(aivResposeBytestream []byte, trusteeReportByteStream []by
 
 	nonceByteArray, err := crypto.FromHexToByteArray(jsonMap["nonce"].(string))
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to convert hex to bytes: %w", err))
+		logger.Error(fmt.Sprintf("Failed to convert hex to bytes: %s", err))
 	}
 
 	byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
