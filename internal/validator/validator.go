@@ -2,7 +2,7 @@ package validator
 
 import (
 	"fmt"
-	"github.com/vs-uulm/go-taf/internal/projectpath"
+	embedded "github.com/vs-uulm/go-taf"
 	"github.com/vs-uulm/go-taf/pkg/message"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -12,7 +12,11 @@ Function takes a predefined messageSchema and JSON message as string, and either
 */
 func Validate(messageSchema message.MessageSchema, message string) (bool, []string, error) {
 
-	schema := gojsonschema.NewReferenceLoader("file://" + projectpath.Root + "/res/schemas/" + string(messageSchema))
+	schemaContent, err := embedded.Schemas.ReadFile("res/schemas/" + string(messageSchema))
+	if err != nil {
+		return false, nil, err
+	}
+	schema := gojsonschema.NewBytesLoader(schemaContent)
 	document := gojsonschema.NewStringLoader(message)
 
 	result, err := gojsonschema.Validate(schema, document)
