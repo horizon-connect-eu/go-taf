@@ -12,6 +12,7 @@ Example messages to input into the CLI KAFAK producer:
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/IBM/sarama"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
@@ -45,6 +46,15 @@ func WaitForCtrlC() {
 A helper command to watch and check Kafka topics
 */
 func main() {
+	//specification of topics to listen to
+	topics := flag.Bool("topics", false, "List of topics the watcher should listen to.")
+
+	flag.Parse()
+
+	if *topics == true {
+		WATCH_TOPICS = flag.Args()
+	}
+
 	tafConfig := config.DefaultConfig
 	// First, see whether a config file path has been specified
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
