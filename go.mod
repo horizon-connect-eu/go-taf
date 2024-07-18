@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	connect.informatik.uni-ulm.de/coordination/tlee-implementation v0.0.0-00010101000000-000000000000
+	crypto-library-interface v0.0.0-00010101000000-000000000000
 	github.com/IBM/sarama v1.43.2
 	github.com/pterm/pterm v0.12.79
 	github.com/vs-uulm/go-subjectivelogic v0.2.0
@@ -15,7 +16,6 @@ require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	crypto-library-interface v0.0.0-00010101000000-000000000000 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dominikbraun/graph v0.23.0 // indirect

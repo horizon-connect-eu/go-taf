@@ -79,5 +79,5 @@ func (e *TrustModelInstance) Update() {
 
 func (e *TrustModelInstance) Init(ctx core.TafContext, channels core.TafChannels) {
 	//TODO implement me
-	panic("implement me")
+	//panic("implement me")
 }

@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/communication"
@@ -51,7 +50,7 @@ func main() {
 
 	tafId := fmt.Sprintf("taf-%000000d", rand.IntN(999999))
 
-	crypto.Init()
+	//crypto.Init(logging.CreateChildLogger(logger, "Crypto Library"), "res/keys") TODO: re-add
 
 	tafContext := core.TafContext{
 		Configuration: tafConfig,
