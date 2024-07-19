@@ -21,12 +21,12 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
-	"log"
 	"log/slog"
 	"math/rand/v2"
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -46,8 +46,10 @@ func WaitForCtrlC() {
 A helper command to watch and check Kafka topics
 */
 func main() {
+	//specification of config path
+	configPath := flag.String("config", "", "Path to the file with the configuration specification")
 	//specification of topics to listen to
-	topics := flag.Bool("topics", false, "List of topics the watcher should listen to.")
+	topics := flag.Bool("topics", false, "List of space-separated topics the watcher should subscribe to.")
 
 	flag.Parse()
 
@@ -56,19 +58,29 @@ func main() {
 	}
 
 	tafConfig := config.DefaultConfig
-	// First, see whether a config file path has been specified
-	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
+
+	if *configPath != "" {
+		var err error
+		tafConfig, err = config.LoadJSON(*configPath)
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Config parameter is incorrect - specified file "+*configPath+" not found")
+			os.Exit(1)
+		}
+	} else if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
 		var err error
 		tafConfig, err = config.LoadJSON(filepath)
 		if err != nil {
-			log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			//log.Fatalf("main: error reading config file %s: %s\n", filepath, err.Error())
+			fmt.Fprintln(os.Stderr, "Environment variable is incorrect - specified file "+filepath+" not found")
+			os.Exit(1)
 		}
 	}
 
 	logger = logging.CreateMainLogger(tafConfig.Logging)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
-		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
+		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.CommunicationConfiguration.Kafka.Broker)))
 
 	go saramaConsume(tafConfig.CommunicationConfiguration.Kafka)
 
@@ -91,8 +103,11 @@ func saramaConsume(kafkaConfig config.KafkaConfig) {
 	client, err := sarama.NewConsumerGroup(brokers, "cg"+fmt.Sprint(rand.IntN(1000000)), config)
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to create kafka consumer group: %v", err))
+		os.Exit(1)
 	}
 	defer client.Close()
+
+	logger.Info("Starting Kafka Consumer", "Subscribed Topics", strings.Join(WATCH_TOPICS, " "))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal, 1)

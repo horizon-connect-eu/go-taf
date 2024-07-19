@@ -52,7 +52,6 @@ func main() {
 
 	absPathTestCases := *storylineDir
 
-	//crypto.Init()
 	tafConfig := config.DefaultConfig
 
 	if *configPath != "" {
