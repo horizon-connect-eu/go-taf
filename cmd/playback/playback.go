@@ -227,7 +227,7 @@ func ReadFiles(pathDir string, targetEntities []string, target bool, logger *slo
 				return nil, errors.New("Error while unmarshalling JSON " + event.Path + ": " + err.Error())
 			}
 			if rawMsg.Sender != event.Sender {
-				return nil, errors.New("Mismatch between CSV file and JSON regardind sender for file file " + event.Path + ".")
+				return nil, errors.New("Mismatch between CSV file and JSON regarding sender for file file " + event.Path + ".")
 			}
 			schema, exists := messages.SchemaMap[rawMsg.MessageType]
 			if !exists {

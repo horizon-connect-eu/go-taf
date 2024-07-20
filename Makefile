@@ -105,5 +105,26 @@ build-playback:
 .PHONY:build-playback
 
 
+release-cli:
+	mkdir -p out/release/windows-amd64
+	env GOOS=windows GOARCH=amd64 go build -o out/release/windows-amd64 ./cmd/playback/playback.go
+	env GOOS=windows GOARCH=amd64 go build -o out/release/windows-amd64 ./cmd/watch/watch.go
+	mkdir -p out/release/windows-386
+	env GOOS=windows GOARCH=386 go build -o out/release/windows-386 ./cmd/playback/playback.go
+	env GOOS=windows GOARCH=386 go build -o out/release/windows-386 ./cmd/watch/watch.go
+	mkdir -p out/release/linux-amd64
+	env GOOS=linux GOARCH=amd64 go build -o out/release/linux-amd64 ./cmd/playback/playback.go
+	env GOOS=linux GOARCH=amd64 go build -o out/release/linux-amd64 ./cmd/watch/watch.go
+	mkdir -p out/release/linux-386
+	env GOOS=linux GOARCH=386 go build -o out/release/linux-386 ./cmd/playback/playback.go
+	env GOOS=linux GOARCH=386 go build -o out/release/linux-386 ./cmd/watch/watch.go
+	mkdir -p out/release/darwin-arm64
+	env GOOS=darwin GOARCH=arm64 go build -o out/release/darwin-arm64 ./cmd/playback/playback.go
+	env GOOS=darwin GOARCH=arm64 go build -o out/release/darwin-arm64 ./cmd/watch/watch.go
+	mkdir -p out/release/darwin-amd64
+	env GOOS=darwin GOARCH=amd64 go build -o out/release/darwin-amd64 ./cmd/playback/playback.go
+	env GOOS=darwin GOARCH=amd64 go build -o out/release/darwin-amd64 ./cmd/watch/watch.go
+
+
 run-playback: build-playback
 	TAF_CONFIG=res/taf.json out/playback
