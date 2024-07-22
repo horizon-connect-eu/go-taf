@@ -36,7 +36,7 @@ func (t ExampleTrustModelTemplate) TemplateName() string {
 	return t.name
 }
 
-func (t ExampleTrustModelTemplate) Spawn(params map[string]string) trustmodelinstance.TrustModelInstance {
+func (t ExampleTrustModelTemplate) Spawn(params map[string]string, context core.TafContext) trustmodelinstance.TrustModelInstance {
 	return &ExampleTrustModelInstance{
 		id:       t.TemplateName() + "@" + t.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
 		version:  0,
@@ -77,7 +77,12 @@ func (e *ExampleTrustModelInstance) Update() {
 	panic("implement me")
 }
 
-func (e *ExampleTrustModelInstance) Init(ctx core.TafContext, channels core.TafChannels) {
+func (e *ExampleTrustModelInstance) Init() {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (e *ExampleTrustModelInstance) Cleanup() {
+	//TODO implement me
+	//panic("implement me")
 }

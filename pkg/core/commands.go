@@ -17,6 +17,8 @@ const (
 	HANDLE_MBD_NOTIFY
 	HANDLE_MBD_UNSUBSCRIBE_RESPONSE
 	HANDLE_TCH_NOTIFY
+	HANDLE_V2X_CPM
+	HANDLE_V2X_NTM
 )
 
 func (c CommandType) String() string {
@@ -33,7 +35,10 @@ func (c CommandType) String() string {
 		"HANDLE_MBD_SUBSCRIBE_RESPONSE",
 		"HANDLE_MBD_NOTIFY",
 		"HANDLE_MBD_UNSUBSCRIBE_RESPONSE",
-		"HANDLE_TCH_NOTIFY"}[c]
+		"HANDLE_TCH_NOTIFY",
+		"HANDLE_V2X_CPM",
+		"HANDLE_V2X_NTM",
+	}[c]
 }
 
 type Command interface {

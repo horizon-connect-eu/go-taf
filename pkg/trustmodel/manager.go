@@ -3,7 +3,9 @@ package trustmodel
 import (
 	"context"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"log/slog"
 )
 
@@ -41,12 +43,15 @@ func (tmm *trustModelManager) Run() {
 		case incomingCmd := <-tmm.channels.TMMChan:
 
 			switch cmd := incomingCmd.(type) {
-
-			//case command.HandleResponse[aivmsg.AivResponse]:
-			//	tmm.handleAivResponse(cmd)
+			case command.HandleOneWay[v2xmsg.V2XCpm]:
+				tmm.handleV2xCpmMessage(cmd)
 			default:
 				tmm.logger.Warn("Command with no associated handling logic received by TMM", "Command Type", cmd.Type())
 			}
 		}
 	}
+}
+
+func (tmm *trustModelManager) handleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm]) {
+	//TODO
 }

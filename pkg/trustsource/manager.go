@@ -6,6 +6,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
+	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	"log/slog"
 )
 
@@ -46,6 +47,18 @@ func (tsm *trustSourceManager) Run() {
 			switch cmd := incomingCmd.(type) {
 			case command.HandleResponse[aivmsg.AivResponse]:
 				tsm.handleAivResponse(cmd)
+			case command.HandleResponse[aivmsg.AivSubscribeResponse]:
+				tsm.handleAivSubscribeResponse(cmd)
+			case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+				tsm.handleAivUnsubscribeResponse(cmd)
+			case command.HandleNotify[aivmsg.AivNotify]:
+				tsm.handleAivNotify(cmd)
+			case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
+				tsm.handleMbdSubscribeResponse(cmd)
+			case command.HandleResponse[mbdmsg.MBDUnsubscribeResponse]:
+				tsm.handleMbdUnsubscribeResponse(cmd)
+			case command.HandleNotify[mbdmsg.MBDNotify]:
+				tsm.handleMbdNotify(cmd)
 			default:
 				tsm.logger.Warn("Command with no associated handling logic received by TSM", "Command Type", cmd.Type())
 			}
@@ -53,6 +66,34 @@ func (tsm *trustSourceManager) Run() {
 	}
 }
 
+/* ------------ ------------ AIV Message Handling ------------ ------------ */
+
 func (t *trustSourceManager) handleAivResponse(cmd command.HandleResponse[aivmsg.AivResponse]) {
-	t.logger.Info("TODO: handle AIV_RESPONSE: " + cmd.Response.AivEvidence.KeyRef)
+	t.logger.Info("TODO: handle AIV_RESPONSE")
+}
+
+func (t *trustSourceManager) handleAivSubscribeResponse(cmd command.HandleResponse[aivmsg.AivSubscribeResponse]) {
+	t.logger.Info("TODO: handle AIV_SUBSCRIBE_RESPONSE")
+}
+
+func (t *trustSourceManager) handleAivUnsubscribeResponse(cmd command.HandleResponse[aivmsg.AivUnsubscribeResponse]) {
+	t.logger.Info("TODO: handle AIV_UNSUBSCRIBE_RESPONSE")
+}
+
+func (t *trustSourceManager) handleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
+	t.logger.Info("TODO: handle AIV_NOTIFY")
+}
+
+/* ------------ ------------ MBD Message Handling ------------ ------------ */
+
+func (t *trustSourceManager) handleMbdSubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDSubscribeResponse]) {
+	t.logger.Info("TODO: handle MBD_SUBSCRIBE_RESPONSE")
+}
+
+func (t *trustSourceManager) handleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse]) {
+	t.logger.Info("TODO: handle MBD_UNSUBSCRIBE_RESPONSE")
+}
+
+func (t *trustSourceManager) handleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
+	t.logger.Info("TODO: handle MBD_NOTIFY")
 }

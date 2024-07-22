@@ -172,7 +172,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleRequest[
 	t.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
-	newTMI := tmt.Spawn(cmd.Request.Params)
+	newTMI := tmt.Spawn(cmd.Request.Params, t.tafContext)
 	//add new TMI to session
 	tMIs := newSession.TrustModelInstances()
 	tMIs[sessionId] = newTMI
@@ -182,7 +182,7 @@ func (t *trustAssessmentManager) handleTasInitRequest(cmd command.HandleRequest[
 	t.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//Initialize TMI
-	newTMI.Init(t.tafContext, t.channels)
+	newTMI.Init()
 
 	success := "Session with trust model template '" + newTMI.Template() + "' created."
 
