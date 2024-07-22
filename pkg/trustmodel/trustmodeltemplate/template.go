@@ -8,5 +8,5 @@ import (
 type TrustModelTemplate interface {
 	TemplateName() string
 	Version() string
-	Spawn(params map[string]string, context core.TafContext) trustmodelinstance.TrustModelInstance
+	Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) trustmodelinstance.TrustModelInstance
 }
