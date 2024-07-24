@@ -9,7 +9,9 @@ import (
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/manager"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"log"
 	"log/slog"
 	"math/rand/v2"
@@ -19,7 +21,6 @@ import (
 	"time"
 
 	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/trustsource"
 )
 
@@ -61,9 +62,7 @@ func main() {
 
 	//Channels
 	tafChannels := core.TafChannels{
-		TAMChan:                make(chan core.Command, tafConfig.ChanBufSize),
-		TSMChan:                make(chan core.Command, tafConfig.ChanBufSize),
-		TMMChan:                make(chan core.Command, tafConfig.ChanBufSize),
+		TAMChannel:             make(chan core.Command, tafConfig.ChanBufSize),
 		OutgoingMessageChannel: make(chan core.Message, tafConfig.ChanBufSize),
 	}
 
@@ -74,26 +73,32 @@ func main() {
 		logger.Error("Error creating communication interface", err)
 	}
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
-	if err != nil {
-		logger.Error("Error creating TAM", err)
-	}
-
 	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TMM", err)
 	}
-
 	trustSourceManager, err := trustsource.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TMM", err)
 	}
 
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
+	if err != nil {
+		logger.Error("Error creating TAM", err)
+	}
+
+	managers := manager.TafManagers{
+		TSM: trustSourceManager,
+		TAM: trustAssessmentManager,
+		TMM: trustModelManager,
+	}
+	trustAssessmentManager.SetManagers(managers)
+	trustModelManager.SetManagers(managers)
+	trustSourceManager.SetManagers(managers)
+
 	//Let's go
 	go communicationInterface.Run()
 	go trustAssessmentManager.Run()
-	go trustModelManager.Run()
-	go trustSourceManager.Run()
 
 	WaitForCtrlC()
 

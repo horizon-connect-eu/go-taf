@@ -22,12 +22,12 @@ type Worker struct {
 	//	states     State
 }
 
-func (t *trustAssessmentManager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.TafContext) Worker {
+func (tam *Manager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.TafContext) Worker {
 	return Worker{
 		tafContext: tafContext,
 		id:         id,
 		inputs:     inputs,
-		//		states:     t.mkStateDatabase(),
+		//		states:     tam.mkStateDatabase(),
 		logger: logger.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
 	}
 }
@@ -54,7 +54,7 @@ func (w *Worker) Run() {
 }
 
 //// Processes the messages received via the specified channel as fast as possible.
-//func (t *trustAssessmentManager) tamWorker(id int, inputs <-chan Command, tablelogger consolelogger.Logger) {
+//func (t *TrustAssessmentManager) tamWorker(id int, inputs <-chan Command, tablelogger consolelogger.Logger) {
 //	states := t.mkStateDatabase()
 //	//results := t.mkResultsDatabase()
 //
