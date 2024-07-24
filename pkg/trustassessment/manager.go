@@ -43,14 +43,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		tMIs:       make(map[string]*trustmodelinstance.TrustModelInstance),
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TAM"),
 	}
-
-	var err error
-	//	f, err := getUpdateResultFunc(tafContext.Configuration.TAM.UpdateResultsOp)
-	if err != nil {
-		return &Manager{}, err
-	}
-	//	retTam.updateResults = f
-
+	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.conf.TAM.TrustModelInstanceShards)
 	return tam, nil
 }
 

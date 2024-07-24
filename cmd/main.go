@@ -73,18 +73,17 @@ func main() {
 		logger.Error("Error creating communication interface", err)
 	}
 
-	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating TMM", err)
+		logger.Error("Error creating TAM", err)
 	}
 	trustSourceManager, err := trustsource.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TMM", err)
 	}
-
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
+	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating TAM", err)
+		logger.Error("Error creating TMM", err)
 	}
 
 	managers := manager.TafManagers{

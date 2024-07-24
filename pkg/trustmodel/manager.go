@@ -8,6 +8,7 @@ import (
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 	"log/slog"
+	"strings"
 )
 
 type Manager struct {
@@ -24,8 +25,17 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		tafContext:             tafContext,
 		channels:               channels,
 		logger:                 logging.CreateChildLogger(tafContext.Logger, "TMM"),
-		trustModelTemplateRepo: KnownTemplates,
+		trustModelTemplateRepo: TemplateRepository,
 	}
+
+	tmtNames := make([]string, len(tmm.trustModelTemplateRepo))
+	i := 0
+	for k := range tmm.trustModelTemplateRepo {
+		tmtNames[i] = k
+		i++
+	}
+
+	tmm.logger.Info("Initializing Trust Model Manager", "Available trust models", strings.Join(tmtNames, ", "))
 	return tmm, nil
 }
 

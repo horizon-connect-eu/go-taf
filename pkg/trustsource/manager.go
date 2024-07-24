@@ -24,6 +24,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		channels:   channels,
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TSM"),
 	}
+	tsm.logger.Info("Initializing Trust Source Manager")
 	return tsm, nil
 }
 
