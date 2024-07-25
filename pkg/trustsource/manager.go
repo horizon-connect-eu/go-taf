@@ -1,8 +1,10 @@
 package trustsource
 
 import (
+	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
@@ -64,4 +66,74 @@ func (tsm *Manager) HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdm
 
 func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 	tsm.logger.Info("TODO: handle MBD_NOTIFY")
+}
+
+func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
+
+	subscriptions := make(map[core.Source]map[string][]core.Evidence, 1)
+
+	for _, quantifier := range tmi.TrustSourceQuantifiers() {
+
+		for _, evidence := range quantifier.Evidence {
+			if subscriptions[evidence.Source()] == nil {
+				subscriptions[evidence.Source()] = make(map[string][]core.Evidence, 0)
+			}
+			if subscriptions[evidence.Source()][quantifier.Trustee] == nil {
+				subscriptions[evidence.Source()][quantifier.Trustee] = make([]core.Evidence, 0)
+			}
+			subscriptions[evidence.Source()][quantifier.Trustee] = append(subscriptions[evidence.Source()][quantifier.Trustee], evidence)
+		}
+		//	trustSource.quantifier.Evidence[0].Source()
+	}
+
+	fmt.Printf("%+v", subscriptions)
+
+	for source, trustees := range subscriptions {
+		switch source {
+		case core.AIV:
+
+			subscribeField := make([]aivmsg.Subscribe, 0)
+
+			for trusteeID, evidenceList := range trustees {
+
+				evidenceStringList := make([]string, 0)
+				for _, evidence := range evidenceList {
+					evidenceStringList = append(evidenceStringList, evidence.String())
+				}
+
+				subscribeField = append(subscribeField, aivmsg.Subscribe{
+					TrusteeID:       trusteeID,
+					RequestedClaims: evidenceStringList,
+				})
+			}
+
+			subMsg := aivmsg.AivSubscribeRequest{
+				AttestationCertificate: "",
+				CheckInterval:          1000,
+				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
+				Subscribe:              subscribeField,
+			}
+			bytes, err := communication.BuildSubscriptionRequest("taf", "ECI", "AIV_SUBSCRIBE_REQUEST", "taf", "taf", subMsg)
+			if err != nil {
+				tsm.logger.Error("Error marshalling response", "error", err)
+			}
+			//Send response message
+			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "aiv")
+
+		case core.MBD:
+			subMsg := mbdmsg.MBDSubscribeRequest{
+				AttestationCertificate: "",
+				Subscribe:              true,
+			}
+			bytes, err := communication.BuildSubscriptionRequest("taf", "ECI", "MBD_SUBSCRIBE_REQUEST", "taf", "taf", subMsg)
+			if err != nil {
+				tsm.logger.Error("Error marshalling response", "error", err)
+			}
+			//Send response message
+			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "mbd")
+		default:
+			panic("unknown Trust Source")
+		}
+	}
+
 }

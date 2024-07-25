@@ -2,11 +2,11 @@ package manager
 
 import (
 	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/core"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 )
 
 type TafManagers struct {
@@ -38,6 +38,7 @@ type TrustSourceManager interface {
 	HandleMbdSubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDSubscribeResponse])
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
+	InitTrustSourceQuantifiers(tmi core.TrustModelInstance)
 }
 
 type TrustAssessmentManager interface {
@@ -51,5 +52,5 @@ type TrustAssessmentManager interface {
 type TrustModelManager interface {
 	SetManagers(managers TafManagers)
 	HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
-	ResolveTMT(identifier string) trustmodeltemplate.TrustModelTemplate
+	ResolveTMT(identifier string) core.TrustModelTemplate
 }

@@ -21,6 +21,16 @@ type GenericResponseWrapper struct {
 	Message     interface{} `json:"message"`
 }
 
+type GenericSubscriptionRequestWrapper struct {
+	Sender          string      `json:"sender"`
+	ServiceType     string      `json:"serviceType"`
+	MessageType     string      `json:"messageType"`
+	ResponseTopic   string      `json:"responseTopic"`
+	SubscriberTopic string      `json:"subscriberTopic"`
+	RequestId       string      `json:"requestId"`
+	Message         interface{} `json:"message"`
+}
+
 /*
 Function builds a byte representation of a JSON response by filling the header fields and
 */
@@ -38,6 +48,22 @@ func BuildRequest(sender string, serviceType string, messageType string, respons
 
 func generateRequestId() string {
 	return "123" //TODO
+}
+
+/*
+Function builds a byte representation of a JSON response by filling the header fields and
+*/
+func BuildSubscriptionRequest(sender string, serviceType string, messageType string, responseTopic string, subscriberTopic string, message interface{}) ([]byte, error) {
+	subReqWrapper := GenericSubscriptionRequestWrapper{
+		Sender:          sender,
+		ServiceType:     serviceType,
+		MessageType:     messageType,
+		RequestId:       generateRequestId(),
+		SubscriberTopic: subscriberTopic,
+		ResponseTopic:   responseTopic,
+		Message:         message,
+	}
+	return json.Marshal(subReqWrapper)
 }
 
 /*

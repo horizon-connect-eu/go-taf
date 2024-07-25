@@ -7,7 +7,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 	"log/slog"
 	"strings"
 )
@@ -18,7 +17,7 @@ type Manager struct {
 	logger                 *slog.Logger
 	tam                    manager.TrustAssessmentManager
 	tsm                    manager.TrustSourceManager
-	trustModelTemplateRepo map[string]trustmodeltemplate.TrustModelTemplate
+	trustModelTemplateRepo map[string]core.TrustModelTemplate
 	v2xObserver            v2xObserver
 }
 
@@ -66,7 +65,7 @@ func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 	tmm.v2xObserver.AddNode(sender)
 }
 
-func (tmm *Manager) ResolveTMT(identifier string) trustmodeltemplate.TrustModelTemplate {
+func (tmm *Manager) ResolveTMT(identifier string) core.TrustModelTemplate {
 	tmt, exists := tmm.trustModelTemplateRepo[identifier]
 	if !exists {
 		return nil

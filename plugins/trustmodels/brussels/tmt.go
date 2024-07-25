@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodeltemplate"
 	"math/rand/v2"
 )
 
@@ -14,10 +12,20 @@ type TrustModelTemplate struct {
 	version string
 }
 
-func CreateTrustModelTemplate(name string, version string) trustmodeltemplate.TrustModelTemplate {
+func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
 	return TrustModelTemplate{
 		name:    name,
 		version: version,
+	}
+}
+
+func (t TrustModelTemplate) EvidenceSources() []core.Evidence {
+	return []core.Evidence{
+		core.AIV_SECURE_BOOT,
+		core.AIV_SECURE_OTA,
+		core.AIV_ACCESS_CONTROL,
+		core.AIV_APPLICATION_ISOLATION,
+		core.AIV_CONTROL_FLOW_INTEGRITY,
 	}
 }
 
@@ -29,7 +37,7 @@ func (t TrustModelTemplate) TemplateName() string {
 	return t.name
 }
 
-func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) trustmodelinstance.TrustModelInstance {
+func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) core.TrustModelInstance {
 
 	omegaDTI1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 	omegaDTI2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)

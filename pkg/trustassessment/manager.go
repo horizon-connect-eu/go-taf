@@ -15,7 +15,6 @@ import (
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelinstance"
 	"log/slog"
 )
 
@@ -26,7 +25,7 @@ type Manager struct {
 	tafContext     core.TafContext
 	channels       core.TafChannels
 	sessions       map[string]*session.Session
-	tMIs           map[string]*trustmodelinstance.TrustModelInstance
+	tMIs           map[string]*core.TrustModelInstance
 	outbox         chan core.Message
 	tsm            manager.TrustSourceManager
 	tmm            manager.TrustModelManager
@@ -40,7 +39,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		tafContext: tafContext,
 		channels:   channels,
 		sessions:   make(map[string]*session.Session),
-		tMIs:       make(map[string]*trustmodelinstance.TrustModelInstance),
+		tMIs:       make(map[string]*core.TrustModelInstance),
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TAM"),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.conf.TAM.TrustModelInstanceShards)
@@ -157,6 +156,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 		return
 	}
+	tmt.EvidenceSources()
 	//create session ID for client
 	sessionId := tam.createSessionId()
 	//create Session
@@ -179,7 +179,9 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//Initialize TMI
 	newTMI.Init()
 
-	success := "Session with trust model template '" + newTMI.Template() + "' created."
+	tam.tsm.InitTrustSourceQuantifiers(newTMI)
+
+	success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
 
 	response := tasmsg.TasInitResponse{
 		AttestationCertificate: attestationCertificate, //TODO add crypto library call

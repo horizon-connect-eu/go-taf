@@ -51,8 +51,8 @@ func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRela
 	panic("implement me")
 }
 
-func (e *TrustModelInstance) Template() string {
-	return e.template.TemplateName() + "@" + e.template.Version()
+func (e *TrustModelInstance) Template() core.TrustModelTemplate {
+	return e.template
 }
 
 func (e *TrustModelInstance) Update(update core.Update) {
@@ -68,7 +68,24 @@ func (e *TrustModelInstance) Update(update core.Update) {
 
 func (e *TrustModelInstance) Init() {
 	//TODO implement me
-	panic("implement me")
+
+}
+
+func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifierInstance {
+	return []core.TrustSourceQuantifierInstance{
+		core.TrustSourceQuantifierInstance{
+			Trustor:  "TAF",
+			Trustee:  "VC1",
+			Scope:    "VC1",
+			Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+		},
+		core.TrustSourceQuantifierInstance{
+			Trustor:  "TAF",
+			Trustee:  "VC2",
+			Scope:    "VC2",
+			Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+		},
+	}
 }
 
 func (e *TrustModelInstance) Cleanup() {

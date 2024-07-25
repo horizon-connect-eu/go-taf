@@ -1,7 +1,6 @@
-package trustmodelinstance
+package core
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 )
 
@@ -11,8 +10,9 @@ type TrustModelInstance interface {
 	Fingerprint() uint32
 	Structure() trustmodelstructure.TrustGraphStructure
 	Values() map[string][]trustmodelstructure.TrustRelationship
-	Template() string
-	Update(update core.Update) //TODO
+	Template() TrustModelTemplate
+	Update(update Update) //TODO
 	Init()
+	TrustSourceQuantifiers() []TrustSourceQuantifierInstance
 	Cleanup()
 }
