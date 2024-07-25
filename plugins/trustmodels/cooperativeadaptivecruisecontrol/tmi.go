@@ -1,6 +1,11 @@
 package cooperativeadaptivecruisecontrol
 
-import "github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+import (
+	"github.com/vs-uulm/go-taf/internal/util"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+)
 
 type TrustModelInstance struct {
 	id      string
@@ -37,9 +42,15 @@ func (e *TrustModelInstance) Template() string {
 	return e.template.TemplateName() + "@" + e.template.Version()
 }
 
-func (e *TrustModelInstance) Update() {
+func (e *TrustModelInstance) Update(update core.Update) {
 	//TODO implement me
-	panic("implement me")
+	switch update := update.(type) {
+	case trustmodelupdate.UpdateAtomicTrustOpinion:
+		//TODO
+		util.UNUSED(update)
+	default:
+		//ignore
+	}
 }
 
 func (e *TrustModelInstance) Init() {
