@@ -10,7 +10,6 @@ import (
 type Configuration struct {
 	Logging                    LogConfiguration
 	ChanBufSize                int
-	V2X                        V2XConfiguration
 	TAM                        TAMConfiguration
 	CommunicationConfiguration CommunicationConfiguration
 	TLEE                       TLEEConfig
@@ -31,16 +30,9 @@ type LogConfiguration struct {
 	LogStyle string //PLAIN, PRETTY, JSON
 }
 
-// V2XConfiguration stores the config of the [v2xlistener].
-type V2XConfiguration struct {
-	SendIntervalNs int
-}
-
 // TAMConfiguration stores the config of the [tam.tam].
 type TAMConfiguration struct {
 	TrustModelInstanceShards int
-	UpdateStateOp            string
-	UpdateResultsOp          string
 }
 
 type TLEEConfig struct {
@@ -57,13 +49,8 @@ var (
 	DefaultConfig Configuration = Configuration{
 		Logging:     LogConfiguration{LogLevel: pterm.LogLevelDebug, LogStyle: "PRETTY"},
 		ChanBufSize: 1_000,
-		V2X: V2XConfiguration{
-			SendIntervalNs: 1_000_000_000,
-		},
 		TAM: TAMConfiguration{
 			TrustModelInstanceShards: 1,
-			UpdateResultsOp:          "add",
-			UpdateStateOp:            "TODO", //TODO
 		},
 		CommunicationConfiguration: CommunicationConfiguration{
 			Handler: "kafka-based",

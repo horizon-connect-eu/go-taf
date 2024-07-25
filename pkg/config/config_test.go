@@ -17,8 +17,7 @@ func TestLoadJson(t *testing.T) {
 
 	//fmt.Printf("%+v\n", conf)
 
-	if conf.ChanBufSize != 1337 ||
-		conf.V2X.SendIntervalNs != 42 {
+	if conf.ChanBufSize != 1337 {
 		t.Error("Read valid config file incorrectly")
 	}
 }
