@@ -14,17 +14,18 @@ type TrustModelInstance struct {
 
 	template TrustModelTemplate
 
-	omega1       subjectivelogic.Opinion
-	omega2       subjectivelogic.Opinion
-	fingerprint  int
-	omega_DTI_1  subjectivelogic.Opinion
-	omega_DTI_2  subjectivelogic.Opinion
-	weights      map[string]float64
-	evidence1    map[string]bool
-	evidence2    map[string]bool
-	rTL1         subjectivelogic.Opinion
-	rTL2         subjectivelogic.Opinion
-	trustsources []string
+	omega1                         subjectivelogic.Opinion
+	omega2                         subjectivelogic.Opinion
+	fingerprint                    int
+	omega_DTI_1                    subjectivelogic.Opinion
+	omega_DTI_2                    subjectivelogic.Opinion
+	weights                        map[string]float64
+	evidence1                      map[string]bool
+	evidence2                      map[string]bool
+	rTL1                           subjectivelogic.Opinion
+	rTL2                           subjectivelogic.Opinion
+	trustsources                   []string
+	trustSourceQuantifierInstances []core.TrustSourceQuantifierInstance
 }
 
 func (e *TrustModelInstance) ID() string {
@@ -72,20 +73,7 @@ func (e *TrustModelInstance) Init() {
 }
 
 func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifierInstance {
-	return []core.TrustSourceQuantifierInstance{
-		core.TrustSourceQuantifierInstance{
-			Trustor:  "TAF",
-			Trustee:  "VC1",
-			Scope:    "VC1",
-			Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
-		},
-		core.TrustSourceQuantifierInstance{
-			Trustor:  "TAF",
-			Trustee:  "VC2",
-			Scope:    "VC2",
-			Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
-		},
-	}
+	return e.trustSourceQuantifierInstances
 }
 
 func (e *TrustModelInstance) Cleanup() {
