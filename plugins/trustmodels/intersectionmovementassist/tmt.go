@@ -37,3 +37,7 @@ func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafCont
 		template: t,
 	}
 }
+
+func (t TrustModelTemplate) Description() string {
+	return "TODO: Add description of trust model"
+}

@@ -45,7 +45,6 @@ type TrustAssessmentManager interface {
 	SetManagers(managers TafManagers)
 	HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest])
 	HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest])
-	Hello()
 	Run()
 }
 

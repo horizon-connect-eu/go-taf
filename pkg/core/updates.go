@@ -6,10 +6,25 @@ The UpdateOp identifies the type of Update Operation than can be applied to an e
 type UpdateOp int32
 
 const (
+	/*
+		Dummy Operation
+	*/
 	NO_OP UpdateOp = iota
+	/*
+		Trust Opinion Update
+	*/
 	UPDATE_TO
+	/*
+		Atomic Trust Opinion Update
+	*/
 	UPDATE_ATO
+	/*
+		Add new Trust Object to Trust Model
+	*/
 	ADD_TRUST_OBJECT
+	/*
+		Remove Trust Object from Trust Model
+	*/
 	REMOVE_TRUST_OBJECT
 )
 

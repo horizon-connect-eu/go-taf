@@ -7,6 +7,40 @@ import (
 	"math/rand/v2"
 )
 
+var trustSourceQuantifierInstances = []core.TrustSourceQuantifierInstance{
+	core.TrustSourceQuantifierInstance{
+		Trustor:  "TAF",
+		Trustee:  "VC1",
+		Scope:    "VC1",
+		Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+	},
+	core.TrustSourceQuantifierInstance{
+		Trustor:  "TAF",
+		Trustee:  "VC2",
+		Scope:    "VC2",
+		Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+	},
+}
+
+var trustSources []core.Evidence
+
+func init() {
+
+	//Extract list of used trust sources from trustSourceQuantifierInstances
+	evidenceMap := make(map[core.Evidence]bool)
+	for _, quantifier := range trustSourceQuantifierInstances {
+		for _, evidence := range quantifier.Evidence {
+			evidenceMap[evidence] = true
+		}
+	}
+	trustSources = make([]core.Evidence, len(evidenceMap))
+	i := 0
+	for k := range evidenceMap {
+		trustSources[i] = k
+		i++
+	}
+}
+
 type TrustModelTemplate struct {
 	name                           string
 	version                        string
@@ -15,33 +49,14 @@ type TrustModelTemplate struct {
 
 func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
 	return TrustModelTemplate{
-		name:    name,
-		version: version,
-		trustSourceQuantifierInstances: []core.TrustSourceQuantifierInstance{
-			core.TrustSourceQuantifierInstance{
-				Trustor:  "TAF",
-				Trustee:  "VC1",
-				Scope:    "VC1",
-				Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
-			},
-			core.TrustSourceQuantifierInstance{
-				Trustor:  "TAF",
-				Trustee:  "VC2",
-				Scope:    "VC2",
-				Evidence: []core.Evidence{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
-			},
-		},
+		name:                           name,
+		version:                        version,
+		trustSourceQuantifierInstances: trustSourceQuantifierInstances,
 	}
 }
 
 func (t TrustModelTemplate) EvidenceSources() []core.Evidence {
-	return []core.Evidence{
-		core.AIV_SECURE_BOOT,
-		core.AIV_SECURE_OTA,
-		core.AIV_ACCESS_CONTROL,
-		core.AIV_APPLICATION_ISOLATION,
-		core.AIV_CONTROL_FLOW_INTEGRITY,
-	}
+	return trustSources
 }
 
 func (t TrustModelTemplate) Version() string {
@@ -50,6 +65,10 @@ func (t TrustModelTemplate) Version() string {
 
 func (t TrustModelTemplate) TemplateName() string {
 	return t.name
+}
+
+func (t TrustModelTemplate) Description() string {
+	return "TODO: Add description of trust model"
 }
 
 func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) core.TrustModelInstance {

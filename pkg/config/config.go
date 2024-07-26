@@ -11,10 +11,15 @@ type Configuration struct {
 	Identifier    string
 	Logging       Log
 	ChanBufSize   int
+	Crypto        Crypto
 	TAM           TAM
 	Communication Communication
 	TLEE          TLEE
 	V2X           V2X
+}
+
+type Crypto struct {
+	KeyFolder string
 }
 
 type Communication struct {
@@ -62,6 +67,9 @@ var (
 		ChanBufSize: 1_000,
 		TAM: TAM{
 			TrustModelInstanceShards: 1,
+		},
+		Crypto: Crypto{
+			KeyFolder: "res/cert/",
 		},
 		Communication: Communication{
 			Handler: "kafka-based",

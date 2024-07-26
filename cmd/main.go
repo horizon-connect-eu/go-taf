@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/communication"
@@ -48,7 +49,11 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	//crypto.Init(logging.CreateChildLogger(logger, "Crypto Library"), "res/keys") TODO: re-add
+	err := crypto.Init(logging.CreateChildLogger(logger, "Crypto Library"), tafConfig.Crypto.KeyFolder)
+	if err != nil {
+		logger.Error("Error initializing crypto library")
+		os.Exit(-1)
+	}
 
 	tafContext := core.TafContext{
 		Configuration: tafConfig,
@@ -63,7 +68,7 @@ func main() {
 		OutgoingMessageChannel: make(chan core.Message, tafConfig.ChanBufSize),
 	}
 
-	logger.Info("Starting TAF with ID " + tafContext.Identifier)
+	logger.Info("Starting TAF with ID '" + tafContext.Identifier + "'")
 
 	communicationInterface, err := communication.NewInterface(tafContext, tafChannels)
 	if err != nil {

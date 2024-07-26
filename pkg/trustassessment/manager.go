@@ -3,7 +3,6 @@ package trustassessment
 import (
 	"context"
 	"crypto-library-interface/pkg/crypto"
-	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
@@ -34,8 +33,6 @@ type Manager struct {
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tam := &Manager{
-		//		mkResultsDatabase: func() Results { return make(map[int]int) },
-		//		updateState:       updateWorkerState,
 		conf:       tafContext.Configuration,
 		tafContext: tafContext,
 		channels:   channels,
@@ -116,10 +113,6 @@ func (tam *Manager) Run() {
 			}
 		}
 	}
-}
-
-func (tam *Manager) Hello() {
-	fmt.Println("hello")
 }
 
 func (tam *Manager) createSessionId() string {

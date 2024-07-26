@@ -53,7 +53,6 @@ func (tsm *Manager) HandleAivUnsubscribeResponse(cmd command.HandleResponse[aivm
 
 func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	tsm.logger.Info("TODO: handle AIV_NOTIFY")
-	tsm.tam.Hello()
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */
