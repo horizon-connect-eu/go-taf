@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
@@ -255,7 +254,7 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.tafContext.Logger.Error("Incomplete message header for TCH_NOTIFY message: " + errs.Error())
 				} else {
 					cmd := command.CreateTchNotify(tchNotify, rawMsg.Sender)
-					util.UNUSED(cmd) //TODO
+					ch.channels.TAMChannel <- cmd
 				}
 			case messages.V2X_NTM:
 				v2xNtm, err := v2xmsg.UnmarshalV2XNtm(msg)
@@ -263,7 +262,7 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.tafContext.Logger.Error("Error unmarshalling V2X_NTM: " + err.Error())
 				} else {
 					cmd := command.CreateV2xNtm(v2xNtm, rawMsg.Sender)
-					ch.channels.TAMChannel <- cmd //TODO: correct?
+					ch.channels.TAMChannel <- cmd
 				}
 			case messages.V2X_CPM:
 				v2xCpm, err := v2xmsg.UnmarshalV2XCpm(msg)
