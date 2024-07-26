@@ -29,8 +29,14 @@
 									"type": "string"
 								},
 								"appraisal": {
-									"description": "AIV verification status",
-									"type": "integer"
+									"description": "Verification status based on the attestation mechanisms. Possible values: \n Value 0: The verifier (i.e., AIV) asserts that the attestation process has failed for a specific claim.\n Value 1: The verifier (i.e., AIV) affirms that a specific claim has been successfully verified. \n Value -1: The verifier (i.e., AIV) hasn't engaged in an attestation process for this specific claim (e.g., because the attestation process is not supported or the prover ECU is not responding). Note that this could be treated equivalently by TAF as no claim being made.\nValue -2: The verifier (i.e., AIV) initiated an attestation process but didn't receive the expected evidence from the prover entity (e.g., request timeout, malformed response).",
+									"type": "integer",
+									"enum": [
+										-2,
+										-1,
+										0,
+										1
+									]
 								}
 							},
 							"required": [
