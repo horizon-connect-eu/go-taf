@@ -13,6 +13,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"log/slog"
@@ -88,6 +89,18 @@ func (tam *Manager) Run() {
 			return
 		case incomingCmd := <-tam.channels.TAMChannel:
 			switch cmd := incomingCmd.(type) {
+			// TAM Message Handling
+			case command.HandleRequest[tasmsg.TasInitRequest]:
+				tam.HandleTasInitRequest(cmd)
+			case command.HandleRequest[tasmsg.TasTeardownRequest]:
+				tam.HandleTasTeardownRequest(cmd)
+			case command.HandleRequest[tasmsg.TasTaRequest]:
+				tam.HandleTasTaRequest(cmd)
+			case command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]:
+				tam.HandleTasSubscribeRequest(cmd)
+			case command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]:
+				tam.HandleTasUnsubscribeRequest(cmd)
+			// TSM Message Handling
 			case command.HandleResponse[aivmsg.AivResponse]:
 				tsm.HandleAivResponse(cmd)
 			case command.HandleResponse[aivmsg.AivSubscribeResponse]:
@@ -102,10 +115,9 @@ func (tam *Manager) Run() {
 				tsm.HandleMbdUnsubscribeResponse(cmd)
 			case command.HandleNotify[mbdmsg.MBDNotify]:
 				tsm.HandleMbdNotify(cmd)
-			case command.HandleRequest[tasmsg.TasInitRequest]:
-				tam.HandleTasInitRequest(cmd)
-			case command.HandleRequest[tasmsg.TasTeardownRequest]:
-				tam.HandleTasTeardownRequest(cmd)
+			case command.HandleNotify[tchmsg.Message]:
+				tsm.HandleTchNotify(cmd)
+			// TMM Message Handling
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
 				tmm.HandleV2xCpmMessage(cmd)
 			default:
@@ -229,5 +241,17 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	//Send response message
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	return
+
+}
+
+func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
+
+}
+
+func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]) {
+
+}
+
+func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
 
 }

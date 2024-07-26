@@ -6,6 +6,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 )
 
@@ -29,6 +30,16 @@ type RunnableManager interface {
 	Run()
 }
 
+type TrustAssessmentManager interface {
+	SetManagers(managers TafManagers)
+	HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest])
+	HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest])
+	HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest])
+	HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest])
+	HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest])
+	Run()
+}
+
 type TrustSourceManager interface {
 	SetManagers(managers TafManagers)
 	HandleAivResponse(cmd command.HandleResponse[aivmsg.AivResponse])
@@ -38,14 +49,8 @@ type TrustSourceManager interface {
 	HandleMbdSubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDSubscribeResponse])
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
+	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
 	InitTrustSourceQuantifiers(tmi core.TrustModelInstance)
-}
-
-type TrustAssessmentManager interface {
-	SetManagers(managers TafManagers)
-	HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest])
-	HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest])
-	Run()
 }
 
 type TrustModelManager interface {

@@ -11,6 +11,7 @@ import (
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"log/slog"
 )
 
@@ -67,6 +68,10 @@ func (tsm *Manager) HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdm
 
 func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 	tsm.logger.Info("TODO: handle MBD_NOTIFY")
+}
+
+func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
+
 }
 
 func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {

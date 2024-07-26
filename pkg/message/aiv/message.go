@@ -121,7 +121,17 @@ type AIVNOTIFYTrusteeReport struct {
 }
 
 type PurpleAttestationReport struct {
-	// AIV verification status
+	// Verification status based on the attestation mechanisms. Possible values:
+	// Value 0: The verifier (i.e., AIV) asserts that the attestation process has failed for a
+	// specific claim.
+	// Value 1: The verifier (i.e., AIV) affirms that a specific claim has been successfully
+	// verified.
+	// Value -1: The verifier (i.e., AIV) hasn't engaged in an attestation process for this
+	// specific claim (e.g., because the attestation process is not supported or the prover ECU
+	// is not responding). Note that this could be treated equivalently by TAF as no claim being
+	// made.
+	// Value -2: The verifier (i.e., AIV) initiated an attestation process but didn't receive
+	// the expected evidence from the prover entity (e.g., request timeout, malformed response).
 	Appraisal int64  `json:"appraisal"`
 	Claim     string `json:"claim"`
 	// Date
@@ -184,7 +194,17 @@ type AIVRESPONSETrusteeReport struct {
 }
 
 type FluffyAttestationReport struct {
-	// AIV verification status
+	// Verification status based on the attestation mechanisms. Possible values:
+	// Value 0: The verifier (i.e., AIV) asserts that the attestation process has failed for a
+	// specific claim.
+	// Value 1: The verifier (i.e., AIV) affirms that a specific claim has been successfully
+	// verified.
+	// Value -1: The verifier (i.e., AIV) hasn't engaged in an attestation process for this
+	// specific claim (e.g., because the attestation process is not supported or the prover ECU
+	// is not responding). Note that this could be treated equivalently by TAF as no claim being
+	// made.
+	// Value -2: The verifier (i.e., AIV) initiated an attestation process but didn't receive
+	// the expected evidence from the prover entity (e.g., request timeout, malformed response).
 	Appraisal int64  `json:"appraisal"`
 	Claim     string `json:"claim"`
 	// Date
