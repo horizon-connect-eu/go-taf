@@ -36,6 +36,7 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	producer, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		logger.Error("Error creating Kafka Producer ", "Details", err)
+		os.Exit(-1)
 		return
 	}
 	defer producer.Close()
@@ -43,6 +44,7 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	consumer, err := sarama.NewConsumerGroup(brokers, tafContext.Identifier, config)
 	if err != nil {
 		logger.Error("Error creating Kafka Consumer ", "Details", err)
+		os.Exit(-1)
 		return
 
 	}
