@@ -31,43 +31,71 @@ type GenericSubscriptionRequestWrapper struct {
 	Message         interface{} `json:"message"`
 }
 
+type GenericSubscriptionResponseWrapper struct {
+	Sender      string      `json:"sender"`
+	ServiceType string      `json:"serviceType"`
+	MessageType string      `json:"messageType"`
+	ResponseId  string      `json:"responseId"`
+	Message     interface{} `json:"message"`
+}
+
+type GenericOneWayMessageWrapper struct {
+	Sender      string      `json:"sender"`
+	ServiceType string      `json:"serviceType"`
+	MessageType string      `json:"messageType"`
+	Message     interface{} `json:"message"`
+}
+
+func generateRequestId() string {
+	return "123" //TODO: make random
+}
+
 /*
-Function builds a byte representation of a JSON response by filling the header fields and
+The BuildRequest function builds a byte representation of a JSON request by filling the header fields and return a byte representation of the message and the request ID used.
 */
-func BuildRequest(sender string, serviceType string, messageType string, responseTopic string, message interface{}) ([]byte, error) {
+func BuildRequest(sender string, serviceType string, messageType string, responseTopic string, message interface{}) ([]byte, string, error) {
+	requestId := generateRequestId()
 	responseWrapper := GenericRequestWrapper{
 		Sender:        sender,
 		ServiceType:   serviceType,
 		MessageType:   messageType,
-		RequestId:     generateRequestId(),
+		RequestId:     requestId,
 		ResponseTopic: responseTopic,
 		Message:       message,
 	}
-	return json.Marshal(responseWrapper)
-}
-
-func generateRequestId() string {
-	return "123" //TODO
+	bytes, err := json.Marshal(responseWrapper)
+	if err != nil {
+		return nil, "", err
+	} else {
+		return bytes, requestId, nil
+	}
 }
 
 /*
-Function builds a byte representation of a JSON response by filling the header fields and
+The BuildSubscriptionRequest function builds a byte representation of a JSON subscription request by filling the header fields and returns a byte representation of the message and the request ID used.
 */
-func BuildSubscriptionRequest(sender string, serviceType string, messageType string, responseTopic string, subscriberTopic string, message interface{}) ([]byte, error) {
+func BuildSubscriptionRequest(sender string, serviceType string, messageType string, responseTopic string, subscriberTopic string, message interface{}) ([]byte, string, error) {
+	requestId := generateRequestId()
 	subReqWrapper := GenericSubscriptionRequestWrapper{
 		Sender:          sender,
 		ServiceType:     serviceType,
 		MessageType:     messageType,
-		RequestId:       generateRequestId(),
+		RequestId:       requestId,
 		SubscriberTopic: subscriberTopic,
 		ResponseTopic:   responseTopic,
 		Message:         message,
 	}
-	return json.Marshal(subReqWrapper)
+	bytes, err := json.Marshal(subReqWrapper)
+	if err != nil {
+		return nil, "", err
+	} else {
+		return bytes, requestId, nil
+	}
+
 }
 
 /*
-Function builds a byte representation of a JSON response by filling the header fields and
+The BuildResponse function builds a byte representation of a JSON response by filling the header fields and returns a byte representation of the message.
 */
 func BuildResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
 	responseWrapper := GenericResponseWrapper{
@@ -78,4 +106,31 @@ func BuildResponse(sender string, serviceType string, messageType string, respon
 		Message:     message,
 	}
 	return json.Marshal(responseWrapper)
+}
+
+/*
+The BuildSubscriptionResponse function builds a byte representation of a JSON subscription response by filling the header fields and returns a byte representation of the message.
+*/
+func BuildSubscriptionResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
+	subResWrapper := GenericSubscriptionResponseWrapper{
+		Sender:      sender,
+		ServiceType: serviceType,
+		MessageType: messageType,
+		ResponseId:  responseId,
+		Message:     message,
+	}
+	return json.Marshal(subResWrapper)
+}
+
+/*
+The BuildOneWayMessage function builds a byte representation of a JSON subscription response by filling the header fields and returns a byte representation of the message.
+*/
+func BuildOneWayMessage(sender string, serviceType string, messageType string, message interface{}) ([]byte, error) {
+	msgWrapper := GenericOneWayMessageWrapper{
+		Sender:      sender,
+		ServiceType: serviceType,
+		MessageType: messageType,
+		Message:     message,
+	}
+	return json.Marshal(msgWrapper)
 }
