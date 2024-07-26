@@ -15,7 +15,7 @@ const (
 )
 
 // Creates a new slog logger to be used as the main logger
-func CreateMainLogger(configuration config.LogConfiguration) *slog.Logger {
+func CreateMainLogger(configuration config.Log) *slog.Logger {
 	switch strings.ToUpper(configuration.LogStyle) {
 	case PRETTY:
 		handler := pterm.NewSlogHandler(&pterm.DefaultLogger)

@@ -31,7 +31,7 @@ type CommunicationInterface struct {
 }
 
 func NewInterface(tafContext core.TafContext, tafChannels core.TafChannels) (CommunicationInterface, error) {
-	return NewInterfaceWithHandler(tafContext, tafChannels, tafContext.Configuration.CommunicationConfiguration.Handler)
+	return NewInterfaceWithHandler(tafContext, tafChannels, tafContext.Configuration.Communication.Handler)
 }
 
 func NewInterfaceWithHandler(tafContext core.TafContext, tafChannels core.TafChannels, handlerName string) (CommunicationInterface, error) {

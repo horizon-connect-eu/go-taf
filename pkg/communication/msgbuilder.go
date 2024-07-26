@@ -2,6 +2,7 @@ package communication
 
 import (
 	"encoding/json"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
 )
 
 type GenericRequestWrapper struct {
@@ -53,12 +54,12 @@ func generateRequestId() string {
 /*
 The BuildRequest function builds a byte representation of a JSON request by filling the header fields and return a byte representation of the message and the request ID used.
 */
-func BuildRequest(sender string, serviceType string, messageType string, responseTopic string, message interface{}) ([]byte, string, error) {
+func BuildRequest(sender string, messageType messages.MessageSchema, responseTopic string, message interface{}) ([]byte, string, error) {
 	requestId := generateRequestId()
 	responseWrapper := GenericRequestWrapper{
 		Sender:        sender,
-		ServiceType:   serviceType,
-		MessageType:   messageType,
+		ServiceType:   messages.ServiceMap[messageType],
+		MessageType:   string(messageType),
 		RequestId:     requestId,
 		ResponseTopic: responseTopic,
 		Message:       message,
@@ -74,12 +75,12 @@ func BuildRequest(sender string, serviceType string, messageType string, respons
 /*
 The BuildSubscriptionRequest function builds a byte representation of a JSON subscription request by filling the header fields and returns a byte representation of the message and the request ID used.
 */
-func BuildSubscriptionRequest(sender string, serviceType string, messageType string, responseTopic string, subscriberTopic string, message interface{}) ([]byte, string, error) {
+func BuildSubscriptionRequest(sender string, messageType messages.MessageSchema, responseTopic string, subscriberTopic string, message interface{}) ([]byte, string, error) {
 	requestId := generateRequestId()
 	subReqWrapper := GenericSubscriptionRequestWrapper{
 		Sender:          sender,
-		ServiceType:     serviceType,
-		MessageType:     messageType,
+		ServiceType:     messages.ServiceMap[messageType],
+		MessageType:     string(messageType),
 		RequestId:       requestId,
 		SubscriberTopic: subscriberTopic,
 		ResponseTopic:   responseTopic,
@@ -97,11 +98,11 @@ func BuildSubscriptionRequest(sender string, serviceType string, messageType str
 /*
 The BuildResponse function builds a byte representation of a JSON response by filling the header fields and returns a byte representation of the message.
 */
-func BuildResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
+func BuildResponse(sender string, messageType messages.MessageSchema, responseId string, message interface{}) ([]byte, error) {
 	responseWrapper := GenericResponseWrapper{
 		Sender:      sender,
-		ServiceType: serviceType,
-		MessageType: messageType,
+		ServiceType: messages.ServiceMap[messageType],
+		MessageType: string(messageType),
 		ResponseId:  responseId,
 		Message:     message,
 	}
@@ -111,11 +112,11 @@ func BuildResponse(sender string, serviceType string, messageType string, respon
 /*
 The BuildSubscriptionResponse function builds a byte representation of a JSON subscription response by filling the header fields and returns a byte representation of the message.
 */
-func BuildSubscriptionResponse(sender string, serviceType string, messageType string, responseId string, message interface{}) ([]byte, error) {
+func BuildSubscriptionResponse(sender string, messageType messages.MessageSchema, responseId string, message interface{}) ([]byte, error) {
 	subResWrapper := GenericSubscriptionResponseWrapper{
 		Sender:      sender,
-		ServiceType: serviceType,
-		MessageType: messageType,
+		ServiceType: messages.ServiceMap[messageType],
+		MessageType: string(messageType),
 		ResponseId:  responseId,
 		Message:     message,
 	}
@@ -125,11 +126,11 @@ func BuildSubscriptionResponse(sender string, serviceType string, messageType st
 /*
 The BuildOneWayMessage function builds a byte representation of a JSON subscription response by filling the header fields and returns a byte representation of the message.
 */
-func BuildOneWayMessage(sender string, serviceType string, messageType string, message interface{}) ([]byte, error) {
+func BuildOneWayMessage(sender string, messageType messages.MessageSchema, message interface{}) ([]byte, error) {
 	msgWrapper := GenericOneWayMessageWrapper{
 		Sender:      sender,
-		ServiceType: serviceType,
-		MessageType: messageType,
+		ServiceType: messages.ServiceMap[messageType],
+		MessageType: string(messageType),
 		Message:     message,
 	}
 	return json.Marshal(msgWrapper)

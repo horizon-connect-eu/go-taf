@@ -80,9 +80,9 @@ func main() {
 	logger = logging.CreateMainLogger(tafConfig.Logging)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
-		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.CommunicationConfiguration.Kafka.Broker)))
+		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.Communication.Kafka.Broker)))
 
-	go saramaConsume(tafConfig.CommunicationConfiguration.Kafka)
+	go saramaConsume(tafConfig.Communication.Kafka)
 
 	WaitForCtrlC()
 
@@ -91,7 +91,7 @@ func main() {
 /*
  * The functions registers for the WATCH_TOPICS at the Kafka broker and checks every message it consumes.
  */
-func saramaConsume(kafkaConfig config.KafkaConfig) {
+func saramaConsume(kafkaConfig config.Kafka) {
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest

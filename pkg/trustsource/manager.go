@@ -3,10 +3,12 @@ package trustsource
 import (
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/manager"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	"log/slog"
@@ -113,24 +115,26 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
 				Subscribe:              subscribeField,
 			}
-			bytes, err := communication.BuildSubscriptionRequest("taf", "ECI", "AIV_SUBSCRIBE_REQUEST", "taf", "taf", subMsg)
+			bytes, subReqId, err := communication.BuildSubscriptionRequest("taf", messages.AIV_SUBSCRIBE_REQUEST, "taf", "taf", subMsg)
 			if err != nil {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
 			//Send response message
 			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "aiv")
+			util.UNUSED(subReqId)
 
 		case core.MBD:
 			subMsg := mbdmsg.MBDSubscribeRequest{
 				AttestationCertificate: "",
 				Subscribe:              true,
 			}
-			bytes, err := communication.BuildSubscriptionRequest("taf", "ECI", "MBD_SUBSCRIBE_REQUEST", "taf", "taf", subMsg)
+			bytes, subReqId, err := communication.BuildSubscriptionRequest("taf", messages.MBD_SUBSCRIBE_REQUEST, "taf", "taf", subMsg)
 			if err != nil {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
 			//Send response message
 			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "mbd")
+			util.UNUSED(subReqId)
 		default:
 			panic("unknown Trust Source")
 		}

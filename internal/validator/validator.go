@@ -12,7 +12,7 @@ Function takes a predefined messageSchema and JSON message as string, and either
 */
 func Validate(messageSchema message.MessageSchema, message string) (bool, []string, error) {
 
-	schemaContent, err := embedded.Schemas.ReadFile("res/schemas/" + string(messageSchema))
+	schemaContent, err := embedded.Schemas.ReadFile("res/schemas/" + string(messageSchema) + ".json")
 	if err != nil {
 		return false, nil, err
 	}

@@ -31,7 +31,7 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	config.Producer.Return.Errors = true
 	config.Producer.Return.Successes = true
 
-	brokers := []string{tafContext.Configuration.CommunicationConfiguration.Kafka.Broker}
+	brokers := []string{tafContext.Configuration.Communication.Kafka.Broker}
 
 	producer, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
@@ -90,7 +90,7 @@ func handleIncomingMessages(tafContext core.TafContext, logger *slog.Logger, con
 	signal.Notify(signals, os.Interrupt)
 
 	for {
-		err := consumer.Consume(ctx, tafContext.Configuration.CommunicationConfiguration.Kafka.Topics, &consumerHandler{
+		err := consumer.Consume(ctx, []string{tafContext.Configuration.Communication.Kafka.TafTopic}, &consumerHandler{
 			inboxChannel: inboxChannel,
 			logger:       logger,
 		})

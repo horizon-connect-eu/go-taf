@@ -14,7 +14,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"log"
 	"log/slog"
-	"math/rand/v2"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,15 +48,13 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	tafId := fmt.Sprintf("taf-%000000d", rand.IntN(999999))
-
 	//crypto.Init(logging.CreateChildLogger(logger, "Crypto Library"), "res/keys") TODO: re-add
 
 	tafContext := core.TafContext{
 		Configuration: tafConfig,
 		Logger:        logger,
 		Context:       ctx,
-		Identifier:    tafId,
+		Identifier:    tafConfig.Identifier,
 	}
 
 	//Channels
@@ -66,7 +63,7 @@ func main() {
 		OutgoingMessageChannel: make(chan core.Message, tafConfig.ChanBufSize),
 	}
 
-	logger.Info("Starting TAF with ID " + tafId)
+	logger.Info("Starting TAF with ID " + tafContext.Identifier)
 
 	communicationInterface, err := communication.NewInterface(tafContext, tafChannels)
 	if err != nil {

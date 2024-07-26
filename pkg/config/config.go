@@ -8,35 +8,45 @@ import (
 
 // Configuration of the TAF, including its subcomponents.
 type Configuration struct {
-	Logging                    LogConfiguration
-	ChanBufSize                int
-	TAM                        TAMConfiguration
-	CommunicationConfiguration CommunicationConfiguration
-	TLEE                       TLEEConfig
+	Identifier    string
+	Logging       Log
+	ChanBufSize   int
+	TAM           TAM
+	Communication Communication
+	TLEE          TLEE
+	V2X           V2X
 }
 
-type CommunicationConfiguration struct {
-	Handler string
-	Kafka   KafkaConfig
+type Communication struct {
+	Handler     string
+	Kafka       Kafka
+	TafEndpoint string
+	AivEndpoint string
+	MbdEndpoint string
 }
 
-type KafkaConfig struct {
-	Broker string
-	Topics []string
+type Kafka struct {
+	Broker   string
+	TafTopic string
 }
 
-type LogConfiguration struct {
+type Log struct {
 	LogLevel pterm.LogLevel
 	LogStyle string //PLAIN, PRETTY, JSON
 }
 
 // TAMConfiguration stores the config of the [tam.tam].
-type TAMConfiguration struct {
+type TAM struct {
 	TrustModelInstanceShards int
 }
 
-type TLEEConfig struct {
+type TLEE struct {
 	UseInternalTLEE bool
+}
+
+type V2X struct {
+	NodeTTLsec       int
+	CheckIntervalSec int
 }
 
 var (
@@ -47,20 +57,28 @@ var (
 	// misses values, this struct defines the corresponding
 	// default values.
 	DefaultConfig Configuration = Configuration{
-		Logging:     LogConfiguration{LogLevel: pterm.LogLevelDebug, LogStyle: "PRETTY"},
+		Identifier:  "taf",
+		Logging:     Log{LogLevel: pterm.LogLevelDebug, LogStyle: "PRETTY"},
 		ChanBufSize: 1_000,
-		TAM: TAMConfiguration{
+		TAM: TAM{
 			TrustModelInstanceShards: 1,
 		},
-		CommunicationConfiguration: CommunicationConfiguration{
+		Communication: Communication{
 			Handler: "kafka-based",
-			Kafka: KafkaConfig{
-				Broker: "localhost:9092",
-				Topics: []string{"taf"},
+			Kafka: Kafka{
+				Broker:   "localhost:9092",
+				TafTopic: "taf",
 			},
+			TafEndpoint: "taf",
+			AivEndpoint: "aiv",
+			MbdEndpoint: "mbd",
 		},
-		TLEE: TLEEConfig{
+		TLEE: TLEE{
 			UseInternalTLEE: true,
+		},
+		V2X: V2X{
+			NodeTTLsec:       5,
+			CheckIntervalSec: 1,
 		},
 	}
 )

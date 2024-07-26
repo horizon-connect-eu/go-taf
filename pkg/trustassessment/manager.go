@@ -10,6 +10,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/manager"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
@@ -148,7 +149,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 			SessionID:              nil,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
+		bytes, err := communication.BuildResponse(tam.tafContext.Configuration.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 		}
@@ -190,7 +191,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		Success:                &success,
 	}
 
-	bytes, err := communication.BuildResponse("taf", "TAS", "TAS_INIT_RESPONSE", cmd.RequestID, response)
+	bytes, err := communication.BuildResponse("taf", messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
 	}
@@ -210,7 +211,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 			Error:                  &errorMsg,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
+		bytes, err := communication.BuildResponse("taf", messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 		}
@@ -228,7 +229,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		Success:                &success,
 	}
 
-	bytes, err := communication.BuildResponse("taf", "TAS", "TAS_TEARDOWN_RESPONSE", cmd.RequestID, response)
+	bytes, err := communication.BuildResponse("taf", messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
 	}

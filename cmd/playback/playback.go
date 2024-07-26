@@ -119,7 +119,7 @@ func main() {
 
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
-		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.CommunicationConfiguration.Kafka.Broker)))
+		slog.String("Broker", fmt.Sprintf("%+v", tafConfig.Communication.Kafka.Broker)))
 
 	var wg sync.WaitGroup
 	wg.Add(1)

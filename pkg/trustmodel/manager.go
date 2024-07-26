@@ -39,7 +39,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		channels:               channels,
 		logger:                 logging.CreateChildLogger(tafContext.Logger, "TMM"),
 		trustModelTemplateRepo: TemplateRepository,
-		v2xObserver:            CreateListener(5, 2),
+		v2xObserver:            CreateListener(tafContext.Configuration.V2X.NodeTTLsec, tafContext.Configuration.V2X.CheckIntervalSec),
 	}
 
 	tmtNames := make([]string, len(tmm.trustModelTemplateRepo))
