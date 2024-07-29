@@ -68,10 +68,10 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		//TODO
-		if update.TrustSourceQuantifierInstance.Trustee == "VC1" {
+		if update.Trustee == "VC1" {
 			e.omega1.Modify(update.Opinion.Belief(), update.Opinion.Disbelief(), update.Opinion.Uncertainty(), update.Opinion.BaseRate())
 			e.version++
-		} else if update.TrustSourceQuantifierInstance.Trustee == "VC2" {
+		} else if update.Trustee == "VC2" {
 			e.omega2.Modify(update.Opinion.Belief(), update.Opinion.Disbelief(), update.Opinion.Uncertainty(), update.Opinion.BaseRate())
 			e.version++
 		}
