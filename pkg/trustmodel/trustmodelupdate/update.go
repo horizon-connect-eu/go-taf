@@ -7,7 +7,7 @@ import (
 
 type UpdateAtomicTrustOpinion struct {
 	Opinion                       subjectivelogic.QueryableOpinion
-	TrustSourceQuantifierInstance string
+	TrustSourceQuantifierInstance core.TrustSourceQuantifierInstance
 }
 
 func (u UpdateAtomicTrustOpinion) Type() core.UpdateOp {
