@@ -160,6 +160,6 @@ func (tsm *Manager) GenerateRequestId() string {
 	if tsm.config.Debug.FixedRequestID != "" {
 		return tsm.config.Debug.FixedRequestID
 	} else {
-		return "R-" + uuid.New().String()
+		return "REQ-" + uuid.New().String()
 	}
 }

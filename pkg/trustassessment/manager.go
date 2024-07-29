@@ -136,7 +136,7 @@ func (tam *Manager) createSessionId() string {
 	if tam.config.Debug.FixedSessionID != "" {
 		return tam.config.Debug.FixedSessionID
 	} else {
-		return "S-" + uuid.New().String()
+		return "SES-" + uuid.New().String()
 	}
 }
 
