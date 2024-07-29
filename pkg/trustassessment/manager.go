@@ -2,7 +2,6 @@ package trustassessment
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/uuid"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
@@ -44,6 +43,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		tMIs:       make(map[string]*core.TrustModelInstance),
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TAM"),
 		crypto:     tafContext.Crypto,
+		outbox:     channels.OutgoingMessageChannel,
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -66,7 +66,6 @@ func (tam *Manager) Run() {
 		tam.logger.Info("Shutting down")
 	}()
 
-	tam.outbox = tam.channels.OutgoingMessageChannel
 	tsm := tam.tsm
 	tmm := tam.tmm
 
@@ -189,8 +188,6 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 	success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
 
-	fmt.Println()
-
 	response := tasmsg.TasInitResponse{
 		AttestationCertificate: tam.crypto.AttestationCertificate(),
 		Error:                  nil,
@@ -243,7 +240,6 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	//Send response message
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	return
-
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {

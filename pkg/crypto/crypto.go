@@ -2,7 +2,9 @@ package crypto
 
 import (
 	"crypto-library-interface/pkg/crypto"
+	"encoding/json"
 	"errors"
+	"fmt"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	"log/slog"
 )
@@ -82,18 +84,48 @@ func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) e
 
 func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) {
 	if cr.cryptoEnabled {
-		//TODO
-		return true, nil
+		nonceByteArray, err := crypto.FromHexToByteArray(*response.AivEvidence.Nonce)
+		if err != nil {
+			return false, errors.New("Failed to decode nonce from AIV_RESPONSE")
+		}
+		trusteeReportByteStream, err := json.Marshal(response.TrusteeReports)
+		if err != nil {
+			return false, errors.New("Failed to decode trustee report from AIV_RESPONSE")
+		}
+		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
+		verificationResult, err := crypto.Verify(byteStreamToBeSigned, response.AivEvidence.Signature, response.AivEvidence.KeyRef+".pem")
+		if err == nil {
+			return false, err
+		} else {
+			fmt.Sprintf("Output: %b", verificationResult)
+			return verificationResult, nil
+		}
 	} else {
+		//Don't do anything
 		return true, nil
 	}
 }
 
 func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	if cr.cryptoEnabled {
-		//TODO
-		return true, nil
+		nonceByteArray, err := crypto.FromHexToByteArray(notify.AivEvidence.Nonce)
+		if err != nil {
+			return false, errors.New("Failed to decode nonce from AIV_RESPONSE")
+		}
+		trusteeReportByteStream, err := json.Marshal(notify.TrusteeReports)
+		if err != nil {
+			return false, errors.New("Failed to decode trustee report from AIV_RESPONSE")
+		}
+		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
+		verificationResult, err := crypto.Verify(byteStreamToBeSigned, notify.AivEvidence.Signature, notify.AivEvidence.KeyRef+".pem")
+		if err == nil {
+			return false, err
+		} else {
+			fmt.Sprintf("Output: %b", verificationResult)
+			return verificationResult, nil
+		}
 	} else {
+		//Don't do anything
 		return true, nil
 	}
 }
