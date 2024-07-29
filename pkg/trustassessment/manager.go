@@ -2,12 +2,14 @@ package trustassessment
 
 import (
 	"context"
-	"crypto-library-interface/pkg/crypto"
+	"fmt"
+	"github.com/google/uuid"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	crypto "github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
@@ -20,7 +22,7 @@ import (
 )
 
 type Manager struct {
-	conf           config.Configuration
+	config         config.Configuration
 	workerChannels []chan core.Command
 	logger         *slog.Logger
 	tafContext     core.TafContext
@@ -30,18 +32,20 @@ type Manager struct {
 	outbox         chan core.Message
 	tsm            manager.TrustSourceManager
 	tmm            manager.TrustModelManager
+	crypto         *crypto.Crypto
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tam := &Manager{
-		conf:       tafContext.Configuration,
+		config:     tafContext.Configuration,
 		tafContext: tafContext,
 		channels:   channels,
 		sessions:   make(map[string]*session.Session),
 		tMIs:       make(map[string]*core.TrustModelInstance),
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TAM"),
+		crypto:     tafContext.Crypto,
 	}
-	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.conf.TAM.TrustModelInstanceShards)
+	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
 }
 
@@ -52,7 +56,7 @@ func (tam *Manager) SetManagers(managers manager.TafManagers) {
 
 // Get shard worker based on provided ID and configured number of shards
 func (tam *Manager) getShardWorkerById(id int) int {
-	return id % tam.conf.TAM.TrustModelInstanceShards
+	return id % tam.config.TAM.TrustModelInstanceShards
 }
 
 // Run the trust assessment manager
@@ -66,8 +70,8 @@ func (tam *Manager) Run() {
 	tsm := tam.tsm
 	tmm := tam.tmm
 
-	tam.workerChannels = make([]chan core.Command, 0, tam.conf.TAM.TrustModelInstanceShards)
-	for i := range tam.conf.TAM.TrustModelInstanceShards {
+	tam.workerChannels = make([]chan core.Command, 0, tam.config.TAM.TrustModelInstanceShards)
+	for i := range tam.config.TAM.TrustModelInstanceShards {
 		ch := make(chan core.Command, 1_000)
 		tam.workerChannels = append(tam.workerChannels, ch)
 
@@ -128,20 +132,16 @@ func (tam *Manager) Run() {
 }
 
 func (tam *Manager) createSessionId() string {
-
-	//sessionId := fmt.Sprintf("session-%000000d", rand.IntN(999999))
-	sessionId := "sessionId"
-
-	return sessionId
+	//When debug configuration provides fixed session ID, use this ID
+	if tam.config.Debug.FixedSessionID != "" {
+		return tam.config.Debug.FixedSessionID
+	} else {
+		return "S-" + uuid.New().String()
+	}
 }
 
 func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest]) {
 	tam.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request.TrustModelTemplate)
-
-	attestationCertificate, err := crypto.LoadAttestationCertificateInBase64()
-	if err != nil {
-		tam.logger.Error("Error marshalling response", "Error", err)
-	}
 
 	tmt := tam.tmm.ResolveTMT(cmd.Request.TrustModelTemplate)
 	if tmt == nil {
@@ -149,12 +149,12 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 		errorMsg := "Trust model template '" + cmd.Request.TrustModelTemplate + "' could not be resolved."
 		response := tasmsg.TasInitResponse{
-			AttestationCertificate: attestationCertificate,
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errorMsg,
 			SessionID:              nil,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse(tam.tafContext.Configuration.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 		}
@@ -189,14 +189,16 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 	success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
 
+	fmt.Println()
+
 	response := tasmsg.TasInitResponse{
-		AttestationCertificate: attestationCertificate, //TODO add crypto library call
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
 		Error:                  nil,
 		SessionID:              &sessionId,
 		Success:                &success,
 	}
 
-	bytes, err := communication.BuildResponse("taf", messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
 	}
@@ -212,11 +214,11 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		errorMsg := "Session ID '" + cmd.Request.SessionID + "' not found."
 
 		response := tasmsg.TasTeardownResponse{
-			AttestationCertificate: "", //TODO add crypto library call
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errorMsg,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse("taf", messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 		}
@@ -229,12 +231,12 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."
 	response := tasmsg.TasTeardownResponse{
-		AttestationCertificate: "", //TODO add crypto library call
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
 		Error:                  nil,
 		Success:                &success,
 	}
 
-	bytes, err := communication.BuildResponse("taf", messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
+	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
 	}

@@ -7,26 +7,41 @@ import (
 	"log/slog"
 )
 
+/*
+The Crypto struct is a lightweight TAF-side wrapper around the crypto library.
+*/
 type Crypto struct {
-	cryptoEnabled bool
+	cryptoEnabled          bool
+	attestationCertificate string
 }
 
 func NewCrypto(logger *slog.Logger, keyPath string, cryptoEnabled bool) (*Crypto, error) {
-	err := crypto.Init(logger, keyPath)
-	if err != nil {
-		return nil, err
-	} else {
-		cr := &Crypto{
-			cryptoEnabled: cryptoEnabled,
+
+	cr := &Crypto{
+		cryptoEnabled: cryptoEnabled,
+	}
+	if cr.cryptoEnabled {
+		err := crypto.Init(logger, keyPath)
+		if err != nil {
+			return nil, err
 		}
+		cert, err := crypto.LoadAttestationCertificateInBase64()
+		if err != nil {
+			return nil, err
+		} else {
+			cr.attestationCertificate = cert
+			return cr, nil
+		}
+
+	} else {
+		cr.attestationCertificate = ""
 		return cr, nil
 	}
+
 }
 
-func (cr *Crypto) addAttestationCertificate() {
-	if cr.cryptoEnabled {
-		//TODO
-	}
+func (cr *Crypto) AttestationCertificate() string {
+	return cr.attestationCertificate
 }
 
 func (cr *Crypto) VerifyAivResponse(aivResposeBytestream []byte, trusteeReportByteStream []byte, logger *slog.Logger) {

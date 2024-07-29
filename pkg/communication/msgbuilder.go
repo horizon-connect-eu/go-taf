@@ -47,15 +47,10 @@ type GenericOneWayMessageWrapper struct {
 	Message     interface{} `json:"message"`
 }
 
-func generateRequestId() string {
-	return "123" //TODO: make random
-}
-
 /*
 The BuildRequest function builds a byte representation of a JSON request by filling the header fields and return a byte representation of the message and the request ID used.
 */
-func BuildRequest(sender string, messageType messages.MessageSchema, responseTopic string, message interface{}) ([]byte, string, error) {
-	requestId := generateRequestId()
+func BuildRequest(sender string, messageType messages.MessageSchema, responseTopic string, requestId string, message interface{}) ([]byte, error) {
 	responseWrapper := GenericRequestWrapper{
 		Sender:        sender,
 		ServiceType:   messages.ServiceMap[messageType],
@@ -66,17 +61,16 @@ func BuildRequest(sender string, messageType messages.MessageSchema, responseTop
 	}
 	bytes, err := json.Marshal(responseWrapper)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	} else {
-		return bytes, requestId, nil
+		return bytes, nil
 	}
 }
 
 /*
 The BuildSubscriptionRequest function builds a byte representation of a JSON subscription request by filling the header fields and returns a byte representation of the message and the request ID used.
 */
-func BuildSubscriptionRequest(sender string, messageType messages.MessageSchema, responseTopic string, subscriberTopic string, message interface{}) ([]byte, string, error) {
-	requestId := generateRequestId()
+func BuildSubscriptionRequest(sender string, messageType messages.MessageSchema, responseTopic string, subscriberTopic string, requestId string, message interface{}) ([]byte, error) {
 	subReqWrapper := GenericSubscriptionRequestWrapper{
 		Sender:          sender,
 		ServiceType:     messages.ServiceMap[messageType],
@@ -88,9 +82,9 @@ func BuildSubscriptionRequest(sender string, messageType messages.MessageSchema,
 	}
 	bytes, err := json.Marshal(subReqWrapper)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	} else {
-		return bytes, requestId, nil
+		return bytes, nil
 	}
 
 }

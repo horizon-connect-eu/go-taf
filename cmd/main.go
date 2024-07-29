@@ -50,7 +50,7 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	cryptoLib, err := crypto.NewCrypto(logging.CreateChildLogger(logger, "Crypto Library"), tafConfig.Crypto.KeyFolder, true)
+	cryptoLib, err := crypto.NewCrypto(logging.CreateChildLogger(logger, "Crypto Library"), tafConfig.Crypto.KeyFolder, tafConfig.Crypto.Enabled)
 	if err != nil {
 		logger.Error("Error initializing crypto library")
 	}
@@ -61,6 +61,7 @@ func main() {
 		Logger:        logger,
 		Context:       ctx,
 		Identifier:    tafConfig.Identifier,
+		Crypto:        cryptoLib,
 	}
 
 	//Channels

@@ -5,6 +5,7 @@ import (
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"log/slog"
@@ -13,12 +14,13 @@ import (
 
 type Manager struct {
 	tafContext             core.TafContext
-	channels               core.TafChannels
 	logger                 *slog.Logger
 	tam                    manager.TrustAssessmentManager
 	tsm                    manager.TrustSourceManager
 	trustModelTemplateRepo map[string]core.TrustModelTemplate
 	v2xObserver            v2xObserver
+	crypto                 *crypto.Crypto
+	outbox                 chan core.Message
 }
 
 type v2xListener struct{}
@@ -36,10 +38,11 @@ func (v v2xListener) handleNodeRemoved(identifier string) {
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tmm := &Manager{
 		tafContext:             tafContext,
-		channels:               channels,
 		logger:                 logging.CreateChildLogger(tafContext.Logger, "TMM"),
 		trustModelTemplateRepo: TemplateRepository,
 		v2xObserver:            CreateListener(tafContext.Configuration.V2X.NodeTTLsec, tafContext.Configuration.V2X.CheckIntervalSec),
+		crypto:                 tafContext.Crypto,
+		outbox:                 channels.OutgoingMessageChannel,
 	}
 
 	tmtNames := make([]string, len(tmm.trustModelTemplateRepo))

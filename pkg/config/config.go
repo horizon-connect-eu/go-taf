@@ -10,6 +10,7 @@ import (
 type Configuration struct {
 	Identifier    string
 	Logging       Log
+	Debug         Debug
 	ChanBufSize   int
 	Crypto        Crypto
 	TAM           TAM
@@ -20,6 +21,13 @@ type Configuration struct {
 
 type Crypto struct {
 	KeyFolder string
+	Enabled   bool
+}
+
+type Debug struct {
+	FixedSessionID      string
+	FixedSubscriptionID string
+	FixedRequestID      string
 }
 
 type Communication struct {
@@ -70,6 +78,7 @@ var (
 		},
 		Crypto: Crypto{
 			KeyFolder: "res/cert/",
+			Enabled:   false,
 		},
 		Communication: Communication{
 			Handler: "kafka-based",
@@ -80,6 +89,11 @@ var (
 			TafEndpoint: "taf",
 			AivEndpoint: "aiv",
 			MbdEndpoint: "mbd",
+		},
+		Debug: Debug{
+			FixedSessionID:      "",
+			FixedSubscriptionID: "",
+			FixedRequestID:      "",
 		},
 		TLEE: TLEE{
 			UseInternalTLEE: true,

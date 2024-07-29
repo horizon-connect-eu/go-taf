@@ -2,11 +2,14 @@ package trustsource
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
+	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
@@ -16,18 +19,22 @@ import (
 )
 
 type Manager struct {
+	config     config.Configuration
 	tafContext core.TafContext
-	channels   core.TafChannels
 	logger     *slog.Logger
 	tam        manager.TrustAssessmentManager
 	tmm        manager.TrustModelManager
+	crypto     *crypto.Crypto
+	outbox     chan core.Message
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tsm := &Manager{
+		config:     tafContext.Configuration,
 		tafContext: tafContext,
-		channels:   channels,
 		logger:     logging.CreateChildLogger(tafContext.Logger, "TSM"),
+		crypto:     tafContext.Crypto,
+		outbox:     channels.OutgoingMessageChannel,
 	}
 	tsm.logger.Info("Initializing Trust Source Manager")
 	return tsm, nil
@@ -114,17 +121,18 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 			}
 
 			subMsg := aivmsg.AivSubscribeRequest{
-				AttestationCertificate: "",
+				AttestationCertificate: tsm.crypto.AttestationCertificate(),
 				CheckInterval:          1000,
 				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
 				Subscribe:              subscribeField,
 			}
-			bytes, subReqId, err := communication.BuildSubscriptionRequest("taf", messages.AIV_SUBSCRIBE_REQUEST, "taf", "taf", subMsg)
+			subReqId := tsm.GenerateRequestId()
+			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
 			if err != nil {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
 			//Send response message
-			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "aiv")
+			tsm.outbox <- core.NewMessage(bytes, "", "aiv")
 			util.UNUSED(subReqId)
 
 		case core.MBD:
@@ -132,16 +140,26 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 				AttestationCertificate: "",
 				Subscribe:              true,
 			}
-			bytes, subReqId, err := communication.BuildSubscriptionRequest("taf", messages.MBD_SUBSCRIBE_REQUEST, "taf", "taf", subMsg)
+			subReqId := tsm.GenerateRequestId()
+			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
 			if err != nil {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
 			//Send response message
-			tsm.channels.OutgoingMessageChannel <- core.NewMessage(bytes, "", "mbd")
+			tsm.outbox <- core.NewMessage(bytes, "", "mbd")
 			util.UNUSED(subReqId)
 		default:
 			panic("unknown Trust Source")
 		}
 	}
 
+}
+
+func (tsm *Manager) GenerateRequestId() string {
+	//When debug configuration provides fixed session ID, use this ID
+	if tsm.config.Debug.FixedRequestID != "" {
+		return tsm.config.Debug.FixedRequestID
+	} else {
+		return "R-" + uuid.New().String()
+	}
 }

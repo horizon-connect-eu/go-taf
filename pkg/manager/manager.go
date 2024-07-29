@@ -51,6 +51,7 @@ type TrustSourceManager interface {
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
 	InitTrustSourceQuantifiers(tmi core.TrustModelInstance)
+	GenerateRequestId() string
 }
 
 type TrustModelManager interface {
