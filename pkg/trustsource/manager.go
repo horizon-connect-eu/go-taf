@@ -19,13 +19,14 @@ import (
 )
 
 type Manager struct {
-	config     config.Configuration
-	tafContext core.TafContext
-	logger     *slog.Logger
-	tam        manager.TrustAssessmentManager
-	tmm        manager.TrustModelManager
-	crypto     *crypto.Crypto
-	outbox     chan core.Message
+	config                       config.Configuration
+	tafContext                   core.TafContext
+	logger                       *slog.Logger
+	tam                          manager.TrustAssessmentManager
+	tmm                          manager.TrustModelManager
+	crypto                       *crypto.Crypto
+	outbox                       chan core.Message
+	pendingSubscriptionCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command) bool
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
@@ -36,6 +37,13 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		crypto:     tafContext.Crypto,
 		outbox:     channels.OutgoingMessageChannel,
 	}
+
+	tsm.pendingSubscriptionCallbacks = make(map[messages.MessageSchema]map[string]func(cmd core.Command) bool)
+	tsm.pendingSubscriptionCallbacks[messages.AIV_SUBSCRIBE_RESPONSE] = make(map[string]func(cmd core.Command) bool)
+	tsm.pendingSubscriptionCallbacks[messages.AIV_UNSUBSCRIBE_RESPONSE] = make(map[string]func(cmd core.Command) bool)
+	tsm.pendingSubscriptionCallbacks[messages.MBD_SUBSCRIBE_RESPONSE] = make(map[string]func(cmd core.Command) bool)
+	tsm.pendingSubscriptionCallbacks[messages.MBD_UNSUBSCRIBE_RESPONSE] = make(map[string]func(cmd core.Command) bool)
+
 	tsm.logger.Info("Initializing Trust Source Manager")
 	return tsm, nil
 }
@@ -61,11 +69,23 @@ func (tsm *Manager) HandleAivResponse(cmd command.HandleResponse[aivmsg.AivRespo
 }
 
 func (tsm *Manager) HandleAivSubscribeResponse(cmd command.HandleResponse[aivmsg.AivSubscribeResponse]) {
-	tsm.logger.Info("TODO: handle AIV_SUBSCRIBE_RESPONSE")
+	callback, exists := tsm.pendingSubscriptionCallbacks[messages.AIV_SUBSCRIBE_RESPONSE][cmd.ResponseID]
+	if !exists {
+		tsm.logger.Warn("AIV_SUBSCRIBE_RESPONSE with unknown response ID received.")
+	} else {
+		callback(cmd)
+		delete(tsm.pendingSubscriptionCallbacks[messages.AIV_SUBSCRIBE_RESPONSE], cmd.ResponseID)
+	}
 }
 
 func (tsm *Manager) HandleAivUnsubscribeResponse(cmd command.HandleResponse[aivmsg.AivUnsubscribeResponse]) {
-	tsm.logger.Info("TODO: handle AIV_UNSUBSCRIBE_RESPONSE")
+	callback, exists := tsm.pendingSubscriptionCallbacks[messages.AIV_UNSUBSCRIBE_RESPONSE][cmd.ResponseID]
+	if !exists {
+		tsm.logger.Warn("AIV_UNSUBSCRIBE_RESPONSE with unknown response ID received.")
+	} else {
+		callback(cmd)
+		delete(tsm.pendingSubscriptionCallbacks[messages.AIV_UNSUBSCRIBE_RESPONSE], cmd.ResponseID)
+	}
 }
 
 func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
@@ -99,9 +119,11 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 
 }
 
-func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
+func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) map[string]func(cmd core.Command) bool {
 
-	subscriptions := make(map[core.Source]map[string][]core.Evidence, 1)
+	callbacks := make(map[string]func(cmd core.Command) bool, 0)
+
+	subscriptions := make(map[core.Source]map[string][]core.Evidence, 0)
 
 	for _, quantifier := range tmi.TrustSourceQuantifiers() {
 
@@ -150,13 +172,27 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 			if err != nil {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
+
+			callbacks[subReqId] = func(recvCmd core.Command) bool {
+				switch cmd := recvCmd.(type) {
+				case command.HandleResponse[aivmsg.AivSubscribeResponse]:
+					tsm.logger.Warn(*cmd.Response.SubscriptionID)
+					return true
+				default:
+					return false
+				}
+				return true
+			}
+			tsm.RegisterCallback(messages.AIV_SUBSCRIBE_RESPONSE, subReqId, callbacks[subReqId])
+			//TODO: What does InitTrustSourceQuantifiers return instead?
+
 			//Send response message
-			tsm.outbox <- core.NewMessage(bytes, "", "aiv")
+			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
 			util.UNUSED(subReqId)
 
 		case core.MBD:
 			subMsg := mbdmsg.MBDSubscribeRequest{
-				AttestationCertificate: "",
+				AttestationCertificate: tsm.crypto.AttestationCertificate(),
 				Subscribe:              true,
 			}
 			subReqId := tsm.GenerateRequestId()
@@ -165,13 +201,17 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 				tsm.logger.Error("Error marshalling response", "error", err)
 			}
 			//Send response message
-			tsm.outbox <- core.NewMessage(bytes, "", "mbd")
+			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
 			util.UNUSED(subReqId)
 		default:
 			panic("unknown Trust Source")
 		}
 	}
+	return callbacks
+}
 
+func (tsm *Manager) RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command) bool) {
+	tsm.pendingSubscriptionCallbacks[messageType][requestID] = fn
 }
 
 func (tsm *Manager) GenerateRequestId() string {

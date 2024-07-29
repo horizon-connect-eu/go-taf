@@ -3,6 +3,7 @@ package manager
 import (
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
@@ -50,8 +51,9 @@ type TrustSourceManager interface {
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
-	InitTrustSourceQuantifiers(tmi core.TrustModelInstance)
+	InitTrustSourceQuantifiers(tmi core.TrustModelInstance) map[string]func(cmd core.Command) bool
 	GenerateRequestId() string
+	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command) bool)
 }
 
 type TrustModelManager interface {

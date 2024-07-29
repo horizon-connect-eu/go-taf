@@ -161,7 +161,6 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 		return
 	}
-	tmt.EvidenceSources()
 	//create session ID for client
 	sessionId := tam.createSessionId()
 	//create Session
@@ -184,24 +183,32 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//Initialize TMI
 	newTMI.Init()
 
-	tam.tsm.InitTrustSourceQuantifiers(newTMI)
+	//Initialize Trust Source Quantifiers and Subscriptions
+	tsqCallbacks := tam.tsm.InitTrustSourceQuantifiers(newTMI)
+	if len(tsqCallbacks) > 0 {
+		//TODO: prepare TAS_INIT_RESPONSE
+		//TODO: register callbacks and final action
 
-	success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
+		return
+	} else {
+		//no pending subscriptions, answer directly
+		success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
 
-	response := tasmsg.TasInitResponse{
-		AttestationCertificate: tam.crypto.AttestationCertificate(),
-		Error:                  nil,
-		SessionID:              &sessionId,
-		Success:                &success,
+		response := tasmsg.TasInitResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  nil,
+			SessionID:              &sessionId,
+			Success:                &success,
+		}
+
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		//Send response message
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		return
 	}
-
-	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
-	if err != nil {
-		tam.logger.Error("Error marshalling response", "error", err)
-	}
-	//Send response message
-	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
-	return
 }
 
 func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {

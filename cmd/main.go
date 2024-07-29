@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
@@ -54,7 +53,6 @@ func main() {
 	if err != nil {
 		logger.Error("Error initializing crypto library")
 	}
-	util.UNUSED(cryptoLib)
 
 	tafContext := core.TafContext{
 		Configuration: tafConfig,
