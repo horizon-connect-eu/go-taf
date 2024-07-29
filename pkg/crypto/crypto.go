@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"crypto-library-interface/pkg/crypto"
-	"encoding/json"
-	"fmt"
+	"errors"
+	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	"log/slog"
 )
 
@@ -44,22 +44,56 @@ func (cr *Crypto) AttestationCertificate() string {
 	return cr.attestationCertificate
 }
 
-func (cr *Crypto) VerifyAivResponse(aivResposeBytestream []byte, trusteeReportByteStream []byte, logger *slog.Logger) {
-	var jsonMap map[string]interface{}
-	json.Unmarshal(aivResposeBytestream, &jsonMap)
-
-	nonceByteArray, err := crypto.FromHexToByteArray(jsonMap["nonce"].(string))
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to convert hex to bytes: %s", err))
+func (cr *Crypto) SignAivRequest(request *aivmsg.AivRequest) error {
+	if cr.cryptoEnabled {
+		cryptoEvidence, err := crypto.GenerateEvidence()
+		if err != nil {
+			return errors.New("Error generating evidence for AIV request")
+		}
+		request.Evidence.KeyRef = cryptoEvidence.KeyRef
+		request.Evidence.Nonce = *cryptoEvidence.Nonce
+		request.Evidence.Signature = cryptoEvidence.Signature
+		request.Evidence.SignatureAlgorithmType = cryptoEvidence.SignatureAlgorithmType
+		request.Evidence.Timestamp = cryptoEvidence.Timestamp
+		return nil
+	} else {
+		//Don't do anything
+		return nil
 	}
+}
 
-	byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
+func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) error {
+	if cr.cryptoEnabled {
+		cryptoEvidence, err := crypto.GenerateEvidence()
+		if err != nil {
+			return errors.New("Error generating evidence for AIV subscribe request")
+		}
+		request.Evidence.KeyRef = cryptoEvidence.KeyRef
+		request.Evidence.Nonce = *cryptoEvidence.Nonce
+		request.Evidence.Signature = cryptoEvidence.Signature
+		request.Evidence.SignatureAlgorithmType = cryptoEvidence.SignatureAlgorithmType
+		request.Evidence.Timestamp = cryptoEvidence.Timestamp
+		return nil
+	} else {
+		//Don't do anything
+		return nil
+	}
+}
 
-	print("HELLO FROM VERIFICATION\n")
+func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) {
+	if cr.cryptoEnabled {
+		//TODO
+		return true, nil
+	} else {
+		return true, nil
+	}
+}
 
-	//TODO: fix absolute path
-	verificationResult, _ := crypto.Verify(byteStreamToBeSigned, jsonMap["signature"].(string), "/home/stef/workspace/connect/aiv/"+jsonMap["keyRef"].(string)+".pem")
-
-	logger.Info(fmt.Sprintf("AIV_REQUEST verification status is [ %v ]\n", verificationResult))
-	print("HELLO FROM VERIFICATION\n")
+func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
+	if cr.cryptoEnabled {
+		//TODO
+		return true, nil
+	} else {
+		return true, nil
+	}
 }

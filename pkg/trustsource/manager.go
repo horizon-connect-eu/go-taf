@@ -48,6 +48,15 @@ func (tsm *Manager) SetManagers(managers manager.TafManagers) {
 /* ------------ ------------ AIV Message Handling ------------ ------------ */
 
 func (tsm *Manager) HandleAivResponse(cmd command.HandleResponse[aivmsg.AivResponse]) {
+	valid, err := tsm.crypto.VerifyAivResponse(&cmd.Response)
+	if err != nil {
+		tsm.logger.Error("Error verifying AIV_RESPONSE", "Cause", err)
+		return
+	}
+	if !valid {
+		tsm.logger.Warn("AIV_RESPONSE could not be verified, ignoring message")
+		return
+	}
 	tsm.logger.Info("TODO: handle AIV_RESPONSE")
 }
 
@@ -60,6 +69,15 @@ func (tsm *Manager) HandleAivUnsubscribeResponse(cmd command.HandleResponse[aivm
 }
 
 func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
+	valid, err := tsm.crypto.VerifyAivNotify(&cmd.Notify)
+	if err != nil {
+		tsm.logger.Error("Error verifying AIV_NOTIFY", "Cause", err)
+		return
+	}
+	if !valid {
+		tsm.logger.Warn("AIV_NOTIFY could not be verified, ignoring message")
+		return
+	}
 	tsm.logger.Info("TODO: handle AIV_NOTIFY")
 }
 
@@ -126,6 +144,7 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance) {
 				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
 				Subscribe:              subscribeField,
 			}
+			tsm.crypto.SignAivSubscribeRequest(&subMsg)
 			subReqId := tsm.GenerateRequestId()
 			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
 			if err != nil {
