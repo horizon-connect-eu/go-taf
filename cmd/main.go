@@ -5,11 +5,12 @@ package main
 
 import (
 	"context"
-	"crypto-library-interface/pkg/crypto"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
@@ -49,11 +50,11 @@ func main() {
 	defer time.Sleep(1 * time.Second) // TODO: replace this cleanup interval with waitgroups
 	defer cancelFunc()
 
-	err := crypto.Init(logging.CreateChildLogger(logger, "Crypto Library"), tafConfig.Crypto.KeyFolder)
+	cryptoLib, err := crypto.NewCrypto(logging.CreateChildLogger(logger, "Crypto Library"), tafConfig.Crypto.KeyFolder, true)
 	if err != nil {
 		logger.Error("Error initializing crypto library")
-		os.Exit(-1)
 	}
+	util.UNUSED(cryptoLib)
 
 	tafContext := core.TafContext{
 		Configuration: tafConfig,

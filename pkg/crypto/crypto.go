@@ -7,7 +7,29 @@ import (
 	"log/slog"
 )
 
-func VerifyAivResponse(aivResposeBytestream []byte, trusteeReportByteStream []byte, logger *slog.Logger) {
+type Crypto struct {
+	cryptoEnabled bool
+}
+
+func NewCrypto(logger *slog.Logger, keyPath string, cryptoEnabled bool) (*Crypto, error) {
+	err := crypto.Init(logger, keyPath)
+	if err != nil {
+		return nil, err
+	} else {
+		cr := &Crypto{
+			cryptoEnabled: cryptoEnabled,
+		}
+		return cr, nil
+	}
+}
+
+func (cr *Crypto) addAttestationCertificate() {
+	if cr.cryptoEnabled {
+		//TODO
+	}
+}
+
+func (cr *Crypto) VerifyAivResponse(aivResposeBytestream []byte, trusteeReportByteStream []byte, logger *slog.Logger) {
 	var jsonMap map[string]interface{}
 	json.Unmarshal(aivResposeBytestream, &jsonMap)
 
