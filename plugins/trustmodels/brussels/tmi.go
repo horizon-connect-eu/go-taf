@@ -64,10 +64,8 @@ func (e *TrustModelInstance) Template() core.TrustModelTemplate {
 }
 
 func (e *TrustModelInstance) Update(update core.Update) {
-	//TODO implement me
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
-		//TODO
 		if update.Trustee == "VC1" {
 			e.omega1.Modify(update.Opinion.Belief(), update.Opinion.Disbelief(), update.Opinion.Uncertainty(), update.Opinion.BaseRate())
 			e.version++
