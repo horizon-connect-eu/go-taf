@@ -8,7 +8,7 @@ import (
 type v2xObserver struct {
 	nodes     map[string]int64
 	observers map[observer]bool
-	lock      sync.RWMutex
+	lock      *sync.RWMutex
 	ttl       int
 }
 
@@ -28,6 +28,7 @@ func CreateListener(ttlSeconds int, checkIntervalSeconds int) v2xObserver {
 	listener := v2xObserver{
 		nodes:     make(map[string]int64),
 		observers: make(map[observer]bool),
+		lock:      &sync.RWMutex{},
 	}
 	go func() {
 		for now := range time.Tick(time.Duration(checkIntervalSeconds) * time.Second) {
