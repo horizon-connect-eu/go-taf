@@ -53,8 +53,8 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	}
 }
 
-func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifierInstance {
-	return []core.TrustSourceQuantifierInstance{}
+func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
+	return []core.TrustSourceQuantifier{}
 }
 
 func (e *TrustModelInstance) Init() {

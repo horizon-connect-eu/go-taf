@@ -2,7 +2,9 @@ package trustsource
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/util"
@@ -17,7 +19,10 @@ import (
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"log/slog"
+	"math"
 )
+
+const MISSING_EVIDENCE = math.MinInt
 
 type Manager struct {
 	config                  config.Configuration
@@ -28,15 +33,23 @@ type Manager struct {
 	crypto                  *crypto.Crypto
 	outbox                  chan core.Message
 	pendingMessageCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command)
+	subscriptionIDtoTMI     map[string]string
+	//subscriptionID:Trustee:Source:EvidenceType->Value
+	subscriptionEvidence map[string]map[string]map[core.Source]map[core.EvidenceType]int
+	//subscriptionID:Trustee:Source->QuantifierFunc
+	subscriptionQuantifiers map[string]map[string]map[core.Source]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tsm := &Manager{
-		config:     tafContext.Configuration,
-		tafContext: tafContext,
-		logger:     logging.CreateChildLogger(tafContext.Logger, "TSM"),
-		crypto:     tafContext.Crypto,
-		outbox:     channels.OutgoingMessageChannel,
+		config:                  tafContext.Configuration,
+		tafContext:              tafContext,
+		logger:                  logging.CreateChildLogger(tafContext.Logger, "TSM"),
+		crypto:                  tafContext.Crypto,
+		outbox:                  channels.OutgoingMessageChannel,
+		subscriptionIDtoTMI:     make(map[string]string),
+		subscriptionEvidence:    make(map[string]map[string]map[core.Source]map[core.EvidenceType]int),
+		subscriptionQuantifiers: make(map[string]map[string]map[core.Source]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion),
 	}
 
 	tsm.pendingMessageCallbacks = map[messages.MessageSchema]map[string]func(cmd core.Command){
@@ -107,7 +120,31 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		tsm.logger.Warn("AIV_NOTIFY could not be verified, ignoring message")
 		return
 	}
-	tsm.logger.Info("TODO: handle AIV_NOTIFY")
+
+	subscriptionID := *cmd.Notify.SubscriptionID
+	tmiID, exists := tsm.subscriptionIDtoTMI[subscriptionID]
+	util.UNUSED(tmiID)
+	if !exists {
+		return
+	}
+
+	for _, trusteeReport := range cmd.Notify.TrusteeReports {
+		for _, report := range trusteeReport.AttestationReport {
+			evidence := report.Claim
+			tsm.logger.Debug(fmt.Sprintf("%+v", tsm.subscriptionEvidence))
+			tsm.logger.Debug("sub Id: " + subscriptionID)
+			tsm.logger.Debug("Trustee Id: " + *trusteeReport.TrusteeID)
+			tsm.logger.Debug("Source: " + string(core.AIV))
+			tsm.logger.Debug("Evidence: " + core.EvidenceTypeByName(evidence).String())
+			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
+		}
+		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
+		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
+		util.UNUSED(ato)
+	}
+
+	//TODO: call quantifier
+	//TODO create update operation
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */
@@ -140,20 +177,23 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 
 }
 
-func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) InitTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
 
-	subscriptions := make(map[core.Source]map[string][]core.Evidence, 0)
+	subscriptions := make(map[core.Source]map[string][]core.EvidenceType, 0)
+	quantifiers := make(map[core.Source]core.Quantifier, 0)
 
-	for _, quantifier := range tmi.TrustSourceQuantifiers() {
+	for _, item := range tmt.TrustSourceQuantifiers() {
 
-		for _, evidence := range quantifier.Evidence {
+		quantifiers[item.Source] = item.Quantifier
+		for _, evidence := range item.Evidence {
 			if subscriptions[evidence.Source()] == nil {
-				subscriptions[evidence.Source()] = make(map[string][]core.Evidence, 0)
+				subscriptions[evidence.Source()] = make(map[string][]core.EvidenceType, 0)
 			}
-			if subscriptions[evidence.Source()][quantifier.Trustee] == nil {
-				subscriptions[evidence.Source()][quantifier.Trustee] = make([]core.Evidence, 0)
+			if subscriptions[evidence.Source()][item.Trustee] == nil {
+				subscriptions[evidence.Source()][item.Trustee] = make([]core.EvidenceType, 0)
 			}
-			subscriptions[evidence.Source()][quantifier.Trustee] = append(subscriptions[evidence.Source()][quantifier.Trustee], evidence)
+			subscriptions[evidence.Source()][item.Trustee] = append(subscriptions[evidence.Source()][item.Trustee], evidence)
+
 		}
 		//	trustSource.quantifier.Evidence[0].Source()
 	}
@@ -198,7 +238,19 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance, hand
 						reject(errors.New(*cmd.Response.Error))
 						return
 					}
-					tsm.logger.Warn(*cmd.Response.SubscriptionID)
+					tsm.subscriptionIDtoTMI[*cmd.Response.SubscriptionID] = trustModelInstanceID
+					tsm.subscriptionEvidence[*cmd.Response.SubscriptionID] = make(map[string]map[core.Source]map[core.EvidenceType]int)
+					tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID] = make(map[string]map[core.Source]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion)
+
+					for trusteeID, evidenceList := range trustees {
+						tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID] = make(map[core.Source]map[core.EvidenceType]int)
+						tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID][core.AIV] = make(map[core.EvidenceType]int)
+						tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID][trusteeID] = make(map[core.Source]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion)
+						tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID][trusteeID][core.AIV] = quantifiers[core.AIV]
+						for _, evidence := range evidenceList {
+							tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID][core.AIV][evidence] = MISSING_EVIDENCE
+						}
+					}
 					resolve()
 				default:
 					reject(errors.New("Unknown response type: " + cmd.Type().String()))
@@ -236,6 +288,8 @@ func (tsm *Manager) InitTrustSourceQuantifiers(tmi core.TrustModelInstance, hand
 			//Send response message
 			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
 			util.UNUSED(subReqId)
+		case core.TCH:
+			//TODO
 		default:
 			panic("unknown Trust Source")
 		}

@@ -17,15 +17,13 @@ type TrustModelInstance struct {
 	omega1                         subjectivelogic.Opinion
 	omega2                         subjectivelogic.Opinion
 	fingerprint                    uint32
-	omega_DTI_1                    subjectivelogic.Opinion
-	omega_DTI_2                    subjectivelogic.Opinion
 	weights                        map[string]float64
 	evidence1                      map[string]bool
 	evidence2                      map[string]bool
 	rTL1                           subjectivelogic.Opinion
 	rTL2                           subjectivelogic.Opinion
 	trustsources                   []string
-	trustSourceQuantifierInstances []core.TrustSourceQuantifierInstance
+	trustSourceQuantifierInstances []core.TrustSourceQuantifier
 }
 
 func (e *TrustModelInstance) ID() string {
@@ -81,10 +79,6 @@ func (e *TrustModelInstance) Update(update core.Update) {
 func (e *TrustModelInstance) Init() {
 	//TODO implement me
 
-}
-
-func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifierInstance {
-	return e.trustSourceQuantifierInstances
 }
 
 func (e *TrustModelInstance) Cleanup() {

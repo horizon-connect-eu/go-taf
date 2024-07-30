@@ -13,6 +13,5 @@ type TrustModelInstance interface {
 	Template() TrustModelTemplate
 	Update(update Update) //TODO
 	Init()
-	TrustSourceQuantifiers() []TrustSourceQuantifierInstance
 	Cleanup()
 }

@@ -18,8 +18,8 @@ func CreateTrustModelTemplate(name string, version string) core.TrustModelTempla
 	}
 }
 
-func (t TrustModelTemplate) EvidenceSources() []core.Evidence {
-	return []core.Evidence{}
+func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
+	return []core.EvidenceType{}
 }
 
 func (t TrustModelTemplate) Version() string {
@@ -40,4 +40,8 @@ func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafCont
 
 func (t TrustModelTemplate) Description() string {
 	return "TODO: Add description of trust model"
+}
+
+func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
+	return nil
 }

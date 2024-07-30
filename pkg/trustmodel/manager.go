@@ -56,7 +56,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 
 	tmm.logger.Info("Initializing Trust Model Manager", "Available trust models", strings.Join(tmtNames, ", "))
 	for _, tmt := range tmtNames {
-		tmm.logger.Info(tmt, "Description", tmm.trustModelTemplateRepo[tmt].Description(), "Evidence Sources", fmt.Sprintf("%+v", tmm.trustModelTemplateRepo[tmt].EvidenceSources()))
+		tmm.logger.Info(tmt, "Description", tmm.trustModelTemplateRepo[tmt].Description(), "Evidence Sources", fmt.Sprintf("%+v", tmm.trustModelTemplateRepo[tmt].EvidenceTypes()))
 
 	}
 	return tmm, nil

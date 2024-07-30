@@ -11,10 +11,6 @@ const (
 	*/
 	NO_OP UpdateOp = iota
 	/*
-		Trust Opinion Update
-	*/
-	UPDATE_TO
-	/*
 		Atomic Trust Opinion Update
 	*/
 	UPDATE_ATO
@@ -30,7 +26,6 @@ const (
 
 func (u UpdateOp) String() string {
 	return [...]string{"NO_OP",
-		"UPDATE_TO",
 		"UPDATE_ATO",
 		"ADD_TRUST_OBJECT",
 		"REMOVE_TRUST_OBJECT",
