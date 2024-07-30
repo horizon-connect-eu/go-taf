@@ -1,9 +1,13 @@
 package brussels
 
 import (
+	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
+	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"testing"
 )
 
@@ -112,4 +116,10 @@ func TestLoadJson(t *testing.T) {
 		}
 	}
 
+	//----------------TLEE execution-------------------
+	var tlee tleeinterface.TLEE
+	tlee = &actualtlee.TLEE{}
+	util.UNUSED(tlee)
+	tleeResults := tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+	fmt.Printf("%+v", tleeResults)
 }

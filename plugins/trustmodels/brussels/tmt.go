@@ -86,7 +86,7 @@ func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafCont
 		template:                       t,
 		omega1:                         omega1,
 		omega2:                         omega2,
-		fingerprint:                    -1,
+		fingerprint:                    0,
 		omega_DTI_1:                    omegaDTI1,
 		omega_DTI_2:                    omegaDTI2,
 		weights:                        map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},

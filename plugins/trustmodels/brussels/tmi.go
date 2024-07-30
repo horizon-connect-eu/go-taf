@@ -16,7 +16,7 @@ type TrustModelInstance struct {
 
 	omega1                         subjectivelogic.Opinion
 	omega2                         subjectivelogic.Opinion
-	fingerprint                    int
+	fingerprint                    uint32
 	omega_DTI_1                    subjectivelogic.Opinion
 	omega_DTI_2                    subjectivelogic.Opinion
 	weights                        map[string]float64
@@ -34,12 +34,12 @@ func (e *TrustModelInstance) ID() string {
 
 func (e *TrustModelInstance) Version() int {
 	//TODO implement me
-	panic("implement me")
+	return e.version
 }
 
 func (e *TrustModelInstance) Fingerprint() uint32 {
 	//TODO implement me
-	panic("implement me")
+	return e.fingerprint
 }
 
 func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
