@@ -3,6 +3,7 @@ package trustassessment
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
@@ -183,15 +184,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//Initialize TMI
 	newTMI.Init()
 
-	//Initialize Trust Source Quantifiers and Subscriptions
-	tsqCallbacks := tam.tsm.InitTrustSourceQuantifiers(newTMI)
-	if len(tsqCallbacks) > 0 {
-		//TODO: prepare TAS_INIT_RESPONSE
-		//TODO: register callbacks and final action
-
-		return
-	} else {
-		//no pending subscriptions, answer directly
+	successHandler := func() {
 		success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
 
 		response := tasmsg.TasInitResponse{
@@ -207,8 +200,30 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		}
 		//Send response message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
-		return
 	}
+	errorHandler := func(err error) {
+		//TODO: remove session
+		errorMsg := "Error intializing session: " + err.Error()
+		response := tasmsg.TasInitResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  &errorMsg,
+			SessionID:              nil,
+			Success:                nil,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		//Send error message
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	ch := completionhandler.New(successHandler, errorHandler)
+
+	//Initialize Trust Source Quantifiers and Subscriptions
+	tam.tsm.InitTrustSourceQuantifiers(newTMI, ch)
+
+	ch.Execute()
 }
 
 func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {

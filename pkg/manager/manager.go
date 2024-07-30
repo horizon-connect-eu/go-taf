@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
@@ -51,9 +52,9 @@ type TrustSourceManager interface {
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
-	InitTrustSourceQuantifiers(tmi core.TrustModelInstance) map[string]func(cmd core.Command) bool
+	InitTrustSourceQuantifiers(tmi core.TrustModelInstance, handler *completionhandler.CompletionHandler)
 	GenerateRequestId() string
-	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command) bool)
+	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
 }
 
 type TrustModelManager interface {
