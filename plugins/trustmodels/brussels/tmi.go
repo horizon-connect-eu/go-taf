@@ -17,9 +17,6 @@ type TrustModelInstance struct {
 	omega1      subjectivelogic.Opinion
 	omega2      subjectivelogic.Opinion
 	fingerprint uint32
-	weights     map[string]float64      //TODO: Can this be deleted now as it is handled by the Quantifier function?
-	evidence1   map[string]bool         //TODO: Can this be deleted now as it is handled by the TSM?
-	evidence2   map[string]bool         //TODO: Can this be deleted now as it is handled by the TSM?
 	rTL1        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
 	rTL2        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
 }

@@ -159,9 +159,6 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 		omega1:      omega1,
 		omega2:      omega2,
 		fingerprint: 0,
-		weights:     map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},
-		evidence1:   make(map[string]bool),
-		evidence2:   make(map[string]bool),
 		rTL1:        rtl1,
 		rTL2:        rtl2,
 	}
