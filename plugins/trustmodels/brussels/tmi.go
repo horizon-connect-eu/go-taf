@@ -26,12 +26,10 @@ func (e *TrustModelInstance) ID() string {
 }
 
 func (e *TrustModelInstance) Version() int {
-	//TODO implement me
 	return e.version
 }
 
 func (e *TrustModelInstance) Fingerprint() uint32 {
-	//TODO implement me
 	return e.fingerprint
 }
 
@@ -42,13 +40,14 @@ func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure
 }
 
 func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
-	//TODO: omega1 and omega2 must be copies and must not be pointers to the actual values
+	opinionVC1, _ := subjectivelogic.NewOpinion(e.omega1.Belief(), e.omega1.Disbelief(), e.omega1.Uncertainty(), e.omega1.BaseRate())
+	opinionVC2, _ := subjectivelogic.NewOpinion(e.omega2.Belief(), e.omega2.Disbelief(), e.omega2.Uncertainty(), e.omega2.BaseRate())
 	return map[string][]trustmodelstructure.TrustRelationship{
 		"VC1": []trustmodelstructure.TrustRelationship{
-			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "VC1", &e.omega1),
+			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "VC1", &opinionVC1),
 		},
 		"VC2": []trustmodelstructure.TrustRelationship{
-			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "VC2", &e.omega2),
+			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "VC2", &opinionVC2),
 		},
 	}
 }
