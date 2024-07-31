@@ -8,8 +8,44 @@ import (
 )
 
 func quantifier(values map[core.EvidenceType]int, designTimeTrustOp subjectivelogic.QueryableOpinion, existenceWeights map[core.EvidenceType]float64, outputWeights map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-	println("Hello World from quantifier")
-	sl, _ := subjectivelogic.NewOpinion(0.5, .2, .3, 0.5)
+	sl, _ := subjectivelogic.NewOpinion(.0, .0, 1.0, 0.5)
+
+	belief := designTimeTrustOp.Belief()
+	disbelief := designTimeTrustOp.Disbelief()
+	uncertainty := designTimeTrustOp.Uncertainty()
+
+	for control, appraisal := range values {
+		delta := existenceWeights[control] * designTimeTrustOp.Uncertainty()
+
+		if appraisal == -1 { // control not implemented
+			disbelief = disbelief + delta
+			uncertainty = uncertainty - delta
+		} else if appraisal == 0 {
+			if outputWeights[control] == 0 { // still add belief
+				belief = belief + delta
+				uncertainty = uncertainty - delta
+			} else if outputWeights[control] == 1 { // add disbelief
+				disbelief = disbelief + delta
+				uncertainty = uncertainty - delta
+			} else if outputWeights[control] == 2 { // complete disbelief
+				belief = 0.0
+				disbelief = 1.0
+				uncertainty = 0.0
+				break // complete disbelief because negative evidence of critical securityControl
+			} else {
+				// Invalid weight
+				// TODO: Error handling
+			}
+		} else if appraisal == 1 {
+			belief = belief + delta
+			uncertainty = uncertainty - delta
+		} else {
+			// No evidence for the control, e.g. appraisal -2 or no evidence received -> Results in higher uncertainty
+		}
+	}
+
+	sl.Modify(belief, disbelief, uncertainty, sl.BaseRate())
+
 	return &sl
 }
 
