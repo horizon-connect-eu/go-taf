@@ -19,6 +19,7 @@ const (
 	HANDLE_TCH_NOTIFY
 	HANDLE_V2X_CPM
 	HANDLE_V2X_NTM
+	HANDLE_TMI_UPDATE
 )
 
 func (c CommandType) String() string {
@@ -38,6 +39,7 @@ func (c CommandType) String() string {
 		"HANDLE_TCH_NOTIFY",
 		"HANDLE_V2X_CPM",
 		"HANDLE_V2X_NTM",
+		"HANDLE_TMI_UPDATE",
 	}[c]
 }
 

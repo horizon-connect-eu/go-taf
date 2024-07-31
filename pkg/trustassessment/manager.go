@@ -174,7 +174,25 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	tam.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
-	newTMI := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
+	newTMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
+	if err != nil {
+		delete(tam.sessions, sessionId)
+
+		errorMsg := "Error initializing session: " + err.Error()
+		response := tasmsg.TasInitResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  &errorMsg,
+			SessionID:              nil,
+			Success:                nil,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		//Send error message
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		return
+	}
 	//add new TMI to session
 	tMIs := newSession.TrustModelInstances()
 	tMIs[sessionId] = newTMI

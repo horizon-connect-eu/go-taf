@@ -18,6 +18,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 	"math"
 )
@@ -139,12 +140,15 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
 		}
 		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
+		//call quantifier
 		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
-		util.UNUSED(ato)
+		//create update operation
+		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
+		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
+		util.UNUSED(tmiUpdateCmd)
+		tsm.logger.Warn("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
 	}
 
-	//TODO: call quantifier
-	//TODO create update operation
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */

@@ -17,8 +17,6 @@ type TrustModelInstance struct {
 	omega1      subjectivelogic.Opinion
 	omega2      subjectivelogic.Opinion
 	fingerprint uint32
-	rTL1        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
-	rTL2        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
 }
 
 func (e *TrustModelInstance) ID() string {
