@@ -4,7 +4,6 @@ import (
 	"crypto-library-interface/pkg/crypto"
 	"encoding/json"
 	"errors"
-	"fmt"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	"log/slog"
 )
@@ -34,12 +33,10 @@ func NewCrypto(logger *slog.Logger, keyPath string, cryptoEnabled bool) (*Crypto
 			cr.attestationCertificate = cert
 			return cr, nil
 		}
-
 	} else {
 		cr.attestationCertificate = ""
 		return cr, nil
 	}
-
 }
 
 func (cr *Crypto) AttestationCertificate() string {
@@ -94,10 +91,9 @@ func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) 
 		}
 		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
 		verificationResult, err := crypto.Verify(byteStreamToBeSigned, response.AivEvidence.Signature, response.AivEvidence.KeyRef+".pem")
-		if err == nil {
+		if err != nil {
 			return false, err
 		} else {
-			fmt.Sprintf("Output: %b", verificationResult)
 			return verificationResult, nil
 		}
 	} else {
@@ -118,10 +114,9 @@ func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 		}
 		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
 		verificationResult, err := crypto.Verify(byteStreamToBeSigned, notify.AivEvidence.Signature, notify.AivEvidence.KeyRef+".pem")
-		if err == nil {
+		if err != nil {
 			return false, err
 		} else {
-			fmt.Sprintf("Output: %b", verificationResult)
 			return verificationResult, nil
 		}
 	} else {
