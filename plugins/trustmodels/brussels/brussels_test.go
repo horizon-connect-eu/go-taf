@@ -17,7 +17,7 @@ func TestLoadJson(t *testing.T) {
 	context := core.TafContext{}
 	channels := core.TafChannels{}
 
-	tmi := tmt.Spawn(make(map[string]string), context, channels)
+	tmi, _ := tmt.Spawn(make(map[string]string), context, channels)
 
 	// -------------- Check Structure() method ---------------------
 	structure := tmi.Structure()
@@ -93,7 +93,7 @@ func TestLoadJson(t *testing.T) {
 	if err != nil {
 		t.Error("Trust opinion could not be created")
 	} else {
-		update := trustmodelupdate.UpdateAtomicTrustOpinion{&newOpinion, "VC1"}
+		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(&newOpinion, "VC1", core.AIV)
 		tmi.Update(update)
 
 		values := tmi.Values()
@@ -107,7 +107,7 @@ func TestLoadJson(t *testing.T) {
 	if err2 != nil {
 		t.Error("Trust opinion could not be created")
 	} else {
-		update := trustmodelupdate.UpdateAtomicTrustOpinion{&newOpinion2, "VC2"}
+		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(&newOpinion2, "VC2", core.AIV)
 		tmi.Update(update)
 
 		values := tmi.Values()
