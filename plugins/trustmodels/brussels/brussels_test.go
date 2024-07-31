@@ -8,11 +8,12 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
+	"math"
 	"testing"
 )
 
 func TestLoadJson(t *testing.T) {
-	tmt := CreateTrustModelTemplate("test", "0.0.1")
+	tmt := CreateTrustModelTemplate("test", "0.0.1", "test")
 	context := core.TafContext{}
 	channels := core.TafChannels{}
 
@@ -114,6 +115,30 @@ func TestLoadJson(t *testing.T) {
 		if requestedOpinion.Opinion().Belief() != 0.4 || requestedOpinion.Opinion().Disbelief() != 0.2 || requestedOpinion.Opinion().Uncertainty() != 0.4 || requestedOpinion.Opinion().BaseRate() != 0.2 {
 			t.Error("Trust opinion not updated correctly")
 		}
+	}
+
+	//----------------ATO calculation-------------------
+	quantifiers := tmi.Template().TrustSourceQuantifiers()
+	evidenceMap := make(map[core.EvidenceType]int)
+
+	// Test Scenario1
+	evidenceMap[core.AIV_SECURE_BOOT] = 1
+	evidenceMap[core.AIV_ACCESS_CONTROL] = -1
+	evidenceMap[core.AIV_CONTROL_FLOW_INTEGRITY] = 0
+
+	slOpinion := quantifiers[0].Quantifier(evidenceMap)
+	if (math.Round(slOpinion.Belief()*100)/100) != 0.27 || (math.Round(slOpinion.Disbelief()*100)/100) != 0.45 || (math.Round(slOpinion.Uncertainty()*100)/100) != 0.28 {
+		t.Error("Incorrect trust opinion")
+	}
+
+	// Test Scenario2
+	evidenceMap[core.AIV_SECURE_BOOT] = 0
+	evidenceMap[core.AIV_ACCESS_CONTROL] = -1
+	evidenceMap[core.AIV_CONTROL_FLOW_INTEGRITY] = 0
+
+	slOpinion = quantifiers[0].Quantifier(evidenceMap)
+	if (math.Round(slOpinion.Belief()*100)/100) != 0.0 || (math.Round(slOpinion.Disbelief()*100)/100) != 1.0 || (math.Round(slOpinion.Uncertainty()*100)/100) != 0.0 {
+		t.Error("Incorrect trust opinion")
 	}
 
 	//----------------TLEE execution-------------------

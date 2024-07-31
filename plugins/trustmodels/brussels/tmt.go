@@ -58,12 +58,16 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
 			existenceWeights := map[core.EvidenceType]float64{
-				core.AIV_SECURE_BOOT: 0.1,
+				core.AIV_SECURE_BOOT:            0.1,
+				core.AIV_ACCESS_CONTROL:         0.2,
+				core.AIV_CONTROL_FLOW_INTEGRITY: 0.3,
 			}
 			outputWeights := map[core.EvidenceType]int{
-				core.AIV_SECURE_BOOT: 1,
+				core.AIV_SECURE_BOOT:            2,
+				core.AIV_ACCESS_CONTROL:         0,
+				core.AIV_CONTROL_FLOW_INTEGRITY: 1,
 			}
-			designTimeTrustOpinion, _ := subjectivelogic.NewOpinion(0.5, 0.5, 0, 0.5)
+			designTimeTrustOpinion, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 			return quantifier(m, &designTimeTrustOpinion, existenceWeights, outputWeights)
 		},
 	},
@@ -75,12 +79,16 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
 			existenceWeights := map[core.EvidenceType]float64{
-				core.AIV_SECURE_BOOT: 0.1,
+				core.AIV_SECURE_BOOT:            0.1,
+				core.AIV_ACCESS_CONTROL:         0.2,
+				core.AIV_CONTROL_FLOW_INTEGRITY: 0.3,
 			}
 			outputWeights := map[core.EvidenceType]int{
-				core.AIV_SECURE_BOOT: 1,
+				core.AIV_SECURE_BOOT:            2,
+				core.AIV_ACCESS_CONTROL:         0,
+				core.AIV_CONTROL_FLOW_INTEGRITY: 1,
 			}
-			designTimeTrustOpinion, _ := subjectivelogic.NewOpinion(0.5, 0.5, 0, 0.5)
+			designTimeTrustOpinion, _ := subjectivelogic.NewOpinion(0.1, 0.1, 0.8, 0.5)
 			return quantifier(m, &designTimeTrustOpinion, existenceWeights, outputWeights)
 		},
 	},
