@@ -3,7 +3,7 @@ package core
 /*
 The UpdateOp identifies the type of Update Operation than can be applied to an existing TrustModelInstance
 */
-type UpdateOp int32
+type UpdateOp uint16
 
 const (
 	/*

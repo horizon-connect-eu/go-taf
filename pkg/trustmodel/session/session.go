@@ -1,25 +1,21 @@
 package session
 
-import (
-	"github.com/vs-uulm/go-taf/pkg/core"
-)
-
 type Session interface {
 	ID() string
-	TrustModelInstances() map[string]core.TrustModelInstance
+	TrustModelInstances() map[string]bool
 	Client() string
 }
 
 type Instance struct {
 	id     string
-	tMIs   map[string]core.TrustModelInstance
+	tMIs   map[string]bool
 	client string
 }
 
 func NewInstance(id, client string) Session {
 	return &Instance{
 		id:     id,
-		tMIs:   make(map[string]core.TrustModelInstance),
+		tMIs:   make(map[string]bool),
 		client: client,
 	}
 }
@@ -27,7 +23,7 @@ func NewInstance(id, client string) Session {
 func (d *Instance) ID() string {
 	return d.id
 }
-func (d *Instance) TrustModelInstances() map[string]core.TrustModelInstance {
+func (d *Instance) TrustModelInstances() map[string]bool {
 	return d.tMIs
 }
 func (d *Instance) Client() string {

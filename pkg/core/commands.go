@@ -1,6 +1,6 @@
 package core
 
-type CommandType int32
+type CommandType uint16
 
 const (
 	UNDEFINED CommandType = iota
@@ -19,7 +19,10 @@ const (
 	HANDLE_TCH_NOTIFY
 	HANDLE_V2X_CPM
 	HANDLE_V2X_NTM
+	HANDLE_TMI_INIT
 	HANDLE_TMI_UPDATE
+	HANDLE_TMI_DESTROY
+	HANDLE_ATL_UPDATE
 )
 
 func (c CommandType) String() string {
@@ -39,7 +42,10 @@ func (c CommandType) String() string {
 		"HANDLE_TCH_NOTIFY",
 		"HANDLE_V2X_CPM",
 		"HANDLE_V2X_NTM",
+		"HANDLE_TMI_INIT",
 		"HANDLE_TMI_UPDATE",
+		"HANDLE_TMI_DESTROY",
+		"HANDLE_ATL_UPDATE",
 	}[c]
 }
 

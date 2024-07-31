@@ -1,21 +1,86 @@
 package command
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import (
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+	"github.com/vs-uulm/go-taf/pkg/core"
+)
 
 type HandleTMIUpdate struct {
 	commandType core.CommandType
-	tmiID       string
-	update      core.Update
+	TmiID       string
+	Update      core.Update
 }
 
 func CreateHandleTMIUpdate(tmiID string, update core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
-		tmiID:       tmiID,
-		update:      update,
+		TmiID:       tmiID,
+		Update:      update,
 		commandType: core.HANDLE_TMI_UPDATE,
 	}
 }
 
 func (r HandleTMIUpdate) Type() core.CommandType {
+	return r.commandType
+}
+
+type HandleTMIInit struct {
+	commandType core.CommandType
+	TmiID       string
+	SessionID   string
+	TMI         core.TrustModelInstance
+}
+
+func CreateHandleTMIInit(tmiID string, TMI core.TrustModelInstance, SessionID string) HandleTMIInit {
+	return HandleTMIInit{
+
+		TmiID:       tmiID,
+		TMI:         TMI,
+		SessionID:   SessionID,
+		commandType: core.HANDLE_TMI_INIT,
+	}
+}
+
+func (r HandleTMIInit) Type() core.CommandType {
+	return r.commandType
+}
+
+type HandleTMIDestroy struct {
+	commandType core.CommandType
+	TmiID       string
+}
+
+func CreateHandleTMIDestroy(tmiID string, TMI core.TrustModelInstance) HandleTMIDestroy {
+	return HandleTMIDestroy{
+		TmiID:       tmiID,
+		commandType: core.HANDLE_TMI_DESTROY,
+	}
+}
+
+func (r HandleTMIDestroy) Type() core.CommandType {
+	return r.commandType
+}
+
+type HandleATLUpdate struct {
+	commandType core.CommandType
+	TmiID       string
+	SessionID   string
+	//TODO
+	ATLs map[string]subjectivelogic.QueryableOpinion
+	PPs  map[string]float64
+	TDs  map[string]bool
+}
+
+func CreateHandleATLUpdate(tmiID string, sessionID string, atls map[string]subjectivelogic.QueryableOpinion, PPs map[string]float64, TDs map[string]bool) HandleATLUpdate {
+	return HandleATLUpdate{
+		TmiID:       tmiID,
+		SessionID:   sessionID,
+		ATLs:        atls,
+		TDs:         TDs,
+		PPs:         PPs,
+		commandType: core.HANDLE_ATL_UPDATE,
+	}
+}
+
+func (r HandleATLUpdate) Type() core.CommandType {
 	return r.commandType
 }

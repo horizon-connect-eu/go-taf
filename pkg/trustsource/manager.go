@@ -132,23 +132,23 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
 		for _, report := range trusteeReport.AttestationReport {
 			evidence := report.Claim
+			//TODO: Remove
 			tsm.logger.Debug(fmt.Sprintf("%+v", tsm.subscriptionEvidence))
 			tsm.logger.Debug("sub Id: " + subscriptionID)
 			tsm.logger.Debug("Trustee Id: " + *trusteeReport.TrusteeID)
-			tsm.logger.Debug("Source: " + string(core.AIV))
+			tsm.logger.Debug("Source: " + core.AIV.String())
 			tsm.logger.Debug("Evidence: " + core.EvidenceTypeByName(evidence).String())
 			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
 		}
 		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
 		//call quantifier
 		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
+		tsm.logger.Warn("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
 		//create update operation
 		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
 		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
-		util.UNUSED(tmiUpdateCmd)
-		tsm.logger.Warn("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
+		tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
 	}
-
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */

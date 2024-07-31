@@ -4,6 +4,7 @@
 package main
 
 import (
+	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
@@ -11,8 +12,10 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
+	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log"
 	"log/slog"
 	"os"
@@ -75,7 +78,14 @@ func main() {
 		logger.Error("Error creating communication interface", err)
 	}
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
+	var tlee tleeinterface.TLEE
+	if tafConfig.TLEE.UseInternalTLEE {
+		tlee = &internaltlee.TLEE{}
+	} else {
+		tlee = &actualtlee.TLEE{}
+	}
+
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels, tlee)
 	if err != nil {
 		logger.Error("Error creating TAM", err)
 	}

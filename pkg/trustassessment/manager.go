@@ -2,6 +2,7 @@ package trustassessment
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
@@ -9,7 +10,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	crypto "github.com/vs-uulm/go-taf/pkg/crypto"
+	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
@@ -18,35 +19,37 @@ import (
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
+	"hash/fnv"
 	"log/slog"
 )
 
 type Manager struct {
-	config          config.Configuration
-	workerChannels  []chan core.Command
-	logger          *slog.Logger
-	tafContext      core.TafContext
-	channels        core.TafChannels
-	sessions        map[string]*session.Session
-	tMIs            map[string]*core.TrustModelInstance
-	outbox          chan core.Message
-	tsm             manager.TrustSourceManager
-	tmm             manager.TrustModelManager
-	crypto          *crypto.Crypto
-	tMIsToSessionID map[string]string
+	config       config.Configuration
+	tamToWorkers []chan core.Command
+	workersToTam chan core.Command
+	logger       *slog.Logger
+	tafContext   core.TafContext
+	channels     core.TafChannels
+	sessions     map[string]*session.Session
+	outbox       chan core.Message
+	tsm          manager.TrustSourceManager
+	tmm          manager.TrustModelManager
+	crypto       *crypto.Crypto
+	tlee         tleeinterface.TLEE
 }
 
-func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
+func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
 	tam := &Manager{
-		config:          tafContext.Configuration,
-		tafContext:      tafContext,
-		channels:        channels,
-		sessions:        make(map[string]*session.Session),
-		tMIs:            make(map[string]*core.TrustModelInstance),
-		logger:          logging.CreateChildLogger(tafContext.Logger, "TAM"),
-		crypto:          tafContext.Crypto,
-		outbox:          channels.OutgoingMessageChannel,
-		tMIsToSessionID: make(map[string]string),
+		config:       tafContext.Configuration,
+		tafContext:   tafContext,
+		channels:     channels,
+		sessions:     make(map[string]*session.Session),
+		workersToTam: make(chan core.Command, tafContext.Configuration.ChanBufSize),
+		logger:       logging.CreateChildLogger(tafContext.Logger, "TAM"),
+		crypto:       tafContext.Crypto,
+		outbox:       channels.OutgoingMessageChannel,
+		tlee:         tlee,
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -55,11 +58,6 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 func (tam *Manager) SetManagers(managers manager.TafManagers) {
 	tam.tmm = managers.TMM
 	tam.tsm = managers.TSM
-}
-
-// Get shard worker based on provided ID and configured number of shards
-func (tam *Manager) getShardWorkerById(id int) int {
-	return id % tam.config.TAM.TrustModelInstanceShards
 }
 
 // Run the trust assessment manager
@@ -72,13 +70,11 @@ func (tam *Manager) Run() {
 	tsm := tam.tsm
 	tmm := tam.tmm
 
-	tam.workerChannels = make([]chan core.Command, 0, tam.config.TAM.TrustModelInstanceShards)
+	tam.tamToWorkers = make([]chan core.Command, 0, tam.config.TAM.TrustModelInstanceShards)
 	for i := range tam.config.TAM.TrustModelInstanceShards {
-		ch := make(chan core.Command, 1_000)
-		tam.workerChannels = append(tam.workerChannels, ch)
-
-		worker := tam.SpawnNewWorker(i, ch, tam.tafContext)
-
+		channel := make(chan core.Command, tam.config.ChanBufSize)
+		tam.tamToWorkers = append(tam.tamToWorkers, channel)
+		worker := tam.SpawnNewWorker(i, channel, tam.workersToTam, tam.tafContext, tam.tlee)
 		go worker.Run()
 	}
 
@@ -93,6 +89,13 @@ func (tam *Manager) Run() {
 				continue
 			}
 			return
+		case incomingCmd := <-tam.workersToTam:
+			switch cmd := incomingCmd.(type) {
+			case command.HandleATLUpdate:
+				tam.HandleATLUpdate(cmd)
+			default:
+				tam.logger.Warn("Command with no associated handling logic received by TAM from Worker", "Command Type", cmd.Type())
+			}
 		case incomingCmd := <-tam.channels.TAMChannel:
 			switch cmd := incomingCmd.(type) {
 			// TAM Message Handling
@@ -127,7 +130,7 @@ func (tam *Manager) Run() {
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
 				tmm.HandleV2xCpmMessage(cmd)
 			default:
-				tam.logger.Warn("Command with no associated handling logic received by TAM", "Command Type", cmd.Type())
+				tam.logger.Warn("Command with no associated handling logic received by TAM from Communication Handler", "Command Type", cmd.Type())
 			}
 		}
 	}
@@ -167,14 +170,14 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//create session ID for client
 	sessionId := tam.createSessionId()
 	//create Session
-	newSession := session.NewInstance(sessionId, cmd.Sender)
+	session := session.NewInstance(sessionId, cmd.Sender)
 	//put session into session map
-	tam.sessions[sessionId] = &newSession
+	tam.sessions[sessionId] = &session
 
-	tam.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
+	tam.logger.Info("Session created:", "Session ID", session.ID(), "Client", session.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
-	newTMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
+	tMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
 	if err != nil {
 		delete(tam.sessions, sessionId)
 
@@ -194,18 +197,22 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		return
 	}
 	//add new TMI to session
-	tMIs := newSession.TrustModelInstances()
-	tMIs[sessionId] = newTMI //TODO only store TMI.ID
-
-	//add new TMI to list of all TMIs of the TAM
-	tam.tMIs[sessionId] = &newTMI //TODO only store TMI.ID
-	tam.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
-
-	//Initialize TMI
-	newTMI.Initialize(nil)
+	sessionTMIs := session.TrustModelInstances()
+	sessionTMIs[tMI.ID()] = true
+	tmiID := tMI.ID()
 
 	successHandler := func() {
-		success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
+		//add new TMI to list of all TMIs of the TAM
+		tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", session.ID(), "Client", session.Client())
+
+		//Initialize TMI
+		tMI.Initialize(nil)
+
+		//Dispatch new TMI instance to worker
+		tmiInitCmd := command.CreateHandleTMIInit(tmiID, tMI, sessionId)
+		tam.DispatchToWorker(tmiID, tmiInitCmd)
+
+		success := "Session with trust model template '" + tMI.Template().TemplateName() + "@" + tMI.Template().Version() + "' created."
 
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
@@ -222,7 +229,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	}
 	errorHandler := func(err error) {
-		//TODO: remove session
+		//TODO: undo session, TMI, etc.
 		errorMsg := "Error initializing session: " + err.Error()
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
@@ -236,12 +243,15 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		}
 		//Send error message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		//Cleanup TMI creation
+		tMI.Cleanup()
+		delete(tam.sessions, sessionId)
 	}
 
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.InitializeTrustSourceQuantifiers(tmt, newTMI.ID(), ch)
+	tam.tsm.InitializeTrustSourceQuantifiers(tmt, tmiID, ch)
 
 	ch.Execute()
 }
@@ -306,6 +316,24 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 
 }
 
-func (tam *Manager) DispatchToWorker(cmd core.Command) {
-	//TODO
+func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
+	tam.logger.Warn("ATL Update", "ATLs", fmt.Sprintf("%+v", cmd.ATLs), "PPs", fmt.Sprintf("%+v", cmd.PPs))
+	//TODO: Store results
+}
+
+func (tam *Manager) DispatchToWorker(tmiID string, cmd core.Command) {
+	workerId := tam.getShardWorkerById(tmiID)
+	tam.tamToWorkers[workerId] <- cmd
+}
+
+// Get shard worker based on provided ID and configured number of shards
+func (tam *Manager) getShardWorkerById(stringID string) int {
+	algorithm := fnv.New32a()
+	_, err := algorithm.Write([]byte(stringID))
+	if err != nil {
+		return 0
+	} else {
+		id := int(algorithm.Sum32())
+		return id % tam.config.TAM.TrustModelInstanceShards
+	}
 }

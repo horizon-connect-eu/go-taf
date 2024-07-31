@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/IBM/sarama"
+	"github.com/google/uuid"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
@@ -41,7 +42,7 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	}
 	defer producer.Close()
 
-	consumer, err := sarama.NewConsumerGroup(brokers, tafContext.Identifier, config)
+	consumer, err := sarama.NewConsumerGroup(brokers, tafContext.Identifier+uuid.New().String(), config)
 	if err != nil {
 		logger.Error("Error creating Kafka Consumer ", "Details", err)
 		os.Exit(-1)
@@ -75,7 +76,8 @@ func handleOutgoingMessages(tafContext core.TafContext, logger *slog.Logger, pro
 			case success := <-producer.Successes():
 				//				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
 				msgAsStr := string(msg.Bytes())
-				logger.Info("Message sent", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message Excerpt:", msgAsStr[0:min(20, len(msgAsStr)-1)], "Offset", success.Offset)
+				//logger.Info("Sent message", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message Excerpt:", msgAsStr[0:min(200, len(msgAsStr)-1)], "Offset", success.Offset)
+				logger.Info("Sent message", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message:", msgAsStr, "Offset", success.Offset)
 			case err := <-producer.Errors():
 				logger.Error(fmt.Sprintf("Failed to send message: %v", err))
 			}

@@ -2,7 +2,7 @@ package core
 
 import "strings"
 
-type EvidenceType int32
+type EvidenceType uint16
 
 const (
 	UNKNOWN EvidenceType = iota
@@ -16,7 +16,7 @@ const (
 	TCH_VERIFIABLE_PRESENTATION
 )
 
-type TrustSource int32
+type TrustSource uint16
 
 const (
 	NONE TrustSource = iota
@@ -46,7 +46,7 @@ func (e EvidenceType) String() string {
 	case TCH_VERIFIABLE_PRESENTATION:
 		return "VERIFIABLE_PRESENTATION"
 	default:
-		return "UNKOWN_EVIDENCE"
+		return "UNKNOWN_EVIDENCE"
 	}
 }
 
@@ -61,7 +61,7 @@ func (s TrustSource) String() string {
 	case TCH:
 		return "TCH"
 	default:
-		return "UNKOWN_SOURCE"
+		return "UNKNOWN_SOURCE"
 	}
 }
 

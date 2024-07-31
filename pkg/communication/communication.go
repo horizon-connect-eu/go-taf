@@ -69,7 +69,7 @@ func (ch CommunicationInterface) Run() {
 			case <-ch.tafContext.Context.Done():
 				return
 			case msg := <-ch.channels.OutgoingMessageChannel:
-				ch.tafContext.Logger.Info("Msg to be sent:", "Msg", string(msg.Bytes()))
+				//ch.tafContext.Logger.Info("Msg to be sent:", "Msg", string(msg.Bytes()))
 				ch.internalOutbox <- msg
 			}
 		}
@@ -109,7 +109,8 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 		case rcvdMsg := <-ch.internalInbox:
 
 			msgStr := string(rcvdMsg.Bytes())
-			ch.tafContext.Logger.Info("Received message", "Message:", msgStr[0:min(20, len(msgStr)-1)], "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
+			//ch.tafContext.Logger.Info("Received message", "Message:", msgStr[0:min(200, len(msgStr)-1)], "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
+			ch.tafContext.Logger.Info("Received message", "Message:", msgStr, "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
 
 			var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshaled using the correct type.
 			rawMsg := GenericJSONHeaderMessage{
