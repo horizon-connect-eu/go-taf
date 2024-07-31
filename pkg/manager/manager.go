@@ -39,6 +39,7 @@ type TrustAssessmentManager interface {
 	HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest])
 	HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest])
 	HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest])
+	DispatchToWorker(cmd core.Command)
 	Run()
 }
 

@@ -11,79 +11,45 @@ import (
 	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
-	"time"
 )
 
 type Worker struct {
-	tafContext core.TafContext
-	id         int
-	inputs     <-chan core.Command
-	logger     *slog.Logger
-	//	states     State
+	tafContext  core.TafContext
+	id          int
+	workerQueue <-chan core.Command
+	logger      *slog.Logger
 }
 
-func (tam *Manager) SpawnNewWorker(id int, inputs <-chan core.Command, tafContext core.TafContext) Worker {
+func (tam *Manager) SpawnNewWorker(id int, workerQueue <-chan core.Command, tafContext core.TafContext) Worker {
 	return Worker{
-		tafContext: tafContext,
-		id:         id,
-		inputs:     inputs,
-		//		states:     tam.mkStateDatabase(),
-		logger: logger.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
+		tafContext:  tafContext,
+		id:          id,
+		workerQueue: workerQueue,
+		logger:      logger.CreateChildLogger(tafContext.Logger, fmt.Sprintf("TAM-WORKER-%d", id)),
 	}
 }
 
-func (w *Worker) Run() {
-	// Ticker for latency benchmark
-	latTicker := time.NewTicker(1 * time.Second)
-	latMeasurePending := false
-
+func (worker *Worker) Run() {
+	defer func() {
+		worker.logger.Info("Shutting down")
+	}()
 	for {
 		select {
-		case command := <-w.inputs:
-			w.processCommand(command)
-			if latMeasurePending && w.id == 0 {
-				//fmt.Printf("TAM: latency of %d µs\n", time.Since(command.Timestamp).Microseconds())
-				latMeasurePending = false
-			}
-		case <-latTicker.C:
-			latMeasurePending = true
+		case command := <-worker.workerQueue:
+			worker.processCommand(command)
 
 		}
 	}
 	//TODO use ctx to shutdown worker
 }
 
-//// Processes the messages received via the specified channel as fast as possible.
-//func (t *TrustAssessmentManager) tamWorker(id int, inputs <-chan Command, tablelogger consolelogger.Logger) {
-//	states := t.mkStateDatabase()
-//	//results := t.mkResultsDatabase()
-//
-//	// Ticker for latency benchmark
-//	latTicker := time.NewTicker(1 * time.Second)
-//	latMeasurePending := false
-//
-//	for {
-//		select {
-//		case command := <-inputs:
-//			processCommand(id, tablelogger, command, states)
-//			if latMeasurePending && id == 0 {
-//				//fmt.Printf("TAM: latency of %d µs\n", time.Since(command.Timestamp).Microseconds())
-//				latMeasurePending = false
-//			}
-//		case <-latTicker.C:
-//			latMeasurePending = true
-//
-//		}
-//	}
-//}
-
-func (w *Worker) processCommand(cmd core.Command) {
+func (worker *Worker) processCommand(cmd core.Command) {
 
 	var doRunTlee = false
 
 	switch cmd := cmd.(type) {
 	case command.HandleRequest[tasmsg.TasInitRequest]:
-		w.logger.Debug("Got HandleTasInitRequest")
+		worker.logger.Debug("Got HandleTasInitRequest")
 		/*
 			case command.InitTMICommand:
 				w.logger.Debug("handling InitTMICommand", "Message", fmt.Sprintf("%+v", cmd))
@@ -165,14 +131,14 @@ func (w *Worker) processCommand(cmd core.Command) {
 				doRunTlee = true
 		*/
 	default:
-		w.logger.Warn("Unknown message", "Message", fmt.Sprintf("%+v", cmd))
+		worker.logger.Warn("Unknown message", "Message", fmt.Sprintf("%+v", cmd))
 	}
 
 	if doRunTlee {
 
 		//TLEE execution
 		var tlee tleeinterface.TLEE
-		if w.tafContext.Configuration.TLEE.UseInternalTLEE {
+		if worker.tafContext.Configuration.TLEE.UseInternalTLEE {
 			tlee = &internaltlee.TLEE{}
 		} else {
 			tlee = &actualtlee.TLEE{}

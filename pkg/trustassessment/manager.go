@@ -195,10 +195,10 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	}
 	//add new TMI to session
 	tMIs := newSession.TrustModelInstances()
-	tMIs[sessionId] = newTMI
+	tMIs[sessionId] = newTMI //TODO only store TMI.ID
 
 	//add new TMI to list of all TMIs of the TAM
-	tam.tMIs[sessionId] = &newTMI
+	tam.tMIs[sessionId] = &newTMI //TODO only store TMI.ID
 	tam.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//Initialize TMI
@@ -304,4 +304,8 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 
 func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
 
+}
+
+func (tam *Manager) DispatchToWorker(cmd core.Command) {
+	//TODO
 }
