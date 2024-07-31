@@ -57,11 +57,10 @@ func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifi
 	return []core.TrustSourceQuantifier{}
 }
 
-func (e *TrustModelInstance) Init() {
-	//TODO implement me
-	//panic("implement me")
+func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
+	return
 }
+
 func (e *TrustModelInstance) Cleanup() {
-	//TODO implement me
-	//panic("implement me")
+	return
 }

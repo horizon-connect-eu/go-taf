@@ -15,10 +15,10 @@ const (
 	TCH_VERIFIABLE_PRESENTATION
 )
 
-type Source int32
+type TrustSource int32
 
 const (
-	NONE = iota
+	NONE TrustSource = iota
 	AIV
 	MBD
 	TCH
@@ -47,7 +47,7 @@ func (e EvidenceType) String() string {
 	}
 }
 
-func (s Source) String() string {
+func (s TrustSource) String() string {
 	switch s {
 	case NONE:
 		return "NONE"
@@ -62,7 +62,7 @@ func (s Source) String() string {
 	}
 }
 
-func (e EvidenceType) Source() Source {
+func (e EvidenceType) Source() TrustSource {
 	switch e {
 	case UNKNOWN:
 		return NONE
@@ -102,6 +102,6 @@ func EvidenceTypeByName(name string) EvidenceType {
 	case strings.ToUpper(name) == TCH_VERIFIABLE_PRESENTATION.String():
 		return TCH_VERIFIABLE_PRESENTATION
 	default:
-		return NONE
+		return UNKNOWN
 	}
 }

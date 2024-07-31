@@ -184,7 +184,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	tam.logger.Info("TMI spawned:", "TMI ID", newTMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//Initialize TMI
-	newTMI.Init()
+	newTMI.Initialize(nil)
 
 	successHandler := func() {
 		success := "Session with trust model template '" + newTMI.Template().TemplateName() + "@" + newTMI.Template().Version() + "' created."
@@ -205,7 +205,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	}
 	errorHandler := func(err error) {
 		//TODO: remove session
-		errorMsg := "Error intializing session: " + err.Error()
+		errorMsg := "Error initializing session: " + err.Error()
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errorMsg,
@@ -223,7 +223,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.InitTrustSourceQuantifiers(tmt, newTMI.ID(), ch)
+	tam.tsm.InitializeTrustSourceQuantifiers(tmt, newTMI.ID(), ch)
 
 	ch.Execute()
 }
@@ -248,7 +248,17 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		return
 	}
 
-	//TODO: remove session-related data
+	//TODO: remove evidence-related data:
+	// - unsubscribe evidence subscriptions bound to this session ID
+	// - remove subscription data bound to this session ID
+
+	//TODO: force unsubscription of TAS subscription, if existing
+
+	//TODO: remove TMI(s) associated to this session
+
+	//TODO: remove ATL cache entries for this session
+
+	//TODO: remove session data
 
 	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."
 	response := tasmsg.TasTeardownResponse{

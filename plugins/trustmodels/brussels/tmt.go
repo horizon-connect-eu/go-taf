@@ -15,11 +15,11 @@ func quantifier(values map[core.EvidenceType]int, designTimeTrustOp subjectivelo
 
 var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 	core.TrustSourceQuantifier{
-		Trustor:  "TAF",
-		Trustee:  "VC1",
-		Scope:    "VC1",
-		Source:   core.AIV,
-		Evidence: []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+		Trustor:     "TAF",
+		Trustee:     "VC1",
+		Scope:       "VC1",
+		TrustSource: core.AIV,
+		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
 			existenceWeights := map[core.EvidenceType]float64{
 				core.AIV_SECURE_BOOT: 0.1,
@@ -32,11 +32,11 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		},
 	},
 	core.TrustSourceQuantifier{
-		Trustor:  "TAF",
-		Trustee:  "VC2",
-		Scope:    "VC2",
-		Source:   core.AIV,
-		Evidence: []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
+		Trustor:     "TAF",
+		Trustee:     "VC2",
+		Scope:       "VC2",
+		TrustSource: core.AIV,
+		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
 			existenceWeights := map[core.EvidenceType]float64{
 				core.AIV_SECURE_BOOT: 0.1,
@@ -73,33 +73,35 @@ type TrustModelTemplate struct {
 	name                   string
 	version                string
 	trustSourceQuantifiers []core.TrustSourceQuantifier
+	description            string
 }
 
-func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
+func CreateTrustModelTemplate(name string, version string, description string) core.TrustModelTemplate {
 	return TrustModelTemplate{
 		name:                   name,
 		version:                version,
 		trustSourceQuantifiers: trustSourceQuantifiers,
+		description:            description,
 	}
 }
 
-func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
+func (tmt TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
 	return trustSources
 }
 
-func (t TrustModelTemplate) Version() string {
-	return t.version
+func (tmt TrustModelTemplate) Version() string {
+	return tmt.version
 }
 
-func (t TrustModelTemplate) TemplateName() string {
-	return t.name
+func (tmt TrustModelTemplate) TemplateName() string {
+	return tmt.name
 }
 
-func (t TrustModelTemplate) Description() string {
-	return "TODO: Add description of trust model"
+func (tmt TrustModelTemplate) Description() string {
+	return tmt.description
 }
 
-func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) core.TrustModelInstance {
+func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) core.TrustModelInstance {
 
 	omega1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 	omega2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
@@ -107,22 +109,20 @@ func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafCont
 	rtl2, _ := subjectivelogic.NewOpinion(0.65, 0.25, 0.1, 0.5)
 
 	return &TrustModelInstance{
-		id:                             t.TemplateName() + "@" + t.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
-		version:                        0,
-		template:                       t,
-		omega1:                         omega1,
-		omega2:                         omega2,
-		fingerprint:                    0,
-		weights:                        map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},
-		evidence1:                      make(map[string]bool),
-		evidence2:                      make(map[string]bool),
-		rTL1:                           rtl1,
-		rTL2:                           rtl2,
-		trustsources:                   []string{"AIV"},
-		trustSourceQuantifierInstances: t.trustSourceQuantifiers,
+		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		version:     0,
+		template:    tmt,
+		omega1:      omega1,
+		omega2:      omega2,
+		fingerprint: 0,
+		weights:     map[string]float64{"SB": 0.15, "IDS": 0.35, "CFI": 0.35},
+		evidence1:   make(map[string]bool),
+		evidence2:   make(map[string]bool),
+		rTL1:        rtl1,
+		rTL2:        rtl2,
 	}
 }
 
-func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
-	return t.trustSourceQuantifiers
+func (tmt TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
+	return tmt.trustSourceQuantifiers
 }

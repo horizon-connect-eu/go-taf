@@ -11,7 +11,7 @@ type TrustModelInstance interface {
 	Structure() trustmodelstructure.TrustGraphStructure
 	Values() map[string][]trustmodelstructure.TrustRelationship
 	Template() TrustModelTemplate
-	Update(update Update) //TODO
-	Init()
+	Update(update Update)
+	Initialize(params map[string]interface{})
 	Cleanup()
 }

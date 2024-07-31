@@ -14,16 +14,14 @@ type TrustModelInstance struct {
 
 	template TrustModelTemplate
 
-	omega1                         subjectivelogic.Opinion
-	omega2                         subjectivelogic.Opinion
-	fingerprint                    uint32
-	weights                        map[string]float64
-	evidence1                      map[string]bool
-	evidence2                      map[string]bool
-	rTL1                           subjectivelogic.Opinion
-	rTL2                           subjectivelogic.Opinion
-	trustsources                   []string
-	trustSourceQuantifierInstances []core.TrustSourceQuantifier
+	omega1      subjectivelogic.Opinion
+	omega2      subjectivelogic.Opinion
+	fingerprint uint32
+	weights     map[string]float64      //TODO: Can this be deleted now as it is handled by the Quantifier function?
+	evidence1   map[string]bool         //TODO: Can this be deleted now as it is handled by the TSM?
+	evidence2   map[string]bool         //TODO: Can this be deleted now as it is handled by the TSM?
+	rTL1        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
+	rTL2        subjectivelogic.Opinion //TODO: Should this be moved into the template instead because it the same for all instances?
 }
 
 func (e *TrustModelInstance) ID() string {
@@ -47,6 +45,7 @@ func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure
 }
 
 func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
+	//TODO: omega1 and omega2 must be copies and must not be pointers to the actual values
 	return map[string][]trustmodelstructure.TrustRelationship{
 		"VC1": []trustmodelstructure.TrustRelationship{
 			internaltrustmodelstructure.NewTrustRelationshipDTO("TAF", "VC1", &e.omega1),
@@ -76,12 +75,10 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	}
 }
 
-func (e *TrustModelInstance) Init() {
-	//TODO implement me
-
+func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
+	return
 }
 
 func (e *TrustModelInstance) Cleanup() {
-	//TODO implement me
-	//panic("implement me")
+	return
 }
