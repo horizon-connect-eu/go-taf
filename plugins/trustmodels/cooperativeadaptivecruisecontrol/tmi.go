@@ -1,6 +1,7 @@
 package cooperativeadaptivecruisecontrol
 
 import (
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
@@ -63,4 +64,8 @@ func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 
 func (e *TrustModelInstance) Cleanup() {
 	return
+}
+
+func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
+	return map[string]subjectivelogic.QueryableOpinion{}
 }
