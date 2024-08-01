@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
@@ -22,6 +23,7 @@ import (
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"hash/fnv"
 	"log/slog"
+	"strings"
 )
 
 type Manager struct {
@@ -32,7 +34,7 @@ type Manager struct {
 	tafContext   core.TafContext
 	channels     core.TafChannels
 	//sessionID->Session
-	sessions map[string]*session.Session
+	sessions map[string]session.Session
 	outbox   chan core.Message
 	tsm      manager.TrustSourceManager
 	tmm      manager.TrustModelManager
@@ -47,12 +49,13 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tlee
 		config:       tafContext.Configuration,
 		tafContext:   tafContext,
 		channels:     channels,
-		sessions:     make(map[string]*session.Session),
+		sessions:     make(map[string]session.Session),
 		workersToTam: make(chan core.Command, tafContext.Configuration.ChanBufSize),
 		logger:       logging.CreateChildLogger(tafContext.Logger, "TAM"),
 		crypto:       tafContext.Crypto,
 		outbox:       channels.OutgoingMessageChannel,
 		tlee:         tlee,
+		atlResults:   make(map[string]core.AtlResultSet),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -151,11 +154,7 @@ func (tam *Manager) createSessionId() string {
 func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest]) {
 	tam.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request.TrustModelTemplate)
 
-	tmt := tam.tmm.ResolveTMT(cmd.Request.TrustModelTemplate)
-	if tmt == nil {
-		tam.logger.Warn("Unknown Trust Model Template or Version:" + cmd.Request.TrustModelTemplate)
-
-		errorMsg := "Trust model template '" + cmd.Request.TrustModelTemplate + "' could not be resolved."
+	sendErrorResponse := func(errorMsg string) {
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errorMsg,
@@ -168,6 +167,13 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		}
 		//Send error message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	tmt := tam.tmm.ResolveTMT(cmd.Request.TrustModelTemplate)
+	if tmt == nil {
+		tam.logger.Warn("Unknown Trust Model Template or Version:" + cmd.Request.TrustModelTemplate)
+		errorMsg := "Trust model template '" + cmd.Request.TrustModelTemplate + "' could not be resolved."
+		sendErrorResponse(errorMsg)
 		return
 	}
 	//create session ID for client
@@ -175,28 +181,16 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//create Session
 	session := session.NewInstance(sessionId, cmd.Sender)
 	//put session into session map
-	tam.sessions[sessionId] = &session
+	tam.sessions[sessionId] = session
 
 	tam.logger.Info("Session created:", "Session ID", session.ID(), "Client", session.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
+
 	tMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
 	if err != nil {
 		delete(tam.sessions, sessionId)
-
-		errorMsg := "Error initializing session: " + err.Error()
-		response := tasmsg.TasInitResponse{
-			AttestationCertificate: tam.crypto.AttestationCertificate(),
-			Error:                  &errorMsg,
-			SessionID:              nil,
-			Success:                nil,
-		}
-		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
-		if err != nil {
-			tam.logger.Error("Error marshalling response", "error", err)
-		}
-		//Send error message
-		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		sendErrorResponse("Error initializing session: " + err.Error())
 		return
 	}
 	//add new TMI to session
@@ -230,22 +224,11 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		}
 		//Send response message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		tam.sessions[sessionId].Established()
 	}
 	errorHandler := func(err error) {
 		//TODO: undo session, TMI, etc.
-		errorMsg := "Error initializing session: " + err.Error()
-		response := tasmsg.TasInitResponse{
-			AttestationCertificate: tam.crypto.AttestationCertificate(),
-			Error:                  &errorMsg,
-			SessionID:              nil,
-			Success:                nil,
-		}
-		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
-		if err != nil {
-			tam.logger.Error("Error marshalling response", "error", err)
-		}
-		//Send error message
-		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+		sendErrorResponse("Error initializing session: " + err.Error())
 		//Cleanup TMI creation
 		tMI.Cleanup()
 		delete(tam.sessions, sessionId)
@@ -261,7 +244,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {
 	tam.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID)
-	_, exists := tam.sessions[cmd.Request.SessionID]
+	session, exists := tam.sessions[cmd.Request.SessionID]
 	if !exists {
 		errorMsg := "Session ID '" + cmd.Request.SessionID + "' not found."
 
@@ -279,6 +262,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		return
 	}
 
+	session.TearingDown()
 	//TODO: remove evidence-related data:
 	// - unsubscribe evidence subscriptions bound to this session ID
 	// - remove subscription data bound to this session ID
@@ -304,20 +288,146 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	}
 	//Send response message
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	session.TornDown()
 	return
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
 	sessionID := cmd.Request.SessionID
-	_, exists := tam.sessions[sessionID]
+	allowCached := cmd.Request.AllowCache
+	util.UNUSED(allowCached)
+
+	sendErrorResponse := func(errMsg string) {
+		response := tasmsg.TasTaResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  &errMsg,
+			SessionID:              sessionID,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	tmiSession, exists := tam.sessions[sessionID]
 	if !exists {
+		sendErrorResponse("Unknown session")
+		return
+	} else if tmiSession.State() != session.ESTABLISHED {
+		sendErrorResponse("Session not in established state")
 		return
 	}
 
+	targets := cmd.Request.Query.Filter
+	if len(targets) == 0 {
+		//when no specific target is specified, use all TMIs from session
+		for tmiID, _ := range tmiSession.TrustModelInstances() {
+			targets = append(targets, tmiID)
+		}
+	} else {
+		//Check whether all specified targets exist. If at least one is missing, return with error
+		errors := make([]string, 0)
+		for _, target := range targets {
+			if !tmiSession.HasTMI(target) {
+				errors = append(errors, "Target ID '"+target+"' not found.")
+			}
+		}
+		if len(errors) > 0 {
+			sendErrorResponse(strings.Join(errors, "\n"))
+			return
+		}
+	}
+
+	taResponseResults := make([]tasmsg.Result, 0)
+
+	for _, tmiID := range targets {
+		atlResultSet, exists := tam.atlResults[tmiID]
+		propositions := make([]tasmsg.ResultProposition, 0)
+
+		if exists {
+			for propositionID, opinion := range atlResultSet.ATLs() {
+				trustDecision := atlResultSet.TrustDecisions()[propositionID]
+				atl := make([]tasmsg.FluffyActualTrustworthinessLevel, 0)
+				baseRate := opinion.BaseRate()
+				belief := opinion.Belief()
+				disbelief := opinion.Disbelief()
+				uncertainty := opinion.Uncertainty()
+
+				atl = append(atl, tasmsg.FluffyActualTrustworthinessLevel{
+					Output: tasmsg.FluffyOutput{
+						BaseRate:    &baseRate,
+						Belief:      &belief,
+						Disbelief:   &disbelief,
+						Uncertainty: &uncertainty,
+					},
+					Type: tasmsg.SubjectiveLogicOpinion,
+				})
+
+				projectedProbability := atlResultSet.ProjectedProbabilities()[propositionID]
+				atl = append(atl, tasmsg.FluffyActualTrustworthinessLevel{
+					Output: tasmsg.FluffyOutput{
+						Value: &projectedProbability,
+					},
+					Type: tasmsg.ProjectedProbability,
+				})
+
+				propositions = append(propositions, tasmsg.ResultProposition{
+					ActualTrustworthinessLevel: atl,
+					PropositionID:              propositionID,
+					TrustDecision:              &trustDecision,
+				})
+			}
+		}
+
+		taResponseResults = append(taResponseResults, tasmsg.Result{
+			ID:           tmiID,
+			Propositions: propositions,
+		})
+
+	}
+
+	response := tasmsg.TasTaResponse{
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
+		Error:                  nil,
+		Results:                taResponseResults,
+		SessionID:              sessionID,
+	}
+	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
+	if err != nil {
+		tam.logger.Error("Error marshalling response", "error", err)
+	}
+	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 }
 
 func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]) {
+	sessionID := cmd.Request.SessionID
 
+	sendErrorResponse := func(errMsg string) {
+		response := tasmsg.TasSubscribeResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  &errMsg,
+			SessionID:              sessionID,
+			SubscriptionID:         nil,
+			Success:                nil,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	tmiSession, exists := tam.sessions[sessionID]
+	if !exists {
+		sendErrorResponse("Unknown session")
+		return
+	} else if tmiSession.State() != session.ESTABLISHED {
+		sendErrorResponse("Session not in established state")
+		return
+	}
+
+	//TODO: implement
 }
 
 func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
@@ -325,14 +435,14 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
-	tam.logger.Warn("ATL Update", "ResultSet", fmt.Sprintf("%+v", cmd.ResultSet))
+	tam.logger.Debug("ATL Update", "ResultSet", fmt.Sprintf("%+v", cmd.ResultSet))
 	tmiID := cmd.ResultSet.TmiID()
-	sessionID := cmd.ResultSet.SessionID()
+	sessionID := cmd.Session
 	_, exists := tam.sessions[sessionID]
 	if !exists {
 		return
 	}
-	//TODO: Check whether there are relevant(?) changes and notify subscribers
+	//TODO: Check whether there are relevant(?) changes and notify potential subscribers
 	tam.atlResults[tmiID] = cmd.ResultSet
 }
 

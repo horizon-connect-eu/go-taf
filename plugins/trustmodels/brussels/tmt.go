@@ -1,10 +1,8 @@
 package brussels
 
 import (
-	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"math/rand/v2"
 )
 
 func quantifier(values map[core.EvidenceType]int, designTimeTrustOp subjectivelogic.QueryableOpinion, existenceWeights map[core.EvidenceType]float64, outputWeights map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
@@ -171,7 +169,8 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 	//return nil, errors.New("Reason")
 
 	return &TrustModelInstance{
-		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		//		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		id:          tmt.TemplateName() + "@" + tmt.Version() + "-001",
 		version:     0,
 		template:    tmt,
 		omega1:      omega1,
