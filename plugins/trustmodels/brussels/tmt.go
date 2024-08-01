@@ -7,6 +7,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"math/rand/v2"
 	"strconv"
+	"strings"
 )
 
 var vc1ExistenceWeights = map[core.EvidenceType]float64{
@@ -223,137 +224,124 @@ func getOpinionFromInit(params map[string]string, opinionKey string) (subjective
 	return opinion, err
 }
 
-func createQuantifierFunction(trustSourceQuantifier core.TrustSourceQuantifier, existenceWeights map[string]float64, outputWeights map[string]int, dti subjectivelogic.Opinion) {
-	if trustSourceQuantifier.Trustee == "VC1" {
-		vc1ExistenceWeights = map[core.EvidenceType]float64{
-			core.AIV_SECURE_BOOT:                          existenceWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_ACCESS_CONTROL:                       existenceWeights[core.AIV_ACCESS_CONTROL.String()],
-			core.AIV_CONTROL_FLOW_INTEGRITY:               existenceWeights[core.AIV_CONTROL_FLOW_INTEGRITY.String()],
-			core.AIV_SECURE_OTA:                           existenceWeights[core.AIV_SECURE_OTA.String()],
-			core.AIV_APPLICATION_ISOLATION:                existenceWeights[core.AIV_APPLICATION_ISOLATION.String()],
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: existenceWeights[core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String()],
-		}
+func checkSetParameters(params map[string]string) map[string]bool {
+	setParams := make(map[string]bool)
 
-		vc1OutputWeights = map[core.EvidenceType]int{
-			core.AIV_SECURE_BOOT:                          outputWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_ACCESS_CONTROL:                       outputWeights[core.AIV_ACCESS_CONTROL.String()],
-			core.AIV_CONTROL_FLOW_INTEGRITY:               outputWeights[core.AIV_CONTROL_FLOW_INTEGRITY.String()],
-			core.AIV_SECURE_OTA:                           outputWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_APPLICATION_ISOLATION:                outputWeights[core.AIV_APPLICATION_ISOLATION.String()],
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: outputWeights[core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String()],
+	for k := range params {
+		if strings.HasPrefix(k, "VC1_EXISTENCE") {
+			setParams["VC1_EXISTENCE"] = true
+		} else if strings.HasPrefix(k, "VC2_EXISTENCE") {
+			setParams["VC2_EXISTENCE"] = true
+		} else if strings.HasPrefix(k, "VC1_OUTPUT") {
+			setParams["VC1_OUTPUT"] = true
+		} else if strings.HasPrefix(k, "VC2_OUTPUT") {
+			setParams["VC2_OUTPUT"] = true
+		} else if strings.HasPrefix(k, "VC1_DTI") {
+			setParams["VC1_DTI"] = true
+		} else if strings.HasPrefix(k, "VC2_DTI") {
+			setParams["VC2_DTI"] = true
 		}
-
-		vc1DTI = dti
-	} else if trustSourceQuantifier.Trustee == "VC2" {
-		vc2ExistenceWeights = map[core.EvidenceType]float64{
-			core.AIV_SECURE_BOOT:                          existenceWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_ACCESS_CONTROL:                       existenceWeights[core.AIV_ACCESS_CONTROL.String()],
-			core.AIV_CONTROL_FLOW_INTEGRITY:               existenceWeights[core.AIV_CONTROL_FLOW_INTEGRITY.String()],
-			core.AIV_SECURE_OTA:                           existenceWeights[core.AIV_SECURE_OTA.String()],
-			core.AIV_APPLICATION_ISOLATION:                existenceWeights[core.AIV_APPLICATION_ISOLATION.String()],
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: existenceWeights[core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String()],
-		}
-
-		vc2OutputWeights = map[core.EvidenceType]int{
-			core.AIV_SECURE_BOOT:                          outputWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_ACCESS_CONTROL:                       outputWeights[core.AIV_ACCESS_CONTROL.String()],
-			core.AIV_CONTROL_FLOW_INTEGRITY:               outputWeights[core.AIV_CONTROL_FLOW_INTEGRITY.String()],
-			core.AIV_SECURE_OTA:                           outputWeights[core.AIV_SECURE_BOOT.String()],
-			core.AIV_APPLICATION_ISOLATION:                outputWeights[core.AIV_APPLICATION_ISOLATION.String()],
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: outputWeights[core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String()],
-		}
-
-		vc2DTI = dti
 	}
 
+	return setParams
 }
 
 func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) (core.TrustModelInstance, error) {
+	setParams := checkSetParameters(params)
 
 	omega1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 	omega2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
-
-	//return nil, errors.New("Reason")
-
-	existenceWeightsVC1 := make(map[string]float64)
-	existenceWeightsVC2 := make(map[string]float64)
-	outputWeightsVC1 := make(map[string]int)
-	outputWeightsVC2 := make(map[string]int)
 
 	if len(params) > 0 {
 		// get existence parameters for VC1
 		sum := 0.0
 
-		for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
-			value, err := getExistenceWeightsFromInit(params, "VC1_EXISTENCE_"+typeEvidence.String())
-			if err != nil {
-				return nil, err
+		if _, found := setParams["VC1_EXISTENCE"]; found {
+			for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
+				value, err := getExistenceWeightsFromInit(params, "VC1_EXISTENCE_"+typeEvidence.String())
+				if err != nil {
+					return nil, err
+				}
+				vc1ExistenceWeights[typeEvidence] = value
+
+				sum = sum + value
 			}
-			existenceWeightsVC1[typeEvidence.String()] = value
 
-			sum = sum + value
-		}
+			if sum > 1 {
+				return nil, errors.New("Values for existence weights of VC1 sum up to more than 1")
+			}
 
-		if sum > 1 {
-			return nil, errors.New("Values for existence weights of VC1 sum up to more than 1")
 		}
 
 		// get existence parameters for VC2
 		sum = 0.0
 
-		for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
-			value, err := getExistenceWeightsFromInit(params, "VC2_EXISTENCE_"+typeEvidence.String())
-			if err != nil {
-				return nil, err
+		if _, found := setParams["VC2_EXISTENCE"]; found {
+			for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
+				value, err := getExistenceWeightsFromInit(params, "VC2_EXISTENCE_"+typeEvidence.String())
+				if err != nil {
+					return nil, err
+				}
+				vc2ExistenceWeights[typeEvidence] = value
+
+				sum = sum + value
 			}
-			existenceWeightsVC2[typeEvidence.String()] = value
 
-			sum = sum + value
-		}
-
-		if sum > 1 {
-			return nil, errors.New("Values for existence weights of VC2 sum up to more than 1")
+			if sum > 1 {
+				return nil, errors.New("Values for existence weights of VC2 sum up to more than 1")
+			}
 		}
 
 		// get output parameters for VC1
-		for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
-			value, err := getOutputWeightsFromInit(params, "VC1_OUTPUT_"+typeEvidence.String())
-			if err != nil {
-				return nil, err
-			}
-			outputWeightsVC1[typeEvidence.String()] = value
 
-			if value < 0 || value > 2 {
-				return nil, errors.New("Invalid value for VC1_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+		if _, found := setParams["VC1_OUTPUT"]; found {
+			for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
+				value, err := getOutputWeightsFromInit(params, "VC1_OUTPUT_"+typeEvidence.String())
+				if err != nil {
+					return nil, err
+				}
+				vc1OutputWeights[typeEvidence] = value
+
+				if value < 0 || value > 2 {
+					return nil, errors.New("Invalid value for VC1_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+				}
 			}
 		}
 
 		// get output parameters for VC2
-		for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
-			value, err := getOutputWeightsFromInit(params, "VC2_OUTPUT_"+typeEvidence.String())
-			if err != nil {
-				return nil, err
-			}
-			outputWeightsVC2[typeEvidence.String()] = value
 
-			if value < 0 || value > 2 {
-				return nil, errors.New("Invalid value for VC2_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+		if _, found := setParams["VC2_OUTPUT"]; found {
+			for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
+				value, err := getOutputWeightsFromInit(params, "VC2_OUTPUT_"+typeEvidence.String())
+				if err != nil {
+					return nil, err
+				}
+				vc2OutputWeights[typeEvidence] = value
+
+				if value < 0 || value > 2 {
+					return nil, errors.New("Invalid value for VC2_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+				}
 			}
 		}
 
 		// get DTI for VC1
-		vc1_dti, err := getOpinionFromInit(params, "VC1_DTI")
-		if err != nil {
-			return nil, err
+		if _, found := setParams["VC1_DTI"]; found {
+			err := errors.New("")
+			vc1DTI, err = getOpinionFromInit(params, "VC1_DTI")
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		vc2_dti, err := getOpinionFromInit(params, "VC2_DTI")
-		if err != nil {
-			return nil, err
+		// get DTI for VC1
+		if _, found := setParams["VC2_DTI"]; found {
+			err := errors.New("")
+			vc2DTI, err = getOpinionFromInit(params, "VC2_DTI")
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		createQuantifierFunction(tmt.trustSourceQuantifiers[0], existenceWeightsVC1, outputWeightsVC1, vc1_dti)
-		createQuantifierFunction(tmt.trustSourceQuantifiers[1], existenceWeightsVC2, outputWeightsVC2, vc2_dti)
 	}
 
 	return &TrustModelInstance{
