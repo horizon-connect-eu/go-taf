@@ -100,7 +100,7 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 		projectedProbabilities[proposition] = trustdecision.ProjectProbability(opinion)
 		//trustDecisions[proposition] = trustdecision.Decide(opinion, ) TODO: How to get RTL?
 	}
-
-	atlUpdateCmd := command.CreateHandleATLUpdate(tmi.ID(), sessionID, atls, projectedProbabilities, trustDecisions)
+	resultSet := core.CreateAtlResultSet(tmi.ID(), sessionID, tmi.Version(), atls, projectedProbabilities, trustDecisions)
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet)
 	worker.workersToTam <- atlUpdateCmd
 }

@@ -4,6 +4,7 @@ type Session interface {
 	ID() string
 	TrustModelInstances() map[string]bool
 	Client() string
+	HasTMI(tmiID string) bool
 }
 
 type Instance struct {
@@ -20,12 +21,20 @@ func NewInstance(id, client string) Session {
 	}
 }
 
-func (d *Instance) ID() string {
-	return d.id
+func (s *Instance) ID() string {
+	return s.id
 }
-func (d *Instance) TrustModelInstances() map[string]bool {
-	return d.tMIs
+func (s *Instance) TrustModelInstances() map[string]bool {
+	return s.tMIs
 }
-func (d *Instance) Client() string {
-	return d.client
+func (s *Instance) Client() string {
+	return s.client
+}
+
+func (s *Instance) HasTMI(tmiID string) bool {
+	val, exists := s.tMIs[tmiID]
+	if !exists {
+		return false
+	}
+	return val
 }

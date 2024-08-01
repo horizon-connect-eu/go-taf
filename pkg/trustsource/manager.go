@@ -26,15 +26,17 @@ import (
 const MISSING_EVIDENCE = math.MinInt
 
 type Manager struct {
-	config                  config.Configuration
-	tafContext              core.TafContext
-	logger                  *slog.Logger
-	tam                     manager.TrustAssessmentManager
-	tmm                     manager.TrustModelManager
-	crypto                  *crypto.Crypto
-	outbox                  chan core.Message
+	config     config.Configuration
+	tafContext core.TafContext
+	logger     *slog.Logger
+	tam        manager.TrustAssessmentManager
+	tmm        manager.TrustModelManager
+	crypto     *crypto.Crypto
+	outbox     chan core.Message
+	//Schema:ResponseID->Callback
 	pendingMessageCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command)
-	subscriptionIDtoTMI     map[string]string
+	//subscriptionID->TMI ID
+	subscriptionIDtoTMI map[string]string
 	//subscriptionID:Trustee:Source:EvidenceType->Value
 	subscriptionEvidence map[string]map[string]map[core.TrustSource]map[core.EvidenceType]int
 	//subscriptionID:Trustee:Source->QuantifierFunc
@@ -181,7 +183,7 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 
 }
 
-func (tsm *Manager) InitializeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
 
 	subscriptions := make(map[core.TrustSource]map[string][]core.EvidenceType, 0)
 	quantifiers := make(map[core.TrustSource]core.Quantifier, 0)
@@ -298,7 +300,14 @@ func (tsm *Manager) InitializeTrustSourceQuantifiers(tmt core.TrustModelTemplate
 			panic("unknown Trust Source")
 		}
 	}
+}
 
+func (tsm *Manager) UnregisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+	//Get Subscription ID(s) for TMI ID
+	//For each:
+	//	Create Unsubscribe,
+	//	wait for Response,
+	//	remove associate subscription data
 }
 
 /*

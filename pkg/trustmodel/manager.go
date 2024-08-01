@@ -13,10 +13,11 @@ import (
 )
 
 type Manager struct {
-	tafContext             core.TafContext
-	logger                 *slog.Logger
-	tam                    manager.TrustAssessmentManager
-	tsm                    manager.TrustSourceManager
+	tafContext core.TafContext
+	logger     *slog.Logger
+	tam        manager.TrustAssessmentManager
+	tsm        manager.TrustSourceManager
+	//trustmodeltemplate identifier->TMT
 	trustModelTemplateRepo map[string]core.TrustModelTemplate
 	v2xObserver            v2xObserver
 	crypto                 *crypto.Crypto

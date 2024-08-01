@@ -1,7 +1,6 @@
 package command
 
 import (
-	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
@@ -62,21 +61,12 @@ func (r HandleTMIDestroy) Type() core.CommandType {
 
 type HandleATLUpdate struct {
 	commandType core.CommandType
-	TmiID       string
-	SessionID   string
-	//TODO
-	ATLs map[string]subjectivelogic.QueryableOpinion
-	PPs  map[string]float64
-	TDs  map[string]bool
+	ResultSet   core.AtlResultSet
 }
 
-func CreateHandleATLUpdate(tmiID string, sessionID string, atls map[string]subjectivelogic.QueryableOpinion, PPs map[string]float64, TDs map[string]bool) HandleATLUpdate {
+func CreateHandleATLUpdate(atl core.AtlResultSet) HandleATLUpdate {
 	return HandleATLUpdate{
-		TmiID:       tmiID,
-		SessionID:   sessionID,
-		ATLs:        atls,
-		TDs:         TDs,
-		PPs:         PPs,
+		ResultSet:   atl,
 		commandType: core.HANDLE_ATL_UPDATE,
 	}
 }

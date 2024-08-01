@@ -31,12 +31,15 @@ type Manager struct {
 	logger       *slog.Logger
 	tafContext   core.TafContext
 	channels     core.TafChannels
-	sessions     map[string]*session.Session
-	outbox       chan core.Message
-	tsm          manager.TrustSourceManager
-	tmm          manager.TrustModelManager
-	crypto       *crypto.Crypto
-	tlee         tleeinterface.TLEE
+	//sessionID->Session
+	sessions map[string]*session.Session
+	outbox   chan core.Message
+	tsm      manager.TrustSourceManager
+	tmm      manager.TrustModelManager
+	crypto   *crypto.Crypto
+	tlee     tleeinterface.TLEE
+	//tmiID->latest ATLs/PPs/TDs
+	atlResults map[string]core.AtlResultSet
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
@@ -251,7 +254,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.InitializeTrustSourceQuantifiers(tmt, tmiID, ch)
+	tam.tsm.RegisterTrustSourceQuantifiers(tmt, tmiID, ch)
 
 	ch.Execute()
 }
@@ -305,6 +308,11 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
+	sessionID := cmd.Request.SessionID
+	_, exists := tam.sessions[sessionID]
+	if !exists {
+		return
+	}
 
 }
 
@@ -317,8 +325,15 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
-	tam.logger.Warn("ATL Update", "ATLs", fmt.Sprintf("%+v", cmd.ATLs), "PPs", fmt.Sprintf("%+v", cmd.PPs))
-	//TODO: Store results
+	tam.logger.Warn("ATL Update", "ResultSet", fmt.Sprintf("%+v", cmd.ResultSet))
+	tmiID := cmd.ResultSet.TmiID()
+	sessionID := cmd.ResultSet.SessionID()
+	_, exists := tam.sessions[sessionID]
+	if !exists {
+		return
+	}
+	//TODO: Check whether there are relevant(?) changes and notify subscribers
+	tam.atlResults[tmiID] = cmd.ResultSet
 }
 
 func (tam *Manager) DispatchToWorker(tmiID string, cmd core.Command) {
