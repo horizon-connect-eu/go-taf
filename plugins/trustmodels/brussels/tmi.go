@@ -69,6 +69,13 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	}
 }
 
+func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
+	return map[string]subjectivelogic.QueryableOpinion{
+		"VC1": &e.template.rTL1,
+		"VC2": &e.template.rTL2,
+	}
+}
+
 func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 	return
 }

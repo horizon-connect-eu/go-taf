@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 )
 
@@ -14,4 +15,5 @@ type TrustModelInstance interface {
 	Update(update Update)
 	Initialize(params map[string]interface{})
 	Cleanup()
+	RTLs() map[string]subjectivelogic.QueryableOpinion
 }
