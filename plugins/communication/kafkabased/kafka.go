@@ -42,7 +42,8 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	}
 	defer producer.Close()
 
-	consumer, err := sarama.NewConsumerGroup(brokers, tafContext.Identifier+uuid.New().String(), config)
+	//Use randomized ConsumerGroup name to prevent processing of previously missed messages after crash/restart
+	consumer, err := sarama.NewConsumerGroup(brokers, tafContext.Identifier+"-"+uuid.New().String(), config)
 	if err != nil {
 		logger.Error("Error creating Kafka Consumer ", "Details", err)
 		os.Exit(-1)
