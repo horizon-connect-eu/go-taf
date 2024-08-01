@@ -240,6 +240,10 @@ func checkSetParameters(params map[string]string) map[string]bool {
 			setParams["VC1_DTI"] = true
 		} else if strings.HasPrefix(k, "VC2_DTI") {
 			setParams["VC2_DTI"] = true
+		} else if strings.HasPrefix(k, "VC1_RTL") {
+			setParams["VC1_RTL"] = true
+		} else if strings.HasPrefix(k, "VC2_RTL") {
+			setParams["VC2_RTL"] = true
 		}
 	}
 
@@ -293,7 +297,6 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 		}
 
 		// get output parameters for VC1
-
 		if _, found := setParams["VC1_OUTPUT"]; found {
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
 				value, err := getOutputWeightsFromInit(params, "VC1_OUTPUT_"+typeEvidence.String())
@@ -309,7 +312,6 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 		}
 
 		// get output parameters for VC2
-
 		if _, found := setParams["VC2_OUTPUT"]; found {
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
 				value, err := getOutputWeightsFromInit(params, "VC2_OUTPUT_"+typeEvidence.String())
@@ -337,6 +339,24 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 		if _, found := setParams["VC2_DTI"]; found {
 			err := errors.New("")
 			vc2DTI, err = getOpinionFromInit(params, "VC2_DTI")
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// get RTL for VC1
+		if _, found := setParams["VC1_RTL"]; found {
+			err := errors.New("")
+			tmt.rTL1, err = getOpinionFromInit(params, "VC1_RTL")
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// get DTI for VC1
+		if _, found := setParams["VC2_RTL"]; found {
+			err := errors.New("")
+			tmt.rTL2, err = getOpinionFromInit(params, "VC2_RTL")
 			if err != nil {
 				return nil, err
 			}

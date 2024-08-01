@@ -174,10 +174,15 @@ func TestLoadJson(t *testing.T) {
 	values_init["VC1_DTI_UNCERTAINTY"] = "1.0"
 	values_init["VC1_DTI_BASERATE"] = "0.5"
 
-	/*values_init["VC2_DTI_BELIEF"] = "0.1"
+	values_init["VC2_DTI_BELIEF"] = "0.1"
 	values_init["VC2_DTI_DISBELIEF"] = "0.2"
 	values_init["VC2_DTI_UNCERTAINTY"] = "0.7"
-	values_init["VC2_DTI_BASERATE"] = "0.5"*/
+	values_init["VC2_DTI_BASERATE"] = "0.5"
+
+	values_init["VC1_RTL_BELIEF"] = "0.1"
+	values_init["VC1_RTL_DISBELIEF"] = "0.1"
+	values_init["VC1_RTL_UNCERTAINTY"] = "0.8"
+	values_init["VC1_RTL_BASERATE"] = "0.5"
 
 	tmi2, _ := tmt.Spawn(values_init, context, channels)
 
@@ -188,10 +193,12 @@ func TestLoadJson(t *testing.T) {
 	evidenceMap2[core.AIV_ACCESS_CONTROL] = 1
 	evidenceMap2[core.AIV_CONTROL_FLOW_INTEGRITY] = 1
 
-	slOpinion2 := tmi2.Template().TrustSourceQuantifiers()[0].Quantifier(evidenceMap2)
+	slOpinion2 := tmi2.Template().TrustSourceQuantifiers()[1].Quantifier(evidenceMap2)
 	if (math.Round(slOpinion2.Belief()*100)/100) != 0.3 || (math.Round(slOpinion2.Disbelief()*100)/100) != 1.0 || (math.Round(slOpinion2.Uncertainty()*100)/100) != 0.7 {
 		t.Error("Incorrect trust opinion")
 	}
+
+	fmt.Printf("%+v ", tmi2.RTLs())
 
 	//----------------TLEE execution-------------------
 	var tlee tleeinterface.TLEE
