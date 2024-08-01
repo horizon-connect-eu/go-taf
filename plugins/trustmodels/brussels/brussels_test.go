@@ -3,10 +3,8 @@ package brussels
 import (
 	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"fmt"
-	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"math"
 	"testing"
@@ -17,7 +15,7 @@ func TestLoadJson(t *testing.T) {
 	context := core.TafContext{}
 	channels := core.TafChannels{}
 
-	tmi, _ := tmt.Spawn(make(map[string]string), context, channels)
+	/*tmi, _ := tmt.Spawn(make(map[string]string), context, channels)
 
 	// -------------- Check Structure() method ---------------------
 	structure := tmi.Structure()
@@ -139,12 +137,66 @@ func TestLoadJson(t *testing.T) {
 	slOpinion = quantifiers[0].Quantifier(evidenceMap)
 	if (math.Round(slOpinion.Belief()*100)/100) != 0.0 || (math.Round(slOpinion.Disbelief()*100)/100) != 1.0 || (math.Round(slOpinion.Uncertainty()*100)/100) != 0.0 {
 		t.Error("Incorrect trust opinion")
+	}*/
+
+	//----------------Dynamic weights-------------------
+	values_init := make(map[string]string)
+	values_init["VC1_EXISTENCE_SECURE_BOOT"] = "0.1"
+	values_init["VC1_EXISTENCE_ACCESS_CONTROL"] = "0.1"
+	values_init["VC1_EXISTENCE_SECURE_OTA"] = "0.1"
+	values_init["VC1_EXISTENCE_APPLICATION_ISOLATION"] = "0.1"
+	values_init["VC1_EXISTENCE_CONTROL_FLOW_INTEGRITY"] = "0.1"
+	values_init["VC1_EXISTENCE_CONFIGURATION_INTEGRITY_VERIFICATION"] = "0.1"
+
+	values_init["VC2_EXISTENCE_SECURE_BOOT"] = "0.1"
+	values_init["VC2_EXISTENCE_ACCESS_CONTROL"] = "0.1"
+	values_init["VC2_EXISTENCE_SECURE_OTA"] = "0.1"
+	values_init["VC2_EXISTENCE_APPLICATION_ISOLATION"] = "0.1"
+	values_init["VC2_EXISTENCE_CONTROL_FLOW_INTEGRITY"] = "0.1"
+	values_init["VC2_EXISTENCE_CONFIGURATION_INTEGRITY_VERIFICATION"] = "0.1"
+
+	values_init["VC1_OUTPUT_SECURE_BOOT"] = "0"
+	values_init["VC1_OUTPUT_ACCESS_CONTROL"] = "1"
+	values_init["VC1_OUTPUT_SECURE_OTA"] = "1"
+	values_init["VC1_OUTPUT_APPLICATION_ISOLATION"] = "2"
+	values_init["VC1_OUTPUT_CONTROL_FLOW_INTEGRITY"] = "1"
+	values_init["VC1_OUTPUT_CONFIGURATION_INTEGRITY_VERIFICATION"] = "1"
+
+	values_init["VC2_OUTPUT_SECURE_BOOT"] = "1"
+	values_init["VC2_OUTPUT_ACCESS_CONTROL"] = "1"
+	values_init["VC2_OUTPUT_SECURE_OTA"] = "0"
+	values_init["VC2_OUTPUT_APPLICATION_ISOLATION"] = "2"
+	values_init["VC2_OUTPUT_CONTROL_FLOW_INTEGRITY"] = "1"
+	values_init["VC2_OUTPUT_CONFIGURATION_INTEGRITY_VERIFICATION"] = "0"
+
+	values_init["VC1_DTI_BELIEF"] = "0.0"
+	values_init["VC1_DTI_DISBELIEF"] = "0.0"
+	values_init["VC1_DTI_UNCERTAINTY"] = "1.0"
+	values_init["VC1_DTI_BASERATE"] = "0.5"
+
+	values_init["VC2_DTI_BELIEF"] = "0.1"
+	values_init["VC2_DTI_DISBELIEF"] = "0.2"
+	values_init["VC2_DTI_UNCERTAINTY"] = "0.7"
+	values_init["VC2_DTI_BASERATE"] = "0.5"
+
+	tmi2, _ := tmt.Spawn(values_init, context, channels)
+
+	// Test Scenario2
+	evidenceMap2 := make(map[core.EvidenceType]int)
+
+	evidenceMap2[core.AIV_SECURE_BOOT] = 1
+	evidenceMap2[core.AIV_ACCESS_CONTROL] = 1
+	evidenceMap2[core.AIV_CONTROL_FLOW_INTEGRITY] = 1
+
+	slOpinion2 := tmi2.Template().TrustSourceQuantifiers()[0].Quantifier(evidenceMap2)
+	if (math.Round(slOpinion2.Belief()*100)/100) != 0.3 || (math.Round(slOpinion2.Disbelief()*100)/100) != 1.0 || (math.Round(slOpinion2.Uncertainty()*100)/100) != 0.7 {
+		t.Error("Incorrect trust opinion")
 	}
 
 	//----------------TLEE execution-------------------
 	var tlee tleeinterface.TLEE
 	tlee = &actualtlee.TLEE{}
 	util.UNUSED(tlee)
-	tleeResults := tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+	tleeResults := tlee.RunTLEE(tmi2.ID(), tmi2.Version(), tmi2.Fingerprint(), tmi2.Structure(), tmi2.Values())
 	fmt.Printf("%+v", tleeResults)
 }
