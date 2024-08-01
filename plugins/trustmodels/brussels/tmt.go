@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"math/rand/v2"
 	"strconv"
 	"strings"
 )
