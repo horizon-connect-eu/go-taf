@@ -14,9 +14,13 @@ type AtlResultSet struct {
 	tdResults map[string]bool
 }
 
-func CreateAtlResultSet(tmiID string, sessionID string, version int, slResults map[string]subjectivelogic.QueryableOpinion, ppResults map[string]float64, tdResults map[string]bool) AtlResultSet {
+func CreateAtlResultSet(tmiID string, version int, slResults map[string]subjectivelogic.QueryableOpinion, ppResults map[string]float64, tdResults map[string]bool) AtlResultSet {
 	return AtlResultSet{
-		tmiID: tmiID, sessionID: sessionID, version: version, slResults: slResults, ppResults: ppResults, tdResults: tdResults,
+		tmiID:     tmiID,
+		version:   version,
+		slResults: slResults,
+		ppResults: ppResults,
+		tdResults: tdResults,
 	}
 }
 

@@ -365,7 +365,8 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 	}
 
 	return &TrustModelInstance{
-		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		//		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		id:          tmt.TemplateName() + "@" + tmt.Version() + "-001",
 		version:     0,
 		template:    tmt,
 		omega1:      omega1,

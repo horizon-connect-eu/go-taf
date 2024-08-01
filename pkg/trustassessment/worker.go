@@ -3,6 +3,7 @@ package trustassessment
 import (
 	"context"
 	"fmt"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
@@ -12,11 +13,13 @@ import (
 )
 
 type Worker struct {
-	tafContext   core.TafContext
-	id           int
-	workerQueue  <-chan core.Command
-	logger       *slog.Logger
-	tmis         map[string]core.TrustModelInstance
+	tafContext  core.TafContext
+	id          int
+	workerQueue <-chan core.Command
+	logger      *slog.Logger
+	//tmiID->TMI
+	tmis map[string]core.TrustModelInstance
+	//tmiID->SessionID
 	tmiSessions  map[string]string
 	workersToTam chan<- core.Command
 	tlee         tleeinterface.TLEE
@@ -81,6 +84,32 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.TmiID)
 	worker.tmis[cmd.TmiID] = cmd.TMI
 	worker.tmiSessions[cmd.TmiID] = cmd.SessionID
+	//TODO: call TLEE?
+	//TODO: Initialize ATL at TAM
+}
+
+func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {
+	atls := worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+	worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+	return atls
+}
+
+func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
+	rtls := tmi.RTLs()
+	projectedProbabilities := make(map[string]float64, len(atls))
+	trustDecisions := make(map[string]bool, len(atls))
+	for proposition, atlOpinion := range atls {
+		rtlOpinion, exists := rtls[proposition]
+		if !exists {
+			worker.logger.Error("Could not find RTL in trust model instance for proposition "+proposition, "TMI ID", tmi.ID())
+			trustDecisions[proposition] = false //If no RTL is found, we set trust decision to false as default, TODO: correct behavior?
+		} else {
+			trustDecisions[proposition] = trustdecision.Decide(atlOpinion, rtlOpinion)
+		}
+		projectedProbabilities[proposition] = trustdecision.ProjectProbability(atlOpinion)
+	}
+	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), atls, projectedProbabilities, trustDecisions)
+	return resultSet
 }
 
 func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
@@ -91,16 +120,13 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	}
 	sessionID, _ := worker.tmiSessions[cmd.TmiID]
 
+	//Execute TMI Update
 	tmi.Update(cmd.Update)
-	atls := worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
-	worker.logger.Warn("TLEE called", "Results", fmt.Sprintf("%+v", atls))
-	projectedProbabilities := make(map[string]float64, len(atls))
-	trustDecisions := make(map[string]bool, len(atls))
-	for proposition, opinion := range atls {
-		projectedProbabilities[proposition] = trustdecision.ProjectProbability(opinion)
-		//trustDecisions[proposition] = trustdecision.Decide(opinion, ) TODO: How to get RTL?
-	}
-	resultSet := core.CreateAtlResultSet(tmi.ID(), sessionID, tmi.Version(), atls, projectedProbabilities, trustDecisions)
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet)
+	//Run TLEE
+	atls := worker.executeTLEE(tmi)
+	//Run TDE
+	resultSet := worker.executeTDE(tmi, atls)
+
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, sessionID)
 	worker.workersToTam <- atlUpdateCmd
 }

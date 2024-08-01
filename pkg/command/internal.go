@@ -61,12 +61,14 @@ func (r HandleTMIDestroy) Type() core.CommandType {
 
 type HandleATLUpdate struct {
 	commandType core.CommandType
+	Session     string
 	ResultSet   core.AtlResultSet
 }
 
-func CreateHandleATLUpdate(atl core.AtlResultSet) HandleATLUpdate {
+func CreateHandleATLUpdate(atl core.AtlResultSet, session string) HandleATLUpdate {
 	return HandleATLUpdate{
 		ResultSet:   atl,
+		Session:     session,
 		commandType: core.HANDLE_ATL_UPDATE,
 	}
 }
