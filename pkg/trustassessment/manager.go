@@ -53,6 +53,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tlee
 		crypto:       tafContext.Crypto,
 		outbox:       channels.OutgoingMessageChannel,
 		tlee:         tlee,
+		atlResults:   make(map[string]core.AtlResultSet),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
