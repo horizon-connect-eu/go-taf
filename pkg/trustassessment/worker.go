@@ -97,12 +97,12 @@ func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjec
 func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
 	projectedProbabilities := make(map[string]float64, len(atls))
-	trustDecisions := make(map[string]bool, len(atls))
+	trustDecisions := make(map[string]core.TrustDecision, len(atls))
 	for proposition, atlOpinion := range atls {
 		rtlOpinion, exists := rtls[proposition]
 		if !exists {
 			worker.logger.Error("Could not find RTL in trust model instance for proposition "+proposition, "TMI ID", tmi.ID())
-			trustDecisions[proposition] = false //If no RTL is found, we set trust decision to false as default, TODO: correct behavior?
+			trustDecisions[proposition] = core.UNDECIDABLE //If no RTL is found, we set trust decision to UNDECIDABLE as default
 		} else {
 			trustDecisions[proposition] = trustdecision.Decide(atlOpinion, rtlOpinion)
 		}

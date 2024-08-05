@@ -383,10 +383,19 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 					Type: tasmsg.ProjectedProbability,
 				})
 
+				var tdValue *bool = nil
+				if trustDecision == core.TRUSTWORTHY {
+					value := true
+					tdValue = &value
+				} else if trustDecision == core.NOT_TRUSTWORTHY {
+					value := false
+					tdValue = &value
+				}
+
 				propositions = append(propositions, tasmsg.ResultProposition{
 					ActualTrustworthinessLevel: atl,
 					PropositionID:              propositionID,
-					TrustDecision:              &trustDecision,
+					TrustDecision:              tdValue,
 				})
 			}
 		}

@@ -11,10 +11,10 @@ type AtlResultSet struct {
 	version   int
 	slResults map[string]subjectivelogic.QueryableOpinion
 	ppResults map[string]float64
-	tdResults map[string]bool
+	tdResults map[string]TrustDecision
 }
 
-func CreateAtlResultSet(tmiID string, version int, slResults map[string]subjectivelogic.QueryableOpinion, ppResults map[string]float64, tdResults map[string]bool) AtlResultSet {
+func CreateAtlResultSet(tmiID string, version int, slResults map[string]subjectivelogic.QueryableOpinion, ppResults map[string]float64, tdResults map[string]TrustDecision) AtlResultSet {
 	return AtlResultSet{
 		tmiID:     tmiID,
 		version:   version,
@@ -43,6 +43,6 @@ func (r AtlResultSet) ProjectedProbabilities() map[string]float64 {
 	return r.ppResults
 }
 
-func (r AtlResultSet) TrustDecisions() map[string]bool {
+func (r AtlResultSet) TrustDecisions() map[string]TrustDecision {
 	return r.tdResults
 }
