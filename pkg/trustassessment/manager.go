@@ -263,15 +263,13 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	}
 
 	session.TearingDown()
-	//TODO: remove evidence-related data:
-	// - unsubscribe evidence subscriptions bound to this session ID
-	// - remove subscription data bound to this session ID
 
 	ch := completionhandler.New(func() {
-		//Do nothing in case of successfull unregistering of
+		//Do nothing in case of successfull unregistering of trust sources
 	}, func(err error) {
 		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", session.ID(), "TMT", session.TrustModelTemplate().TemplateName())
 	})
+	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
 	for tmiID, _ := range session.TrustModelInstances() {
 		tam.tsm.UnregisterTrustSourceQuantifiers(session.TrustModelTemplate(), tmiID, ch)
 	}
@@ -284,23 +282,34 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		Success:                &success,
 	}
 
+	//TODO: force unsubscription of TAS subscription, if existing
+
+	//signal worker to destroy TMI
+	for tmiID, _ := range session.TrustModelInstances() {
+		tam.DispatchToWorker(tmiID, command.CreateHandleTMIDestroy(tmiID))
+	}
+
+	//remove ATL cache entries for this session
+	for tmiID, _ := range session.TrustModelInstances() {
+		delete(tam.atlResults, tmiID)
+	}
+
+	//remove TMI(s) associated to this session
+	for tmiID, _ := range session.TrustModelInstances() {
+		delete(session.TrustModelInstances(), tmiID)
+	}
+
+	//remove session data
+	session.TornDown()
+	delete(tam.sessions, session.ID())
+
 	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
 	}
 	//Send response message
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
-	session.TornDown()
 	return
-
-	//TODO: force unsubscription of TAS subscription, if existing
-
-	//TODO: remove TMI(s) associated to this session
-
-	//TODO: remove ATL cache entries for this session
-
-	//TODO: remove session data
-
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {

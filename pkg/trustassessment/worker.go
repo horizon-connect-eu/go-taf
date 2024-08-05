@@ -84,8 +84,14 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.TmiID)
 	worker.tmis[cmd.TmiID] = cmd.TMI
 	worker.tmiSessions[cmd.TmiID] = cmd.SessionID
-	//TODO: call TLEE?
-	//TODO: Initialize ATL at TAM
+
+	//Run TLEE
+	atls := worker.executeTLEE(worker.tmis[cmd.TmiID])
+	//Run TDE
+	resultSet := worker.executeTDE(worker.tmis[cmd.TmiID], atls)
+
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.SessionID)
+	worker.workersToTam <- atlUpdateCmd
 }
 
 func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {

@@ -2,7 +2,6 @@ package trustsource
 
 import (
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
@@ -137,12 +136,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
 		for _, report := range trusteeReport.AttestationReport {
 			evidence := report.Claim
-			//TODO: Remove
-			tsm.logger.Debug(fmt.Sprintf("%+v", tsm.subscriptionEvidence))
-			tsm.logger.Debug("sub Id: " + subscriptionID)
-			tsm.logger.Debug("Trustee Id: " + *trusteeReport.TrusteeID)
-			tsm.logger.Debug("Source: " + core.AIV.String())
-			tsm.logger.Debug("Evidence: " + core.EvidenceTypeByName(evidence).String())
+			tsm.logger.Debug("Recieved new evidence from AIV", "SubscriptionID", subscriptionID, "Source", core.AIV.String(), "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
 			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
 		}
 		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
@@ -234,7 +228,7 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 
 			subMsg := aivmsg.AivSubscribeRequest{
 				AttestationCertificate: tsm.crypto.AttestationCertificate(),
-				CheckInterval:          1000, //TODO: make configurable
+				CheckInterval:          int64(tsm.config.Evidence.AIV.CheckInterval),
 				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
 				Subscribe:              subscribeField,
 			}
@@ -303,7 +297,7 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 				case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
 					if cmd.Response.Error != nil {
 						reject(errors.New(*cmd.Response.Error))
-						//TODO: remove session
+						//TODO: remove session for MBD
 						return
 					}
 					tsm.logger.Warn(*cmd.Response.SubscriptionID)

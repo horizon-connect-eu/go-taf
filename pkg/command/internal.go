@@ -48,7 +48,7 @@ type HandleTMIDestroy struct {
 	TmiID       string
 }
 
-func CreateHandleTMIDestroy(tmiID string, TMI core.TrustModelInstance) HandleTMIDestroy {
+func CreateHandleTMIDestroy(tmiID string) HandleTMIDestroy {
 	return HandleTMIDestroy{
 		TmiID:       tmiID,
 		commandType: core.HANDLE_TMI_DESTROY,
