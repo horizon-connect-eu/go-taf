@@ -179,7 +179,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//create session ID for client
 	sessionId := tam.createSessionId()
 	//create Session
-	session := session.NewInstance(sessionId, cmd.Sender)
+	session := session.NewInstance(sessionId, cmd.Sender, tmt)
 	//put session into session map
 	tam.sessions[sessionId] = session
 
@@ -267,13 +267,15 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	// - unsubscribe evidence subscriptions bound to this session ID
 	// - remove subscription data bound to this session ID
 
-	//TODO: force unsubscription of TAS subscription, if existing
-
-	//TODO: remove TMI(s) associated to this session
-
-	//TODO: remove ATL cache entries for this session
-
-	//TODO: remove session data
+	ch := completionhandler.New(func() {
+		//Do nothing in case of successfull unregistering of
+	}, func(err error) {
+		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", session.ID(), "TMT", session.TrustModelTemplate().TemplateName())
+	})
+	for tmiID, _ := range session.TrustModelInstances() {
+		tam.tsm.UnregisterTrustSourceQuantifiers(session.TrustModelTemplate(), tmiID, ch)
+	}
+	ch.Execute()
 
 	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."
 	response := tasmsg.TasTeardownResponse{
@@ -290,6 +292,15 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	session.TornDown()
 	return
+
+	//TODO: force unsubscription of TAS subscription, if existing
+
+	//TODO: remove TMI(s) associated to this session
+
+	//TODO: remove ATL cache entries for this session
+
+	//TODO: remove session data
+
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {

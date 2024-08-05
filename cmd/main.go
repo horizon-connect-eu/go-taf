@@ -115,7 +115,9 @@ func main() {
 
 }
 
-// Blocks until the process receives SIGTERM (or equivalent).
+/*
+WaitForCtrlC blocks until the process receives SIGTERM (or equivalent).
+*/
 func WaitForCtrlC() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
