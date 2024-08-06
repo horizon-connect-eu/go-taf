@@ -456,6 +456,8 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	subscription := NewSubscription(subscriptionID, sessionID, cmd.SubscriberTopic, filter, trigger)
 	tam.tasSubscriptionsToSessionID[subscriptionID] = sessionID
 	tam.tasSubscriptions[subscriptionID] = subscription
+	//add to session
+	tmiSession.AddSubscription(subscriptionID)
 
 	//send TAS_SUBSCRIBE_RESPONSE
 	success := "Subscription successfully created."
@@ -511,7 +513,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 
 	bytes, err = communication.BuildOneWayMessage(tam.config.Communication.TafEndpoint, messages.TAS_NOTIFY, initialNotify)
 	if err != nil {
-		tam.logger.Error("Error marshalling response", "error", err)
+		tam.logger.Error("Error marshalling notification", "error", err)
 	}
 	tam.outbox <- core.NewMessage(bytes, "", cmd.SubscriberTopic)
 }
@@ -556,8 +558,10 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 	delete(tam.tasSubscriptions, subscriptionID)
 	//remove from map
 	delete(tam.tasSubscriptionsToSessionID, subscriptionID)
+	//delete from session
+	tmiSession.RemoveSubscription(subscriptionID)
 
-	//send TAS_SUBSCRIBE_RESPONSE
+	//send TAS_UNSUBSCRIBE_RESPONSE
 	success := "Subscription with ID '" + subscriptionID + "' successfully terminated."
 	response := tasmsg.TasUnsubscribeResponse{
 		AttestationCertificate: tam.crypto.AttestationCertificate(),
@@ -581,8 +585,35 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	if !exists {
 		return
 	}
-	//TODO: Check whether there are relevant(?) changes and notify potential subscribers
+
+	//Check whether there are subscriptions for which the changes are relevant and send out notifications to subscribers
+	for _, subscriptionID := range tam.sessions[sessionID].ListSubscriptions() {
+		results := tam.tasSubscriptions[subscriptionID].HandleUpdate(tam.atlResults[tmiID], cmd.ResultSet)
+		if len(results) > 0 {
+			taResponseResults := make([]tasmsg.Update, 0)
+
+			for _, result := range results {
+				taResponseResults = append(taResponseResults, result.toUpdateMsgStruct())
+			}
+
+			notify := tasmsg.TasNotify{
+				AttestationCertificate: tam.crypto.AttestationCertificate(),
+				SessionID:              sessionID,
+				SubscriptionID:         subscriptionID,
+				Updates:                taResponseResults,
+			}
+
+			bytes, err := communication.BuildOneWayMessage(tam.config.Communication.TafEndpoint, messages.TAS_NOTIFY, notify)
+			if err != nil {
+				tam.logger.Error("Error marshalling notification", "error", err)
+			}
+			tam.outbox <- core.NewMessage(bytes, "", tam.tasSubscriptions[subscriptionID].SubscriberTopic())
+		}
+	}
+
+	//overwrite result cache with new values
 	tam.atlResults[tmiID] = cmd.ResultSet
+	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
 }
 
 func (tam *Manager) DispatchToWorker(tmiID string, cmd core.Command) {

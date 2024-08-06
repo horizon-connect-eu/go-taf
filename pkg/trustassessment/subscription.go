@@ -17,7 +17,8 @@ type Subscription interface {
 	Trigger() Trigger
 	SubscriptionID() string
 	SessionID() string
-	HandleUpdate(core.AtlResultSet, core.AtlResultSet) []ResultEntry
+	HandleUpdate(old core.AtlResultSet, new core.AtlResultSet) []ResultEntry
+	SubscriberTopic() string
 }
 
 type SubscriptionInstance struct {
@@ -53,6 +54,10 @@ func (s *SubscriptionInstance) SubscriptionID() string {
 }
 func (s *SubscriptionInstance) SessionID() string {
 	return s.sessionID
+}
+
+func (s *SubscriptionInstance) SubscriberTopic() string {
+	return s.subscriberTopic
 }
 
 func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs core.AtlResultSet) []ResultEntry {
@@ -98,10 +103,12 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 		//Nothing to do
 	}
 
-	result = append(result, ResultEntry{
-		TmiID:        newATLs.TmiID(),
-		Propositions: propositions,
-	})
+	if len(propositions) > 0 {
+		result = append(result, ResultEntry{
+			TmiID:        newATLs.TmiID(),
+			Propositions: propositions,
+		})
+	}
 	return result
 }
 

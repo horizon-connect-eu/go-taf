@@ -23,6 +23,7 @@ type Session interface {
 	TearingDown()
 	TornDown()
 	AddSubscription(identifier string)
+	ListSubscriptions() []string
 	RemoveSubscription(identifier string)
 }
 
@@ -95,4 +96,14 @@ func (s *Instance) RemoveSubscription(identifier string) {
 	if exists {
 		delete(s.subscriptions, identifier)
 	}
+}
+
+func (s *Instance) ListSubscriptions() []string {
+	subs := make([]string, len(s.subscriptions))
+	i := 0
+	for k := range s.subscriptions {
+		subs[i] = k
+		i++
+	}
+	return subs
 }
