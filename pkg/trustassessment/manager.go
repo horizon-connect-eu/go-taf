@@ -42,6 +42,8 @@ type Manager struct {
 	tlee     tleeinterface.TLEE
 	//tmiID->latest ATLs/PPs/TDs
 	atlResults map[string]core.AtlResultSet
+	//tas sub ID->sessionID
+	tasSubscriptionsToSessionID map[string]string
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
@@ -361,59 +363,21 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 
 	taResponseResults := make([]tasmsg.Result, 0)
 
+	//Iterate over TMI IDs in the Target Set
 	for _, tmiID := range targets {
 		atlResultSet, exists := tam.atlResults[tmiID]
-		propositions := make([]tasmsg.ResultProposition, 0)
 
 		if exists {
-			for propositionID, opinion := range atlResultSet.ATLs() {
-				trustDecision := atlResultSet.TrustDecisions()[propositionID]
-				atl := make([]tasmsg.FluffyActualTrustworthinessLevel, 0)
-				baseRate := opinion.BaseRate()
-				belief := opinion.Belief()
-				disbelief := opinion.Disbelief()
-				uncertainty := opinion.Uncertainty()
-
-				atl = append(atl, tasmsg.FluffyActualTrustworthinessLevel{
-					Output: tasmsg.FluffyOutput{
-						BaseRate:    &baseRate,
-						Belief:      &belief,
-						Disbelief:   &disbelief,
-						Uncertainty: &uncertainty,
-					},
-					Type: tasmsg.SubjectiveLogicOpinion,
-				})
-
-				projectedProbability := atlResultSet.ProjectedProbabilities()[propositionID]
-				atl = append(atl, tasmsg.FluffyActualTrustworthinessLevel{
-					Output: tasmsg.FluffyOutput{
-						Value: &projectedProbability,
-					},
-					Type: tasmsg.ProjectedProbability,
-				})
-
-				var tdValue *bool = nil
-				if trustDecision == core.TRUSTWORTHY {
-					value := true
-					tdValue = &value
-				} else if trustDecision == core.NOT_TRUSTWORTHY {
-					value := false
-					tdValue = &value
-				}
-
-				propositions = append(propositions, tasmsg.ResultProposition{
-					ActualTrustworthinessLevel: atl,
-					PropositionID:              propositionID,
-					TrustDecision:              tdValue,
-				})
+			propositions := make([]Proposition, 0)
+			for propositionID, _ := range atlResultSet.ATLs() {
+				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 			}
+			result := ResultEntry{
+				TmiID:        tmiID,
+				Propositions: propositions,
+			}
+			taResponseResults = append(taResponseResults, result.toMsgStruct())
 		}
-
-		taResponseResults = append(taResponseResults, tasmsg.Result{
-			ID:           tmiID,
-			Propositions: propositions,
-		})
-
 	}
 
 	response := tasmsg.TasTaResponse{
@@ -460,7 +424,34 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 }
 
 func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
+	sessionID := cmd.Request.SessionID
 
+	sendErrorResponse := func(errMsg string) {
+		response := tasmsg.TasSubscribeResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  &errMsg,
+			SessionID:              sessionID,
+			SubscriptionID:         nil,
+			Success:                nil,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	tmiSession, exists := tam.sessions[sessionID]
+	if !exists {
+		sendErrorResponse("Unknown session")
+		return
+	} else if tmiSession.State() != session.ESTABLISHED {
+		sendErrorResponse("Session not in established state")
+		return
+	}
+	//todo: check whether subscription exists
+
+	//TODO: unregister subscription handler
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {

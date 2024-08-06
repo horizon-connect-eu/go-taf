@@ -22,23 +22,27 @@ type Session interface {
 	Established()
 	TearingDown()
 	TornDown()
+	AddSubscription(identifier string)
+	RemoveSubscription(identifier string)
 }
 
 type Instance struct {
-	id     string
-	tMIs   map[string]bool
-	client string
-	state  State
-	tmt    core.TrustModelTemplate
+	id            string
+	tMIs          map[string]bool
+	client        string
+	state         State
+	tmt           core.TrustModelTemplate
+	subscriptions map[string]bool
 }
 
 func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
 	return &Instance{
-		id:     id,
-		tMIs:   make(map[string]bool),
-		client: client,
-		tmt:    tmt,
-		state:  INITIALIZING,
+		id:            id,
+		tMIs:          make(map[string]bool),
+		subscriptions: make(map[string]bool),
+		client:        client,
+		tmt:           tmt,
+		state:         INITIALIZING,
 	}
 }
 
@@ -80,4 +84,15 @@ func (s *Instance) HasTMI(tmiID string) bool {
 		return false
 	}
 	return val
+}
+
+func (s *Instance) AddSubscription(identifier string) {
+	s.subscriptions[identifier] = true
+}
+
+func (s *Instance) RemoveSubscription(identifier string) {
+	_, exists := s.subscriptions[identifier]
+	if exists {
+		delete(s.subscriptions, identifier)
+	}
 }
