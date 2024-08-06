@@ -174,10 +174,12 @@ func (tsm *Manager) HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdm
 
 func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 	tsm.logger.Info("TODO: handle MBD_NOTIFY")
+	util.UNUSED(cmd)
 }
 
 func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
-
+	tsm.logger.Info("TODO: handle TCH_NOTIFY")
+	util.UNUSED(cmd)
 }
 
 func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
@@ -319,6 +321,7 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 }
 
 func (tsm *Manager) UnregisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+	util.UNUSED(tmt)
 
 	//When no handler has been set, create empty one
 	if handler == nil {
