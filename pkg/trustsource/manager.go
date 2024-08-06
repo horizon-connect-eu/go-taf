@@ -142,7 +142,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
 		//call quantifier
 		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
-		tsm.logger.Warn("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
+		tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
 		//create update operation
 		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
 		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
@@ -182,7 +182,7 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 	util.UNUSED(cmd)
 }
 
-func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
 
 	//When no handler has been set, create empty one
 	if handler == nil {
@@ -320,7 +320,7 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 	}
 }
 
-func (tsm *Manager) UnregisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
 	util.UNUSED(tmt)
 
 	//When no handler has been set, create empty one
@@ -418,6 +418,84 @@ The RegisterCallback function adds a callback for a given Message Type and Reque
 */
 func (tsm *Manager) RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command)) {
 	tsm.pendingMessageCallbacks[messageType][requestID] = fn
+}
+
+func (tsm *Manager) DispatchAivRequest(tmiID string, tmt core.TrustModelTemplate) {
+
+	query := make(map[core.TrustSource]map[string][]core.EvidenceType)
+	quantifiers := make(map[core.TrustSource]core.Quantifier)
+
+	for _, item := range tmt.TrustSourceQuantifiers() {
+
+		quantifiers[item.TrustSource] = item.Quantifier
+		for _, evidence := range item.Evidence {
+			if query[evidence.Source()] == nil {
+				query[evidence.Source()] = make(map[string][]core.EvidenceType)
+			}
+			if query[evidence.Source()][item.Trustee] == nil {
+				query[evidence.Source()][item.Trustee] = make([]core.EvidenceType, 0)
+			}
+			query[evidence.Source()][item.Trustee] = append(query[evidence.Source()][item.Trustee], evidence)
+
+		}
+	}
+
+	trustees, exists := query[core.AIV]
+	if exists {
+
+		queryField := make([]aivmsg.Query, 0)
+
+		for trusteeID, evidenceList := range trustees {
+
+			evidenceStringList := make([]string, 0)
+			for _, evidence := range evidenceList {
+				evidenceStringList = append(evidenceStringList, evidence.String())
+			}
+
+			queryField = append(queryField, aivmsg.Query{
+				TrusteeID:       trusteeID,
+				RequestedClaims: evidenceStringList,
+			})
+		}
+		reqMsg := aivmsg.AivRequest{
+			AttestationCertificate: tsm.crypto.AttestationCertificate(),
+			Evidence:               aivmsg.AIVREQUESTEvidence{},
+			Query:                  queryField,
+		}
+		err := tsm.crypto.SignAivRequest(&reqMsg)
+		util.UNUSED(err)
+
+		reqId := tsm.GenerateRequestId()
+		bytes, err := communication.BuildRequest(tsm.config.Communication.TafEndpoint, messages.AIV_REQUEST, tsm.config.Communication.TafEndpoint, reqId, reqMsg)
+		if err != nil {
+			tsm.logger.Error("Error marshalling request", "error", err)
+		}
+
+		tsm.RegisterCallback(messages.AIV_RESPONSE, reqId, func(recvCmd core.Command) {
+			switch cmd := recvCmd.(type) {
+			case command.HandleResponse[aivmsg.AivResponse]:
+				for _, trusteeReport := range cmd.Response.TrusteeReports {
+					evidenceCollection := make(map[core.EvidenceType]int)
+					for _, report := range trusteeReport.AttestationReport {
+						evidence := report.Claim
+						tsm.logger.Debug("Received evidence response from AIV", "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
+						evidenceCollection[core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
+					}
+					//call quantifier
+					ato := quantifiers[core.AIV](evidenceCollection)
+					tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
+					//create update operation
+					update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
+					tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
+					tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
+				}
+			default:
+				//Nothing to do
+			}
+		})
+		//Send response message
+		tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
+	}
 }
 
 func (tsm *Manager) GenerateRequestId() string {

@@ -365,36 +365,58 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 	}
 
-	taResponseResults := make([]tasmsg.Result, 0)
+	if allowCached == nil || *allowCached == true {
+		//Directly send response
+		taResponseResults := make([]tasmsg.Result, 0)
 
-	//Iterate over TMI IDs in the Target Set
-	for _, tmiID := range targets {
-		atlResultSet, exists := tam.atlResults[tmiID]
+		//Iterate over TMI IDs in the Target Set
+		for _, tmiID := range targets {
+			atlResultSet, exists := tam.atlResults[tmiID]
 
-		if exists {
-			propositions := make([]Proposition, 0)
-			for propositionID := range atlResultSet.ATLs() {
-				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+			if exists {
+				propositions := make([]Proposition, 0)
+				for propositionID := range atlResultSet.ATLs() {
+					propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+				}
+				result := ResultEntry{
+					TmiID:        tmiID,
+					Propositions: propositions,
+				}
+				taResponseResults = append(taResponseResults, result.toResultMsgStruct())
 			}
-			result := ResultEntry{
-				TmiID:        tmiID,
-				Propositions: propositions,
-			}
-			taResponseResults = append(taResponseResults, result.toResultMsgStruct())
+		}
+
+		response := tasmsg.TasTaResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  nil,
+			Results:                taResponseResults,
+			SessionID:              sessionID,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	} else {
+		//We need to call AIV Req first and wait for a response
+		tmis := tam.sessions[sessionID].TrustModelInstances()
+		tmiIDs := make([]string, len(tmis))
+
+		//TODO: We currently need a TMI ID for handling the response, but conceptually, a session can have multiple. We just take the first one.
+		i := 0
+		for k := range tmis {
+			tmiIDs[i] = k
+			i++
+		}
+		if len(tmiIDs) > 0 {
+			tam.tsm.DispatchAivRequest(tmiIDs[0], tmiSession.TrustModelTemplate())
+			//TODO use callback to handle result
+		} else {
+			sendErrorResponse("No trust model instances found in this session")
+			return
 		}
 	}
 
-	response := tasmsg.TasTaResponse{
-		AttestationCertificate: tam.crypto.AttestationCertificate(),
-		Error:                  nil,
-		Results:                taResponseResults,
-		SessionID:              sessionID,
-	}
-	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
-	if err != nil {
-		tam.logger.Error("Error marshalling response", "error", err)
-	}
-	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 }
 
 func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]) {
