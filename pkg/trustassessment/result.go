@@ -36,8 +36,9 @@ func NewPropositionEntry(set core.AtlResultSet, propositionID string) Propositio
 
 /*
 toMsgStruct takes an internal representation of a TMI/proposition result and converts into message struct auto-generated from JSON Schema.
+Result variant.
 */
-func (r ResultEntry) toMsgStruct() tasmsg.Result {
+func (r ResultEntry) toResultMsgStruct() tasmsg.Result {
 
 	propositions := make([]tasmsg.ResultProposition, 0)
 
@@ -84,6 +85,63 @@ func (r ResultEntry) toMsgStruct() tasmsg.Result {
 	}
 
 	return tasmsg.Result{
+		ID:           r.TmiID,
+		Propositions: propositions,
+	}
+
+}
+
+/*
+toMsgStruct takes an internal representation of a TMI/proposition result and converts into message struct auto-generated from JSON Schema.
+Update variant.
+*/
+func (r ResultEntry) toUpdateMsgStruct() tasmsg.Update {
+
+	propositions := make([]tasmsg.UpdateProposition, 0)
+
+	for _, proposition := range r.Propositions {
+
+		var tdValue *bool = nil
+		if proposition.TrustDecision == core.TRUSTWORTHY {
+			value := true
+			tdValue = &value
+		} else if proposition.TrustDecision == core.NOT_TRUSTWORTHY {
+			value := false
+			tdValue = &value
+		}
+
+		atl := make([]tasmsg.PurpleActualTrustworthinessLevel, 0)
+		baseRate := proposition.ATL.BaseRate()
+		belief := proposition.ATL.Belief()
+		disbelief := proposition.ATL.Disbelief()
+		uncertainty := proposition.ATL.Uncertainty()
+
+		atl = append(atl, tasmsg.PurpleActualTrustworthinessLevel{
+			Output: tasmsg.PurpleOutput{
+				BaseRate:    &baseRate,
+				Belief:      &belief,
+				Disbelief:   &disbelief,
+				Uncertainty: &uncertainty,
+			},
+			Type: tasmsg.SubjectiveLogicOpinion,
+		})
+
+		projectedProbability := proposition.PP
+		atl = append(atl, tasmsg.PurpleActualTrustworthinessLevel{
+			Output: tasmsg.PurpleOutput{
+				Value: &projectedProbability,
+			},
+			Type: tasmsg.ProjectedProbability,
+		})
+
+		propositions = append(propositions, tasmsg.UpdateProposition{
+			ActualTrustworthinessLevel: atl,
+			PropositionID:              proposition.PropositionID,
+			TrustDecision:              tdValue,
+		})
+	}
+
+	return tasmsg.Update{
 		ID:           r.TmiID,
 		Propositions: propositions,
 	}

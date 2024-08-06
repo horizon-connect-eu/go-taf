@@ -6,47 +6,56 @@ import (
 	"math"
 )
 
-type Trigger uint8
+type Trigger string
 
 const (
-	TRUST_DECISION Trigger = iota
-	ACTUAL_TRUSTWORTHINESS_LEVEL
+	ACTUAL_TRUSTWORTHINESS_LEVEL Trigger = "ACTUAL_TRUSTWORTHINESS_LEVEL"
+	TRUST_DECISION               Trigger = "TRUST_DECISION"
 )
 
-type Subscription struct {
-	subscriptionID string
-	sessionID      string
+type Subscription interface {
+	Trigger() Trigger
+	SubscriptionID() string
+	SessionID() string
+	HandleUpdate(core.AtlResultSet, core.AtlResultSet) []ResultEntry
+}
+
+type SubscriptionInstance struct {
+	subscriptionID  string
+	subscriberTopic string
+	sessionID       string
 	//tmiID->bool
 	filter  map[string]bool
 	trigger Trigger
 }
 
-func NewSubscription(subscriptionID string, sessionID string, filterList []string, trigger Trigger) *Subscription {
+func NewSubscription(subscriptionID string, sessionID string, subscriberTopic string, filterList []string, trigger Trigger) Subscription {
 
 	filter := make(map[string]bool)
 	for _, item := range filterList {
 		filter[item] = true
 	}
 
-	return &Subscription{
-		subscriptionID: subscriptionID,
-		sessionID:      sessionID,
-		filter:         filter,
-		trigger:        trigger,
+	return &SubscriptionInstance{
+		subscriptionID:  subscriptionID,
+		subscriberTopic: subscriberTopic,
+		sessionID:       sessionID,
+		filter:          filter,
+		trigger:         trigger,
 	}
 }
 
-func (s *Subscription) Trigger() Trigger {
+func (s *SubscriptionInstance) Trigger() Trigger {
 	return s.trigger
 }
-func (s *Subscription) SubscriptionID() string {
+func (s *SubscriptionInstance) SubscriptionID() string {
 	return s.subscriptionID
 }
-func (s *Subscription) SessionID() string {
+func (s *SubscriptionInstance) SessionID() string {
 	return s.sessionID
 }
 
-func (s *Subscription) HandleUpdate(oldATLs core.AtlResultSet, newATLs core.AtlResultSet) []ResultEntry {
+func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs core.AtlResultSet) []ResultEntry {
 	result := make([]ResultEntry, 0)
 	propositions := make([]Proposition, 0)
 

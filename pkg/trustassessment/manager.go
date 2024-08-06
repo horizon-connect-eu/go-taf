@@ -44,20 +44,24 @@ type Manager struct {
 	atlResults map[string]core.AtlResultSet
 	//tas sub ID->sessionID
 	tasSubscriptionsToSessionID map[string]string
+	//tas sub ID->Subscription
+	tasSubscriptions map[string]Subscription
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
 	tam := &Manager{
-		config:       tafContext.Configuration,
-		tafContext:   tafContext,
-		channels:     channels,
-		sessions:     make(map[string]session.Session),
-		workersToTam: make(chan core.Command, tafContext.Configuration.ChanBufSize),
-		logger:       logging.CreateChildLogger(tafContext.Logger, "TAM"),
-		crypto:       tafContext.Crypto,
-		outbox:       channels.OutgoingMessageChannel,
-		tlee:         tlee,
-		atlResults:   make(map[string]core.AtlResultSet),
+		config:                      tafContext.Configuration,
+		tafContext:                  tafContext,
+		channels:                    channels,
+		sessions:                    make(map[string]session.Session),
+		workersToTam:                make(chan core.Command, tafContext.Configuration.ChanBufSize),
+		logger:                      logging.CreateChildLogger(tafContext.Logger, "TAM"),
+		crypto:                      tafContext.Crypto,
+		outbox:                      channels.OutgoingMessageChannel,
+		tlee:                        tlee,
+		atlResults:                  make(map[string]core.AtlResultSet),
+		tasSubscriptionsToSessionID: make(map[string]string),
+		tasSubscriptions:            make(map[string]Subscription),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -144,7 +148,7 @@ func (tam *Manager) Run() {
 	}
 }
 
-func (tam *Manager) createSessionId() string {
+func (tam *Manager) generateSessionId() string {
 	//When debug configuration provides fixed session ID, use this ID
 	if tam.config.Debug.FixedSessionID != "" {
 		return tam.config.Debug.FixedSessionID
@@ -179,7 +183,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		return
 	}
 	//create session ID for client
-	sessionId := tam.createSessionId()
+	sessionId := tam.generateSessionId()
 	//create Session
 	session := session.NewInstance(sessionId, cmd.Sender, tmt)
 	//put session into session map
@@ -376,7 +380,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 				TmiID:        tmiID,
 				Propositions: propositions,
 			}
-			taResponseResults = append(taResponseResults, result.toMsgStruct())
+			taResponseResults = append(taResponseResults, result.toResultMsgStruct())
 		}
 	}
 
@@ -404,7 +408,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 			SubscriptionID:         nil,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
+		bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 		}
@@ -420,11 +424,101 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 		return
 	}
 
-	//TODO: implement
+	//Set trigger type
+	var trigger Trigger
+	if string(cmd.Request.Trigger) == string(ACTUAL_TRUSTWORTHINESS_LEVEL) {
+		trigger = ACTUAL_TRUSTWORTHINESS_LEVEL
+	} else if string(cmd.Request.Trigger) == string(TRUST_DECISION) {
+		trigger = TRUST_DECISION
+	} else {
+		sendErrorResponse("Unknown trigger used: " + string(cmd.Request.Trigger))
+		return
+	}
+
+	//Set filter targets
+	filter := cmd.Request.Subscribe.Filter
+	if len(filter) > 0 {
+		//Check whether all specified targets exist. If at least one is missing, return with error
+		errors := make([]string, 0)
+		for _, target := range filter {
+			if !tmiSession.HasTMI(target) {
+				errors = append(errors, "Target ID '"+target+"' not found.")
+			}
+		}
+		if len(errors) > 0 {
+			sendErrorResponse(strings.Join(errors, "\n"))
+			return
+		}
+	}
+
+	subscriptionID := tam.generateSubscriptionID()
+
+	subscription := NewSubscription(subscriptionID, sessionID, cmd.SubscriberTopic, filter, trigger)
+	tam.tasSubscriptionsToSessionID[subscriptionID] = sessionID
+	tam.tasSubscriptions[subscriptionID] = subscription
+
+	//send TAS_SUBSCRIBE_RESPONSE
+	success := "Subscription successfully created."
+	response := tasmsg.TasSubscribeResponse{
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
+		Error:                  nil,
+		SessionID:              sessionID,
+		SubscriptionID:         &subscriptionID,
+		Success:                &success,
+	}
+	bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
+	if err != nil {
+		tam.logger.Error("Error marshalling response", "error", err)
+	}
+	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	tam.logger.Info("Subscription started", "Session ID", sessionID, "Subscription ID", subscriptionID)
+
+	//Prepare initial TAS_NOTIFY
+	var targets []string
+	copy(filter, targets)
+	if len(targets) == 0 {
+		//when no specific target is specified, use all TMIs from session
+		for tmiID, _ := range tmiSession.TrustModelInstances() {
+			targets = append(targets, tmiID)
+		}
+	}
+
+	taResponseResults := make([]tasmsg.Update, 0)
+
+	//Iterate over TMI IDs in the Target Set
+	for _, tmiID := range targets {
+		atlResultSet, exists := tam.atlResults[tmiID]
+
+		if exists {
+			propositions := make([]Proposition, 0)
+			for propositionID, _ := range atlResultSet.ATLs() {
+				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+			}
+			result := ResultEntry{
+				TmiID:        tmiID,
+				Propositions: propositions,
+			}
+			taResponseResults = append(taResponseResults, result.toUpdateMsgStruct())
+		}
+	}
+
+	initialNotify := tasmsg.TasNotify{
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
+		SessionID:              sessionID,
+		SubscriptionID:         subscriptionID,
+		Updates:                taResponseResults,
+	}
+
+	bytes, err = communication.BuildOneWayMessage(tam.config.Communication.TafEndpoint, messages.TAS_NOTIFY, initialNotify)
+	if err != nil {
+		tam.logger.Error("Error marshalling response", "error", err)
+	}
+	tam.outbox <- core.NewMessage(bytes, "", cmd.SubscriberTopic)
 }
 
 func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
 	sessionID := cmd.Request.SessionID
+	subscriptionID := cmd.Request.SubscriptionID
 
 	sendErrorResponse := func(errMsg string) {
 		response := tasmsg.TasSubscribeResponse{
@@ -441,17 +535,42 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	}
 
+	//check whether session exists
 	tmiSession, exists := tam.sessions[sessionID]
 	if !exists {
-		sendErrorResponse("Unknown session")
+		sendErrorResponse("Unknown session with ID '" + sessionID + "'")
 		return
 	} else if tmiSession.State() != session.ESTABLISHED {
 		sendErrorResponse("Session not in established state")
 		return
 	}
-	//todo: check whether subscription exists
 
-	//TODO: unregister subscription handler
+	//check whether subscription exists
+	_, exists = tam.tasSubscriptions[subscriptionID]
+	if !exists {
+		sendErrorResponse("Unknown subscription with ID '" + subscriptionID + "'")
+		return
+	}
+
+	//unregister subscription handler
+	delete(tam.tasSubscriptions, subscriptionID)
+	//remove from map
+	delete(tam.tasSubscriptionsToSessionID, subscriptionID)
+
+	//send TAS_SUBSCRIBE_RESPONSE
+	success := "Subscription with ID '" + subscriptionID + "' successfully terminated."
+	response := tasmsg.TasUnsubscribeResponse{
+		AttestationCertificate: tam.crypto.AttestationCertificate(),
+		Error:                  nil,
+		SessionID:              sessionID,
+		Success:                &success,
+	}
+	bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_UNSUBSCRIBE_RESPONSE, cmd.RequestID, response)
+	if err != nil {
+		tam.logger.Error("Error marshalling response", "error", err)
+	}
+	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	tam.logger.Info("Subscription terminated", "Session ID", sessionID, "Subscription ID", subscriptionID)
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
@@ -480,5 +599,14 @@ func (tam *Manager) getShardWorkerById(stringID string) int {
 	} else {
 		id := int(algorithm.Sum32())
 		return id % tam.config.TAM.TrustModelInstanceShards
+	}
+}
+
+func (tam *Manager) generateSubscriptionID() string {
+	//When debug configuration provides fixed subscription ID, use this ID
+	if tam.config.Debug.FixedSubscriptionID != "" {
+		return tam.config.Debug.FixedSubscriptionID
+	} else {
+		return "SUB-" + uuid.New().String()
 	}
 }

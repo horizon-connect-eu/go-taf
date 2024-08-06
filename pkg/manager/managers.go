@@ -56,7 +56,6 @@ type TrustSourceManager interface {
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
 	RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
 	UnregisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
-	GenerateRequestId() string
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
 }
 
