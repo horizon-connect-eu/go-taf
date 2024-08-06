@@ -252,8 +252,8 @@ func checkSetParameters(params map[string]string) map[string]bool {
 func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) (core.TrustModelInstance, error) {
 	setParams := checkSetParameters(params)
 
-	omega1, _ := subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
-	omega2, _ := subjectivelogic.NewOpinion(0.15, 0.15, 0.7, 0.5)
+	omega1, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)
+	omega2, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)
 
 	if len(params) > 0 {
 		// get existence parameters for VC1
