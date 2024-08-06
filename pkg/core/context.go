@@ -7,7 +7,9 @@ import (
 	"log/slog"
 )
 
-// A context struct that captures several relevant properties needed by different subcomponents
+/*
+The TafContext struct captures several relevant properties needed by different subcomponents.
+*/
 type TafContext struct {
 	Configuration config.Configuration
 	Logger        *slog.Logger

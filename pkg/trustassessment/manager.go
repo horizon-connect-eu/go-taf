@@ -185,11 +185,11 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	//create session ID for client
 	sessionId := tam.generateSessionId()
 	//create Session
-	session := session.NewInstance(sessionId, cmd.Sender, tmt)
+	newSession := session.NewInstance(sessionId, cmd.Sender, tmt)
 	//put session into session map
-	tam.sessions[sessionId] = session
+	tam.sessions[sessionId] = newSession
 
-	tam.logger.Info("Session created:", "Session ID", session.ID(), "Client", session.Client())
+	tam.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//create new TMI for session //TODO: always possible for dynamic models?
 
@@ -200,13 +200,13 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		return
 	}
 	//add new TMI to session
-	sessionTMIs := session.TrustModelInstances()
+	sessionTMIs := newSession.TrustModelInstances()
 	sessionTMIs[tMI.ID()] = true
 	tmiID := tMI.ID()
 
 	successHandler := func() {
 		//add new TMI to list of all TMIs of the TAM
-		tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", session.ID(), "Client", session.Client())
+		tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 		//Initialize TMI
 		tMI.Initialize(nil)
@@ -250,7 +250,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {
 	tam.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID)
-	session, exists := tam.sessions[cmd.Request.SessionID]
+	currentSession, exists := tam.sessions[cmd.Request.SessionID]
 	if !exists {
 		errorMsg := "Session ID '" + cmd.Request.SessionID + "' not found."
 
@@ -268,16 +268,16 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		return
 	}
 
-	session.TearingDown()
+	currentSession.TearingDown()
 
 	ch := completionhandler.New(func() {
 		//Do nothing in case of successfull unregistering of trust sources
 	}, func(err error) {
-		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", session.ID(), "TMT", session.TrustModelTemplate().TemplateName())
+		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", currentSession.ID(), "TMT", currentSession.TrustModelTemplate().TemplateName())
 	})
 	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
-	for tmiID, _ := range session.TrustModelInstances() {
-		tam.tsm.UnregisterTrustSourceQuantifiers(session.TrustModelTemplate(), tmiID, ch)
+	for tmiID := range currentSession.TrustModelInstances() {
+		tam.tsm.UnregisterTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
 	}
 	ch.Execute()
 
@@ -291,23 +291,23 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	//TODO: force unsubscription of TAS subscription, if existing
 
 	//signal worker to destroy TMI
-	for tmiID, _ := range session.TrustModelInstances() {
+	for tmiID := range currentSession.TrustModelInstances() {
 		tam.DispatchToWorker(tmiID, command.CreateHandleTMIDestroy(tmiID))
 	}
 
 	//remove ATL cache entries for this session
-	for tmiID, _ := range session.TrustModelInstances() {
+	for tmiID := range currentSession.TrustModelInstances() {
 		delete(tam.atlResults, tmiID)
 	}
 
 	//remove TMI(s) associated to this session
-	for tmiID, _ := range session.TrustModelInstances() {
-		delete(session.TrustModelInstances(), tmiID)
+	for tmiID := range currentSession.TrustModelInstances() {
+		delete(currentSession.TrustModelInstances(), tmiID)
 	}
 
 	//remove session data
-	session.TornDown()
-	delete(tam.sessions, session.ID())
+	currentSession.TornDown()
+	delete(tam.sessions, currentSession.ID())
 
 	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 	if err != nil {
@@ -348,7 +348,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 	targets := cmd.Request.Query.Filter
 	if len(targets) == 0 {
 		//when no specific target is specified, use all TMIs from session
-		for tmiID, _ := range tmiSession.TrustModelInstances() {
+		for tmiID := range tmiSession.TrustModelInstances() {
 			targets = append(targets, tmiID)
 		}
 	} else {
@@ -373,7 +373,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 
 		if exists {
 			propositions := make([]Proposition, 0)
-			for propositionID, _ := range atlResultSet.ATLs() {
+			for propositionID := range atlResultSet.ATLs() {
 				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 			}
 			result := ResultEntry{
@@ -478,7 +478,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	copy(filter, targets)
 	if len(targets) == 0 {
 		//when no specific target is specified, use all TMIs from session
-		for tmiID, _ := range tmiSession.TrustModelInstances() {
+		for tmiID := range tmiSession.TrustModelInstances() {
 			targets = append(targets, tmiID)
 		}
 	}
@@ -491,7 +491,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 
 		if exists {
 			propositions := make([]Proposition, 0)
-			for propositionID, _ := range atlResultSet.ATLs() {
+			for propositionID := range atlResultSet.ATLs() {
 				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 			}
 			result := ResultEntry{

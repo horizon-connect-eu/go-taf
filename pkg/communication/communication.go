@@ -424,7 +424,7 @@ func UnmarshallMessage(schema messages.MessageSchema, msg []byte) (interface{}, 
 	case messages.V2X_NTM:
 		extractedStruct, err = v2xmsg.UnmarshalV2XNtm(msg)
 	default:
-		return nil, errors.New("Unkown Message Schema")
+		return nil, errors.New("unkown message schema")
 	}
 	return extractedStruct, err
 }

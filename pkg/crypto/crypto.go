@@ -47,7 +47,7 @@ func (cr *Crypto) SignAivRequest(request *aivmsg.AivRequest) error {
 	if cr.cryptoEnabled {
 		cryptoEvidence, err := crypto.GenerateEvidence()
 		if err != nil {
-			return errors.New("Error generating evidence for AIV request")
+			return errors.New("error generating evidence for AIV request")
 		}
 		request.Evidence.KeyRef = cryptoEvidence.KeyRef
 		request.Evidence.Nonce = *cryptoEvidence.Nonce
@@ -65,7 +65,7 @@ func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) e
 	if cr.cryptoEnabled {
 		cryptoEvidence, err := crypto.GenerateEvidence()
 		if err != nil {
-			return errors.New("Error generating evidence for AIV subscribe request")
+			return errors.New("error generating evidence for AIV subscribe request")
 		}
 		request.Evidence.KeyRef = cryptoEvidence.KeyRef
 		request.Evidence.Nonce = *cryptoEvidence.Nonce
@@ -83,11 +83,11 @@ func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) 
 	if cr.cryptoEnabled {
 		nonceByteArray, err := crypto.FromHexToByteArray(*response.AivEvidence.Nonce)
 		if err != nil {
-			return false, errors.New("Failed to decode nonce from AIV_RESPONSE")
+			return false, errors.New("failed to decode nonce from AIV_RESPONSE")
 		}
 		trusteeReportByteStream, err := json.Marshal(response.TrusteeReports)
 		if err != nil {
-			return false, errors.New("Failed to decode trustee report from AIV_RESPONSE")
+			return false, errors.New("failed to decode trustee report from AIV_RESPONSE")
 		}
 		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
 		verificationResult, err := crypto.Verify(byteStreamToBeSigned, response.AivEvidence.Signature, response.AivEvidence.KeyRef+".pem")
@@ -106,11 +106,11 @@ func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	if cr.cryptoEnabled {
 		nonceByteArray, err := crypto.FromHexToByteArray(notify.AivEvidence.Nonce)
 		if err != nil {
-			return false, errors.New("Failed to decode nonce from AIV_RESPONSE")
+			return false, errors.New("failed to decode nonce from AIV_RESPONSE")
 		}
 		trusteeReportByteStream, err := json.Marshal(notify.TrusteeReports)
 		if err != nil {
-			return false, errors.New("Failed to decode trustee report from AIV_RESPONSE")
+			return false, errors.New("failed to decode trustee report from AIV_RESPONSE")
 		}
 		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
 		verificationResult, err := crypto.Verify(byteStreamToBeSigned, notify.AivEvidence.Signature, notify.AivEvidence.KeyRef+".pem")

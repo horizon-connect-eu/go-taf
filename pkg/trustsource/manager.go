@@ -136,7 +136,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
 		for _, report := range trusteeReport.AttestationReport {
 			evidence := report.Claim
-			tsm.logger.Debug("Recieved new evidence from AIV", "SubscriptionID", subscriptionID, "Source", core.AIV.String(), "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
+			tsm.logger.Debug("Received new evidence from AIV", "SubscriptionID", subscriptionID, "Source", core.AIV.String(), "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
 			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
 		}
 		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
@@ -189,15 +189,15 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 		defer handler.Execute()
 	}
 
-	subscriptions := make(map[core.TrustSource]map[string][]core.EvidenceType, 0)
-	quantifiers := make(map[core.TrustSource]core.Quantifier, 0)
+	subscriptions := make(map[core.TrustSource]map[string][]core.EvidenceType)
+	quantifiers := make(map[core.TrustSource]core.Quantifier)
 
 	for _, item := range tmt.TrustSourceQuantifiers() {
 
 		quantifiers[item.TrustSource] = item.Quantifier
 		for _, evidence := range item.Evidence {
 			if subscriptions[evidence.Source()] == nil {
-				subscriptions[evidence.Source()] = make(map[string][]core.EvidenceType, 0)
+				subscriptions[evidence.Source()] = make(map[string][]core.EvidenceType)
 			}
 			if subscriptions[evidence.Source()][item.Trustee] == nil {
 				subscriptions[evidence.Source()][item.Trustee] = make([]core.EvidenceType, 0)
@@ -232,7 +232,8 @@ func (tsm *Manager) RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, 
 				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
 				Subscribe:              subscribeField,
 			}
-			tsm.crypto.SignAivSubscribeRequest(&subMsg)
+			err := tsm.crypto.SignAivSubscribeRequest(&subMsg)
+			util.UNUSED(err)
 			subReqId := tsm.GenerateRequestId()
 			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
 			if err != nil {

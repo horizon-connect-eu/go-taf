@@ -23,7 +23,7 @@ type Proposition struct {
 }
 
 /*
-The NewPropositionEntry function is a helper function that creates proposition structs based on an existing AtlResultSets and an proposition ID.
+The NewPropositionEntry function is a helper function that creates proposition structs based on an existing AtlResultSets and a proposition ID.
 */
 func NewPropositionEntry(set core.AtlResultSet, propositionID string) Proposition {
 	return Proposition{
