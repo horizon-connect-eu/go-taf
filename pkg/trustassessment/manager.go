@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
@@ -24,6 +23,7 @@ import (
 	"hash/fnv"
 	"log/slog"
 	"strings"
+	"time"
 )
 
 type Manager struct {
@@ -243,7 +243,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.RegisterTrustSourceQuantifiers(tmt, tmiID, ch)
+	tam.tsm.SubscribeTrustSourceQuantifiers(tmt, tmiID, ch)
 
 	ch.Execute()
 }
@@ -277,7 +277,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	})
 	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
 	for tmiID := range currentSession.TrustModelInstances() {
-		tam.tsm.UnregisterTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
+		tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
 	}
 	ch.Execute()
 
@@ -320,8 +320,6 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
 	sessionID := cmd.Request.SessionID
-	allowCached := cmd.Request.AllowCache
-	util.UNUSED(allowCached)
 
 	sendErrorResponse := func(errMsg string) {
 		response := tasmsg.TasTaResponse{
@@ -365,36 +363,55 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 	}
 
-	taResponseResults := make([]tasmsg.Result, 0)
+	if cmd.Request.AllowCache == nil || *cmd.Request.AllowCache == true {
+		//Directly send response
+		taResponseResults := make([]tasmsg.Result, 0)
 
-	//Iterate over TMI IDs in the Target Set
-	for _, tmiID := range targets {
-		atlResultSet, exists := tam.atlResults[tmiID]
+		//Iterate over TMI IDs in the Target Set
+		for _, tmiID := range targets {
+			atlResultSet, exists := tam.atlResults[tmiID]
 
-		if exists {
-			propositions := make([]Proposition, 0)
-			for propositionID := range atlResultSet.ATLs() {
-				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+			if exists {
+				propositions := make([]Proposition, 0)
+				for propositionID := range atlResultSet.ATLs() {
+					propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+				}
+				result := ResultEntry{
+					TmiID:        tmiID,
+					Propositions: propositions,
+				}
+				taResponseResults = append(taResponseResults, result.toResultMsgStruct())
 			}
-			result := ResultEntry{
-				TmiID:        tmiID,
-				Propositions: propositions,
-			}
-			taResponseResults = append(taResponseResults, result.toResultMsgStruct())
+		}
+
+		response := tasmsg.TasTaResponse{
+			AttestationCertificate: tam.crypto.AttestationCertificate(),
+			Error:                  nil,
+			Results:                taResponseResults,
+			SessionID:              sessionID,
+		}
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	} else {
+		//We need to call AIV Req first and wait for a response
+		if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
+			tam.tsm.DispatchAivRequest(tmiSession)
+			//Hacky way to emulate allowCache: dispatch AIV Request, then replay TAS_TA_REQUEST after 80 msec - hoping that the AIV Response has been delivered in the meantime
+			go func() {
+				time.Sleep(80 * time.Millisecond)
+				allowCachedNow := true
+				cmd.Request.AllowCache = &allowCachedNow
+				tam.channels.TAMChannel <- cmd
+			}()
+		} else {
+			sendErrorResponse("No trust model instances found in this session")
+			return
 		}
 	}
 
-	response := tasmsg.TasTaResponse{
-		AttestationCertificate: tam.crypto.AttestationCertificate(),
-		Error:                  nil,
-		Results:                taResponseResults,
-		SessionID:              sessionID,
-	}
-	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
-	if err != nil {
-		tam.logger.Error("Error marshalling response", "error", err)
-	}
-	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 }
 
 func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]) {

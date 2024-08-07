@@ -10,6 +10,7 @@ import (
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 )
 
 type TafManagers struct {
@@ -54,9 +55,10 @@ type TrustSourceManager interface {
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
-	RegisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
-	UnregisterTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
+	SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
+	UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
+	DispatchAivRequest(session session.Session)
 }
 
 type TrustModelManager interface {
