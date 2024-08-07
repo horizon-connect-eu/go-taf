@@ -482,6 +482,9 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 		tsm.RegisterCallback(messages.AIV_RESPONSE, reqId, func(recvCmd core.Command) {
 			switch cmd := recvCmd.(type) {
 			case command.HandleResponse[aivmsg.AivResponse]:
+
+				updates := make([]core.Update, 0)
+
 				for _, trusteeReport := range cmd.Response.TrusteeReports {
 					evidenceCollection := make(map[core.EvidenceType]int)
 					for _, report := range trusteeReport.AttestationReport {
@@ -492,12 +495,12 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 					//call quantifier
 					ato := quantifiers[core.AIV](evidenceCollection)
 					tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
-					//create update operation for all TMIs of session
-					for tmiID := range session.TrustModelInstances() {
-						update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
-						tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
-						tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
-					}
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV))
+				}
+				//create update operation for all TMIs of session
+				for tmiID := range session.TrustModelInstances() {
+					tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
+					tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
 				}
 			default:
 				//Nothing to do

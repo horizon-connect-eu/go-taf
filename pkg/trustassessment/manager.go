@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/config"
@@ -321,8 +320,6 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
 	sessionID := cmd.Request.SessionID
-	allowCached := cmd.Request.AllowCache
-	util.UNUSED(allowCached)
 
 	sendErrorResponse := func(errMsg string) {
 		response := tasmsg.TasTaResponse{
@@ -366,7 +363,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 	}
 
-	if allowCached == nil || *allowCached == true {
+	if cmd.Request.AllowCache == nil || *cmd.Request.AllowCache == true {
 		//Directly send response
 		taResponseResults := make([]tasmsg.Result, 0)
 
@@ -401,14 +398,14 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 	} else {
 		//We need to call AIV Req first and wait for a response
 		if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
-
 			tam.tsm.DispatchAivRequest(tmiSession)
+			//Hacky way to emulate allowCache: dispatch AIV Request, then replay TAS_TA_REQUEST after 80 msec - hoping that the AIV Response has been delivered in the meantime
 			go func() {
-				time.Sleep(50 * time.Millisecond) //TODO
-				// Displayed after sleep overs
-				//tam.channels.TAMChannel <- "output1" //TOOD: Send command to respond
+				time.Sleep(80 * time.Millisecond)
+				allowCachedNow := true
+				cmd.Request.AllowCache = &allowCachedNow
+				tam.channels.TAMChannel <- cmd
 			}()
-			//TODO use callback to handle result
 		} else {
 			sendErrorResponse("No trust model instances found in this session")
 			return
