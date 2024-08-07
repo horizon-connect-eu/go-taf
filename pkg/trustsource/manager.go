@@ -17,6 +17,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 	"math"
@@ -420,7 +421,9 @@ func (tsm *Manager) RegisterCallback(messageType messages.MessageSchema, request
 	tsm.pendingMessageCallbacks[messageType][requestID] = fn
 }
 
-func (tsm *Manager) DispatchAivRequest(tmiID string, tmt core.TrustModelTemplate) {
+func (tsm *Manager) DispatchAivRequest(session session.Session) {
+
+	tmt := session.TrustModelTemplate()
 
 	query := make(map[core.TrustSource]map[string][]core.EvidenceType)
 	quantifiers := make(map[core.TrustSource]core.Quantifier)
@@ -484,10 +487,12 @@ func (tsm *Manager) DispatchAivRequest(tmiID string, tmt core.TrustModelTemplate
 					//call quantifier
 					ato := quantifiers[core.AIV](evidenceCollection)
 					tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
-					//create update operation
-					update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
-					tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
-					tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
+					//create update operation for all TMIs of session
+					for tmiID := range session.TrustModelInstances() {
+						update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
+						tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
+						tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
+					}
 				}
 			default:
 				//Nothing to do

@@ -24,6 +24,7 @@ import (
 	"hash/fnv"
 	"log/slog"
 	"strings"
+	"time"
 )
 
 type Manager struct {
@@ -243,7 +244,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.RegisterTrustSourceQuantifiers(tmt, tmiID, ch)
+	tam.tsm.SubscribeTrustSourceQuantifiers(tmt, tmiID, ch)
 
 	ch.Execute()
 }
@@ -277,7 +278,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 	})
 	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
 	for tmiID := range currentSession.TrustModelInstances() {
-		tam.tsm.UnregisterTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
+		tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
 	}
 	ch.Execute()
 
@@ -399,17 +400,14 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	} else {
 		//We need to call AIV Req first and wait for a response
-		tmis := tam.sessions[sessionID].TrustModelInstances()
-		tmiIDs := make([]string, len(tmis))
+		if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
 
-		//TODO: We currently need a TMI ID for handling the response, but conceptually, a session can have multiple. We just take the first one.
-		i := 0
-		for k := range tmis {
-			tmiIDs[i] = k
-			i++
-		}
-		if len(tmiIDs) > 0 {
-			tam.tsm.DispatchAivRequest(tmiIDs[0], tmiSession.TrustModelTemplate())
+			tam.tsm.DispatchAivRequest(tmiSession)
+			go func() {
+				time.Sleep(50 * time.Millisecond) //TODO
+				// Displayed after sleep overs
+				//tam.channels.TAMChannel <- "output1" //TOOD: Send command to respond
+			}()
 			//TODO use callback to handle result
 		} else {
 			sendErrorResponse("No trust model instances found in this session")
