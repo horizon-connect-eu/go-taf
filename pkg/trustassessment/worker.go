@@ -126,9 +126,10 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	}
 	sessionID, _ := worker.tmiSessions[cmd.TmiID]
 
-	//TODO: loop over all updates in cmd
-	//Execute TMI Update
-	tmi.Update(cmd.Update)
+	//Execute TMI Updates
+	for _, update := range cmd.Update {
+		tmi.Update(update)
+	}
 	//Run TLEE
 	atls := worker.executeTLEE(tmi)
 	//Run TDE

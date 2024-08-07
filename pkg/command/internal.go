@@ -7,11 +7,10 @@ import (
 type HandleTMIUpdate struct {
 	commandType core.CommandType
 	TmiID       string
-	Update      core.Update
+	Update      []core.Update
 }
 
-// TODO: change struct to contain multiple updates in a single command
-func CreateHandleTMIUpdate(tmiID string, update core.Update) HandleTMIUpdate {
+func CreateHandleTMIUpdate(tmiID string, update ...core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
 		TmiID:       tmiID,
 		Update:      update,
