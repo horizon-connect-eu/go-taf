@@ -148,6 +148,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
 		tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
 	}
+	//TODO: bundle multiple updates into single TMIUpdate
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */

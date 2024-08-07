@@ -10,6 +10,7 @@ type HandleTMIUpdate struct {
 	Update      core.Update
 }
 
+// TODO: change struct to contain multiple updates in a single command
 func CreateHandleTMIUpdate(tmiID string, update core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
 		TmiID:       tmiID,
