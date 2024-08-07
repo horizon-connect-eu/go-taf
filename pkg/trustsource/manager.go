@@ -134,6 +134,8 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		return
 	}
 
+	updates := make([]core.Update, 0)
+
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
 		for _, report := range trusteeReport.AttestationReport {
 			evidence := report.Claim
@@ -146,7 +148,10 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
 		//create update operation
 		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
-		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, update)
+		updates = append(updates, update)
+	}
+	if len(updates) > 0 {
+		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
 		tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
 	}
 }

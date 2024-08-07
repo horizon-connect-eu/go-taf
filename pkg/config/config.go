@@ -8,13 +8,15 @@ import (
 
 // Configuration of the TAF, including its subcomponents.
 type Configuration struct {
-	Identifier    string
-	Logging       Log
-	Debug         Debug
-	ChanBufSize   int
-	Crypto        Crypto
-	TAM           TAM
+	ChanBufSize int
+	Identifier  string
+
 	Communication Communication
+	Crypto        Crypto
+	Debug         Debug
+	Evidence      Evidence
+	Logging       Log
+	TAM           TAM
 	TLEE          TLEE
 	V2X           V2X
 }
@@ -22,6 +24,14 @@ type Configuration struct {
 type Crypto struct {
 	KeyFolder string
 	Enabled   bool
+}
+
+type Evidence struct {
+	AIV AIV
+}
+
+type AIV struct {
+	CheckInterval int
 }
 
 type Debug struct {
@@ -94,6 +104,11 @@ var (
 			FixedSessionID:      "",
 			FixedSubscriptionID: "",
 			FixedRequestID:      "1235",
+		},
+		Evidence: Evidence{
+			AIV: AIV{
+				CheckInterval: 1000,
+			},
 		},
 		TLEE: TLEE{
 			UseInternalTLEE: true,

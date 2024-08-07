@@ -7,13 +7,13 @@ import (
 type HandleTMIUpdate struct {
 	commandType core.CommandType
 	TmiID       string
-	Update      core.Update
+	Updates     []core.Update
 }
 
-func CreateHandleTMIUpdate(tmiID string, update core.Update) HandleTMIUpdate {
+func CreateHandleTMIUpdate(tmiID string, updates ...core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
 		TmiID:       tmiID,
-		Update:      update,
+		Updates:     updates,
 		commandType: core.HANDLE_TMI_UPDATE,
 	}
 }
