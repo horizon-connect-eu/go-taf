@@ -81,7 +81,7 @@ func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) e
 
 func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) {
 	if cr.cryptoEnabled {
-		nonceByteArray, err := crypto.FromHexToByteArray(*response.AivEvidence.Nonce)
+		nonceByteArray, err := crypto.FromHexToByteArray(response.AivEvidence.Nonce)
 		if err != nil {
 			return false, errors.New("failed to decode nonce from AIV_RESPONSE")
 		}

@@ -179,10 +179,10 @@ type AivResponse struct {
 type AIVRESPONSEAivEvidence struct {
 	KeyRef string `json:"keyRef"`
 	// In Hex.
-	Nonce                  *string `json:"nonce,omitempty"`
-	Signature              string  `json:"signature"`
-	SignatureAlgorithmType string  `json:"signatureAlgorithmType"`
-	Timestamp              string  `json:"timestamp"`
+	Nonce                  string `json:"nonce"`
+	Signature              string `json:"signature"`
+	SignatureAlgorithmType string `json:"signatureAlgorithmType"`
+	Timestamp              string `json:"timestamp"`
 }
 
 type AIVRESPONSETrusteeReport struct {
