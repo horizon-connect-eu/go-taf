@@ -39,12 +39,10 @@ make run
 
 The TAF uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in `res/taf.json`) and specify the actual file location in the environment variable `TAF_CONFIG`. The following options can be configured. Missing options are implicitly using their defined default values.
 
-```json
+```js
 {
-  "ChanBufSize": 10000,
-  "Identifier": "taf",
+  "Identifier": "taf",                  // internal identifier of this instance 
   "Communication": {
-    "Handler": "kafka-based",           // either 'kafka-based' or 'file-based'
     "Kafka": {
       "Broker": "localhost:9092",       // address and port of the kafka bootstrap server
       "TafTopic": "taf"                 // kafka topic the TAF will consume
@@ -59,10 +57,10 @@ The TAF uses an internal configuration with hardcoded defaults. To change the co
     "LogStyle": "PRETTY"                // log style: 'PRETTY', 'JSON', or 'PLAIN'
   },
   "Crypto": {
-    "Enabled": false,                   // whether the crypto library should be used or not
+    "Enabled": true,                    // whether the crypto library should be used or not
     "KeyFolder": "res/cert/",           // path to key folder that is passed to crypto library
-    "IgnoreVerificationResults": true   // true: discard messages that failed to verify
-                                        // false: process messages that failed to verify
+    "IgnoreVerificationResults": false  // false: discard messages that failed to verify
+                                        // true: process messages that failed to verify
                                         //        (a warning will be logged to console)
   },
   "Debug": {
@@ -70,23 +68,17 @@ The TAF uses an internal configuration with hardcoded defaults. To change the co
                                         // instead of a random UUID-based session id
     "FixedSubscriptionID": "",          // if provided, this fixed value is used by the TAM
                                         // instead of a random UUID-based subscription id
-    "FixedRequestID": "1235"            // if provided, this fixed request id is used by the
+    "FixedRequestID": ""                // if provided, this fixed request id is used by the
                                         // trust source manager instead of a random UUID-based id
   },
   "Evidence": {
     "AIV": {
-      "CheckInterval": 1000             // check interval passed to AIV in AivSubscribeRequest
+      "CheckInterval": 1000             // check interval (in msec) passed to AIV in AivSubscribeRequest
     }
   },
-  "TAM": {
-    "TrustModelInstanceShards": 1       // number of workers used by TAM
-  },
   "TLEE": {
-    "UseInternalTLEE": true             // use internal mock TLEE or actual TLEE implementation
-  },
-  "V2X": {
-    "NodeTTLsec": 5,                    // TTL of observed V2X nodes
-    "CheckIntervalSec": 1               // interval to scan for expired nodes
+    "UseInternalTLEE": false            // false: use HUAWEI TLEE implementation
+                                        // true: use internal mockup TLEE instead
   }
 }
 ```
