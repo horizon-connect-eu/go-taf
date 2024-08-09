@@ -1,10 +1,43 @@
 {
-    "ChanBufSize": 10000,
-    "V2XConfig": {
-        "SendIntervalNs": 10000
+  "ChanBufSize": 10000,
+  "Identifier": "taf",
+  "Communication": {
+    "Handler": "kafka-based",
+    "Kafka": {
+      "Broker": "localhost:9092",
+      "TafTopic": "taf"
     },
-    "TAMConfig": {
-        "UpdateResultsOp": "mult",
-        "TrustModelInstanceShards": 128
+    "TafEndpoint": "taf",
+    "AivEndpoint": "aiv",
+    "MbdEndpoint": "mbd"
+  },
+  "Crypto": {
+    "KeyFolder": "res/cert/",
+    "Enabled": false,
+    "IgnoreVerificationResults": true
+  },
+  "Debug": {
+    "FixedSessionID": "",
+    "FixedSubscriptionID": "",
+    "FixedRequestID": "1235"
+  },
+  "Evidence": {
+    "AIV": {
+      "CheckInterval": 1000
     }
+  },
+  "Logging": {
+    "LogLevel": 2,
+    "LogStyle": "PRETTY"
+  },
+  "TAM": {
+    "TrustModelInstanceShards": 1
+  },
+  "TLEE": {
+    "UseInternalTLEE": true
+  },
+  "V2X": {
+    "NodeTTLsec": 5,
+    "CheckIntervalSec": 1
+  }
 }
