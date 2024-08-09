@@ -1,5 +1,4 @@
 {
-  "ChanBufSize": 10000,
   "Identifier": "taf",
   "Communication": {
     "Handler": "kafka-based",
@@ -13,13 +12,13 @@
   },
   "Crypto": {
     "KeyFolder": "res/cert/",
-    "Enabled": false,
-    "IgnoreVerificationResults": true
+    "Enabled": true,
+    "IgnoreVerificationResults": false
   },
   "Debug": {
     "FixedSessionID": "",
     "FixedSubscriptionID": "",
-    "FixedRequestID": "1235"
+    "FixedRequestID": ""
   },
   "Evidence": {
     "AIV": {
@@ -30,14 +29,7 @@
     "LogLevel": 2,
     "LogStyle": "PRETTY"
   },
-  "TAM": {
-    "TrustModelInstanceShards": 1
-  },
   "TLEE": {
-    "UseInternalTLEE": true
-  },
-  "V2X": {
-    "NodeTTLsec": 5,
-    "CheckIntervalSec": 1
+    "UseInternalTLEE": false
   }
 }

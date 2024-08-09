@@ -89,8 +89,8 @@ var (
 		},
 		Crypto: Crypto{
 			KeyFolder:                 "res/cert/",
-			Enabled:                   false,
-			IgnoreVerificationResults: true,
+			Enabled:                   true,
+			IgnoreVerificationResults: false,
 		},
 		Communication: Communication{
 			Handler: "kafka-based",
@@ -105,7 +105,7 @@ var (
 		Debug: Debug{
 			FixedSessionID:      "",
 			FixedSubscriptionID: "",
-			FixedRequestID:      "1235",
+			FixedRequestID:      "",
 		},
 		Evidence: Evidence{
 			AIV: AIV{
@@ -113,7 +113,7 @@ var (
 			},
 		},
 		TLEE: TLEE{
-			UseInternalTLEE: true,
+			UseInternalTLEE: false,
 		},
 		V2X: V2X{
 			NodeTTLsec:       5,
