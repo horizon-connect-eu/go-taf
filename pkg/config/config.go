@@ -22,8 +22,9 @@ type Configuration struct {
 }
 
 type Crypto struct {
-	KeyFolder string
-	Enabled   bool
+	KeyFolder                 string
+	Enabled                   bool
+	IgnoreVerificationResults bool
 }
 
 type Evidence struct {
@@ -87,8 +88,9 @@ var (
 			TrustModelInstanceShards: 1,
 		},
 		Crypto: Crypto{
-			KeyFolder: "res/cert/",
-			Enabled:   false,
+			KeyFolder:                 "res/cert/",
+			Enabled:                   false,
+			IgnoreVerificationResults: true,
 		},
 		Communication: Communication{
 			Handler: "kafka-based",

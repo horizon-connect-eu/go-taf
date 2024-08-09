@@ -84,8 +84,12 @@ func (tsm *Manager) HandleAivResponse(cmd command.HandleResponse[aivmsg.AivRespo
 		return
 	}
 	if !valid {
-		tsm.logger.Warn("AIV_RESPONSE could not be verified, ignoring message")
-		return
+		if tsm.config.Crypto.IgnoreVerificationResults {
+			tsm.logger.Warn("\n********************** WARNING ********************\n*   Ignoring failed AIV_RESPONSE verification     *\n********************** WARNING ********************")
+		} else {
+			tsm.logger.Warn("AIV_RESPONSE could not be verified, discarding message")
+			return
+		}
 	}
 	callback, exists := tsm.pendingMessageCallbacks[messages.AIV_RESPONSE][cmd.ResponseID]
 	if !exists {
@@ -123,8 +127,12 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		return
 	}
 	if !valid {
-		tsm.logger.Warn("AIV_NOTIFY could not be verified, ignoring message")
-		return
+		if tsm.config.Crypto.IgnoreVerificationResults {
+			tsm.logger.Warn("\n********************** WARNING **********************\n*   Ignoring failed AIV_NOTIFY verification     *\n************************ WARNING ********************")
+		} else {
+			tsm.logger.Warn("AIV_NOTIFY could not be verified, discarding message")
+			return
+		}
 	}
 
 	subscriptionID := *cmd.Notify.SubscriptionID
