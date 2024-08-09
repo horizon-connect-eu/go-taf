@@ -37,8 +37,6 @@ type wsPublishWriter struct {
 }
 
 func (e wsPublishWriter) Write(p []byte) (int, error) {
-	log.Println("blubb", string(p))
-
 	e.queue <- socketEvent{eventType: PUBLISH, Data: string(p), Id: "UPDATE", socket: nil}
 	return len(p), nil
 }
