@@ -1,5 +1,10 @@
 # Trust Assessment Framework
 
+[![Latest Release](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/badges/release.svg)](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/releases)
+[![pipeline status](https://connect.informatik.uni-ulm.de/coordination/go-taf/badges/main/pipeline.svg)](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/commits/main)
+
+
+
 This repository provides the latest prototype of the standalone Trust Assessment Framework.
 
 ## Gettting Started
