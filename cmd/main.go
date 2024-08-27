@@ -75,7 +75,7 @@ func main() {
 
 	communicationInterface, err := communication.NewInterface(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating communication interface", err)
+		logger.Error("Error creating communication interface", "Error", err)
 	}
 
 	var tlee tleeinterface.TLEE
@@ -87,15 +87,15 @@ func main() {
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels, tlee)
 	if err != nil {
-		logger.Error("Error creating TAM", err)
+		logger.Error("Error creating TAM", "Error", err)
 	}
 	trustSourceManager, err := trustsource.NewManager(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating TMM", err)
+		logger.Error("Error creating TMM", "Error", err)
 	}
 	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
 	if err != nil {
-		logger.Error("Error creating TMM", err)
+		logger.Error("Error creating TMM", "Error", err)
 	}
 
 	managers := manager.TafManagers{
