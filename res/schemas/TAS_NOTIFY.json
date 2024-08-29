@@ -100,7 +100,7 @@
                 "id", "propositions"
             ]
         },
-        "minItems" : 1
+        "minItems" : 0
       },
       "attestationCertificate" : {
         "description": "The certificate (*base64 string*) issued by the IAM, attesting to the correct execution of the TAF within an enclave.",
