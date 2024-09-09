@@ -196,7 +196,7 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 	util.UNUSED(cmd)
 }
 
-func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler) {
 
 	//When no handler has been set, create empty one
 	if handler == nil {
@@ -226,6 +226,13 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate,
 	for source, trustees := range subscriptions {
 		switch source {
 		case core.AIV:
+
+			//Assumption: If we are using AIV, we already have a single TMI.
+			var trustModelInstanceID string
+			for id := range session.TrustModelInstances() {
+				trustModelInstanceID = id
+				break
+			}
 
 			subscribeField := make([]aivmsg.Subscribe, 0)
 
@@ -334,7 +341,7 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate,
 	}
 }
 
-func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler) {
 	util.UNUSED(tmt)
 
 	//When no handler has been set, create empty one
@@ -344,87 +351,97 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplat
 		defer handler.Execute()
 	}
 
-	//Get Subscription ID(s) for TMI ID
-	subIDs, exists := tsm.tmiToSubscriptionID[trustModelInstanceID]
-	if !exists {
-		_, reject := handler.Register()
-		reject(errors.New("Unknown trust model instance ID: " + trustModelInstanceID))
-		return
-	}
-	for subID, source := range subIDs {
-
-		resolve, reject := handler.Register()
-
-		switch source {
-		case core.AIV:
-			unsubMsg := aivmsg.AivUnsubscribeRequest{
-				AttestationCertificate: tsm.crypto.AttestationCertificate(),
-				SubscriptionID:         subID,
-			}
-			unsubReqId := tsm.GenerateRequestId()
-			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
-			if err != nil {
-				tsm.logger.Error("Error marshalling response", "error", err)
-			}
-			tsm.RegisterCallback(messages.AIV_UNSUBSCRIBE_RESPONSE, unsubReqId, func(recvCmd core.Command) {
-				switch cmd := recvCmd.(type) {
-				case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
-					if cmd.Response.Error != nil {
-						reject(errors.New(*cmd.Response.Error))
-						return
-					}
-					//delete associated data structures/lookups
-					delete(tsm.subscriptionIDtoTMI, subID)
-					delete(tsm.subscriptionEvidence, subID)
-					delete(tsm.subscriptionQuantifiers, subID)
-					delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
-
-					tsm.logger.Debug("Unregistering Subscription " + subID)
-
-					resolve()
-				default:
-					reject(errors.New("Unknown response type: " + cmd.Type().String()))
-				}
-			})
-			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
-		case core.MBD:
-			unsubMsg := mbdmsg.MBDUnsubscribeRequest{
-				AttestationCertificate: tsm.crypto.AttestationCertificate(),
-				SubscriptionID:         subID,
-			}
-			unsubReqId := tsm.GenerateRequestId()
-			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
-			if err != nil {
-				tsm.logger.Error("Error marshalling response", "error", err)
-			}
-			tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_REQUEST, unsubReqId, func(recvCmd core.Command) {
-				switch cmd := recvCmd.(type) {
-				case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
-					if cmd.Response.Error != nil {
-						reject(errors.New(*cmd.Response.Error))
-						return
-					}
-					//delete associated data structures/lookups
-					delete(tsm.subscriptionIDtoTMI, subID)
-					delete(tsm.subscriptionEvidence, subID)
-					delete(tsm.subscriptionQuantifiers, subID)
-					delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
-
-					tsm.logger.Debug("Unregistering Subscription " + subID)
-
-					resolve()
-				default:
-					reject(errors.New("Unknown response type: " + cmd.Type().String()))
-				}
-			})
-			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
-		case core.TCH:
-			//Nothing to do here (yet)
-		default:
-			panic("unknown Trust Source")
+	//Collect TMIs
+	tMIs := make([]string, 0)
+	for tmi, active := range session.TrustModelInstances() {
+		if active {
+			tMIs = append(tMIs, tmi)
 		}
 	}
 
+	//TODO: Check whether this still works with 0 or multiple TMIs per session!
+	for _, trustModelInstanceID := range tMIs {
+		//Get Subscription ID(s) for TMI ID
+		subIDs, exists := tsm.tmiToSubscriptionID[trustModelInstanceID]
+		if !exists {
+			_, reject := handler.Register()
+			reject(errors.New("Unknown trust model instance ID: " + trustModelInstanceID))
+			return
+		}
+		for subID, source := range subIDs {
+
+			resolve, reject := handler.Register()
+
+			switch source {
+			case core.AIV:
+				unsubMsg := aivmsg.AivUnsubscribeRequest{
+					AttestationCertificate: tsm.crypto.AttestationCertificate(),
+					SubscriptionID:         subID,
+				}
+				unsubReqId := tsm.GenerateRequestId()
+				bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
+				if err != nil {
+					tsm.logger.Error("Error marshalling response", "error", err)
+				}
+				tsm.RegisterCallback(messages.AIV_UNSUBSCRIBE_RESPONSE, unsubReqId, func(recvCmd core.Command) {
+					switch cmd := recvCmd.(type) {
+					case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+						if cmd.Response.Error != nil {
+							reject(errors.New(*cmd.Response.Error))
+							return
+						}
+						//delete associated data structures/lookups
+						delete(tsm.subscriptionIDtoTMI, subID)
+						delete(tsm.subscriptionEvidence, subID)
+						delete(tsm.subscriptionQuantifiers, subID)
+						delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
+
+						tsm.logger.Debug("Unregistering Subscription " + subID)
+
+						resolve()
+					default:
+						reject(errors.New("Unknown response type: " + cmd.Type().String()))
+					}
+				})
+				tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
+			case core.MBD:
+				unsubMsg := mbdmsg.MBDUnsubscribeRequest{
+					AttestationCertificate: tsm.crypto.AttestationCertificate(),
+					SubscriptionID:         subID,
+				}
+				unsubReqId := tsm.GenerateRequestId()
+				bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
+				if err != nil {
+					tsm.logger.Error("Error marshalling response", "error", err)
+				}
+				tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_REQUEST, unsubReqId, func(recvCmd core.Command) {
+					switch cmd := recvCmd.(type) {
+					case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+						if cmd.Response.Error != nil {
+							reject(errors.New(*cmd.Response.Error))
+							return
+						}
+						//delete associated data structures/lookups
+						delete(tsm.subscriptionIDtoTMI, subID)
+						delete(tsm.subscriptionEvidence, subID)
+						delete(tsm.subscriptionQuantifiers, subID)
+						delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
+
+						tsm.logger.Debug("Unregistering Subscription " + subID)
+
+						resolve()
+					default:
+						reject(errors.New("Unknown response type: " + cmd.Type().String()))
+					}
+				})
+				tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
+			case core.TCH:
+				//Nothing to do here (yet)
+			default:
+				panic("unknown Trust Source")
+			}
+		}
+	}
 }
 
 /*

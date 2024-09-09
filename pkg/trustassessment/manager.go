@@ -199,23 +199,27 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		sendErrorResponse("Error initializing session: " + err.Error())
 		return
 	}
-	//add new TMI to session
-	sessionTMIs := newSession.TrustModelInstances()
-	sessionTMIs[tMI.ID()] = true
-	tmiID := tMI.ID()
+	if tMI != nil {
+		//add new TMI to session
+		sessionTMIs := newSession.TrustModelInstances()
+		sessionTMIs[tMI.ID()] = true
+	}
 
 	successHandler := func() {
-		//add new TMI to list of all TMIs of the TAM
-		tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
-		//Initialize TMI
-		tMI.Initialize(nil)
+		if tMI != nil {
+			//add new TMI to list of all TMIs of the TAM
+			tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
-		//Dispatch new TMI instance to worker
-		tmiInitCmd := command.CreateHandleTMIInit(tmiID, tMI, sessionId)
-		tam.DispatchToWorker(tmiID, tmiInitCmd)
+			//Initialize TMI
+			tMI.Initialize(nil)
 
-		success := "Session with trust model template '" + tMI.Template().TemplateName() + "@" + tMI.Template().Version() + "' created."
+			//Dispatch new TMI instance to worker
+			tmiInitCmd := command.CreateHandleTMIInit(tMI.ID(), tMI, sessionId)
+			tam.DispatchToWorker(tMI.ID(), tmiInitCmd)
+		}
+
+		success := "Session with trust model template '" + tmt.TemplateName() + "@" + tmt.Version() + "' created."
 
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
@@ -236,14 +240,16 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		//TODO: undo session, TMI, etc.
 		sendErrorResponse("Error initializing session: " + err.Error())
 		//Cleanup TMI creation
-		tMI.Cleanup()
+		if tMI != nil {
+			tMI.Cleanup()
+		}
 		delete(tam.sessions, sessionId)
 	}
 
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.SubscribeTrustSourceQuantifiers(tmt, tmiID, ch)
+	tam.tsm.SubscribeTrustSourceQuantifiers(tmt, newSession, ch)
 
 	ch.Execute()
 }
@@ -276,9 +282,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", currentSession.ID(), "TMT", currentSession.TrustModelTemplate().TemplateName())
 	})
 	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
-	for tmiID := range currentSession.TrustModelInstances() {
-		tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession.TrustModelTemplate(), tmiID, ch)
-	}
+	tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession.TrustModelTemplate(), currentSession, ch)
 	ch.Execute()
 
 	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."

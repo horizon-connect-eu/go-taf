@@ -55,8 +55,8 @@ type TrustSourceManager interface {
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
-	SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
-	UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, trustModelInstanceID string, handler *completionhandler.CompletionHandler)
+	SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler)
+	UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler)
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
 	DispatchAivRequest(session session.Session)
 }
