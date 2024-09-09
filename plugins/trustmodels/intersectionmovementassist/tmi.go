@@ -21,22 +21,25 @@ func (e *TrustModelInstance) ID() string {
 
 func (e *TrustModelInstance) Version() int {
 	//TODO implement me
-	panic("implement me")
+	//	panic("implement me")
+	return 0
 }
 
 func (e *TrustModelInstance) Fingerprint() uint32 {
 	//TODO implement me
-	panic("implement me")
+	//panic("implement me")
+	return 0
 }
 
 func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
 	//TODO implement me
-	panic("implement me")
+	//panic("implement me")
+	return nil
 }
 
 func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
 	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (e *TrustModelInstance) Template() core.TrustModelTemplate {
