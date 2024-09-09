@@ -249,7 +249,7 @@ func checkSetParameters(params map[string]string) map[string]bool {
 	return setParams
 }
 
-func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) (core.TrustModelInstance, error) {
+func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, error) {
 	setParams := checkSetParameters(params)
 
 	omega1, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)

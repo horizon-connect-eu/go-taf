@@ -193,7 +193,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 	//create new TMI for session //TODO: always possible for dynamic models?
 
-	tMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext, tam.channels)
+	tMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
 	if err != nil {
 		delete(tam.sessions, sessionId)
 		sendErrorResponse("Error initializing session: " + err.Error())
