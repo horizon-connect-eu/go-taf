@@ -31,21 +31,17 @@ type Evidence struct {
 }
 
 type TchReport struct {
-	AivEvidence    AivEvidence     `json:"aivEvidence"`
+	// This identifier corresponds to the pseudonym associated with an ego vehicle.
+	TrusteeID      string          `json:"trusteeID"`
 	TrusteeReports []TrusteeReport `json:"trusteeReports"`
-}
-
-type AivEvidence struct {
-	KeyRef                 string `json:"keyRef"`
-	Nonce                  string `json:"nonce"`
-	Signature              string `json:"signature"`
-	SignatureAlgorithmType string `json:"signatureAlgorithmType"`
-	Timestamp              string `json:"timestamp"`
 }
 
 type TrusteeReport struct {
 	AttestationReport []AttestationReport `json:"attestationReport"`
-	TrusteeID         string              `json:"trusteeID"`
+	// This identifier corresponds to the exact component associated with the reported claims in
+	// the attestation report. If this field doesn't exist, then the attributes refer to the
+	// entire trustee entity (e.g., ego-vehicle).
+	ComponentID *string `json:"componentID,omitempty"`
 }
 
 type AttestationReport struct {

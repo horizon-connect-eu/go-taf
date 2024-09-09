@@ -37,36 +37,25 @@
                     "required": ["appraisal", "claim", "timestamp"]
                   }
                 },
-                "trusteeID": {
+                "componentID": {
+                  "description": "This identifier corresponds to the exact component associated with the reported claims in the attestation report. If this field doesn't exist, then the attributes refer to the entire trustee entity (e.g., ego-vehicle).",
                   "type": "string"
                 }
               },
-              "required": ["attestationReport", "trusteeID"]
+              "required": [
+                "attestationReport"
+              ]
             }
           },
-          "aivEvidence": {
-            "type": "object",
-            "properties": {
-              "timestamp": {
-                "type": "string"
-              },
-              "nonce": {
-                "type": "string"
-              },
-              "signatureAlgorithmType": {
-                "type": "string"
-              },
-              "signature": {
-                "type": "string"
-              },
-              "keyRef": {
-                "type": "string"
-              }
-            },
-            "required": ["timestamp", "nonce", "signatureAlgorithmType", "signature", "keyRef"]
+          "trusteeID": {
+            "description": "This identifier corresponds to the pseudonym associated with an ego vehicle.",
+            "type": "string"
           }
         },
-        "required": ["trusteeReports", "aivEvidence"]
+        "required": [
+          "trusteeReports",
+          "trusteeID"
+        ]
       },
       "evidence": {
         "type": "object",
