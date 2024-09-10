@@ -9,7 +9,7 @@ This repository provides the latest prototype of the standalone Trust Assessment
 
 ## Gettting Started
 
-### Gettting a Pre-Compile Binary
+### Gettting a Pre-Compiled Binary
 
 You can get a pre-compiled version of the standalone TAF in the [Releases](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/releases) section.
 
