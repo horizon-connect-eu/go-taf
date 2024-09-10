@@ -1,5 +1,9 @@
 # Standalone TAF Prototype
 
+## Release v0.1.1 (2024-09-10)
+ 
+ * fixed integration of the `VCM@0.0.1` tust model
+
 ## Release v0.1.0 (2024-08-09)
  
  * initial CONNECT-internal release of the standalone TAF prototype
