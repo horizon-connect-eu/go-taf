@@ -25,6 +25,7 @@ type Session interface {
 	AddSubscription(identifier string)
 	ListSubscriptions() []string
 	RemoveSubscription(identifier string)
+	SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner)
 }
 
 type Instance struct {
@@ -34,6 +35,7 @@ type Instance struct {
 	state         State
 	tmt           core.TrustModelTemplate
 	subscriptions map[string]bool
+	spawner       core.DynamicTrustModelInstanceSpawner
 }
 
 func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
@@ -44,6 +46,7 @@ func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
 		client:        client,
 		tmt:           tmt,
 		state:         INITIALIZING,
+		spawner:       nil,
 	}
 }
 
@@ -61,6 +64,10 @@ func (s *Instance) TrustModelTemplate() core.TrustModelTemplate {
 
 func (s *Instance) Client() string {
 	return s.client
+}
+
+func (s *Instance) SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner) {
+	s.spawner = spawner
 }
 
 func (s *Instance) State() State {

@@ -193,7 +193,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 	//create new TMI for session //TODO: always possible for dynamic models?
 
-	tMI, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
+	tMI, dynamicSpawner, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
 	if err != nil {
 		delete(tam.sessions, sessionId)
 		sendErrorResponse("Error initializing session: " + err.Error())
@@ -203,6 +203,10 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		//add new TMI to session
 		sessionTMIs := newSession.TrustModelInstances()
 		sessionTMIs[tMI.ID()] = true
+	}
+	if dynamicSpawner != nil {
+		newSession.SetDynamicSpawner(dynamicSpawner)
+		//TODO:
 	}
 
 	successHandler := func() {
