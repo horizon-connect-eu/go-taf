@@ -183,7 +183,7 @@ func TestLoadJson(t *testing.T) {
 	values_init["VC1_RTL_UNCERTAINTY"] = "0.8"
 	values_init["VC1_RTL_BASERATE"] = "0.5"
 
-	tmi2, _ := tmt.Spawn(values_init, context)
+	tmi2, _, _ := tmt.Spawn(values_init, context)
 
 	// Test Scenario2
 	evidenceMap2 := make(map[core.EvidenceType]int)
