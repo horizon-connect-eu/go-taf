@@ -377,3 +377,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 func (tmt TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return tmt.trustSourceQuantifiers
 }
+
+func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
+	return core.STATIC_TRUST_MODEL
+}

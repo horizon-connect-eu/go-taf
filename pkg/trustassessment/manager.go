@@ -666,3 +666,12 @@ func (tam *Manager) generateSubscriptionID() string {
 		return "SUB-" + uuid.New().String()
 	}
 }
+
+func (tam *Manager) Sessions() map[string]session.Session {
+	return tam.sessions
+}
+
+func (tam *Manager) HandleNewTrustModelInstance(instance core.TrustModelInstance, sessionID string) {
+	tam.logger.Warn("Implement me.", "TMI", instance.ID())
+	//TODO: do all the work necessary to instantiate the new TMI
+}

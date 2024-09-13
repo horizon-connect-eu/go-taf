@@ -45,3 +45,7 @@ func (t TrustModelTemplate) Description() string {
 func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return nil
 }
+
+func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
+	return core.STATIC_TRUST_MODEL
+}

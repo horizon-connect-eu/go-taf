@@ -42,6 +42,8 @@ type TrustAssessmentManager interface {
 	HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest])
 	DispatchToWorker(tmiID string, cmd core.Command)
 	HandleATLUpdate(cmd command.HandleATLUpdate)
+	Sessions() map[string]session.Session
+	HandleNewTrustModelInstance(instance core.TrustModelInstance, sessionID string)
 	Run()
 }
 

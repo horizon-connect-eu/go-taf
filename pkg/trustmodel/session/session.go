@@ -26,6 +26,7 @@ type Session interface {
 	ListSubscriptions() []string
 	RemoveSubscription(identifier string)
 	SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner)
+	DynamicSpawner() core.DynamicTrustModelInstanceSpawner
 }
 
 type Instance struct {
@@ -68,6 +69,9 @@ func (s *Instance) Client() string {
 
 func (s *Instance) SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner) {
 	s.spawner = spawner
+}
+func (s *Instance) DynamicSpawner() core.DynamicTrustModelInstanceSpawner {
+	return s.spawner
 }
 
 func (s *Instance) State() State {

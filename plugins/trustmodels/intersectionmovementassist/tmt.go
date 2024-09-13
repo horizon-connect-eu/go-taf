@@ -1,9 +1,7 @@
 package intersectionmovementassist
 
 import (
-	"fmt"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"math/rand/v2"
 )
 
 type TrustModelTemplate struct {
@@ -31,11 +29,7 @@ func (t TrustModelTemplate) TemplateName() string {
 }
 
 func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
-	return &TrustModelInstance{
-		id:       t.TemplateName() + "@" + t.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
-		version:  0,
-		template: t,
-	}, nil, nil
+	return nil, t, nil
 }
 
 func (t TrustModelTemplate) Description() string {
@@ -44,4 +38,16 @@ func (t TrustModelTemplate) Description() string {
 
 func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return nil
+}
+
+func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
+	return core.VEHICLE_TRIGGERED_TRUST_MODEL
+}
+
+func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]string) (core.TrustModelInstance, error) {
+	return &TrustModelInstance{
+		id:       identifier + "#" + t.TemplateName() + "@" + t.Version(),
+		version:  0,
+		template: t,
+	}, nil
 }
