@@ -6,7 +6,6 @@ package main
 import _ "github.com/vs-uulm/go-taf/plugins/communication/filebased"
 import _ "github.com/vs-uulm/go-taf/plugins/communication/kafkabased"
 import _ "github.com/vs-uulm/go-taf/plugins/trustmodels/brussels"
-import _ "github.com/vs-uulm/go-taf/plugins/trustmodels/cooperativeadaptivecruisecontrol"
 import _ "github.com/vs-uulm/go-taf/plugins/trustmodels/examplemodel"
 import _ "github.com/vs-uulm/go-taf/plugins/trustmodels/intersectionmovementassist"
 import _ "github.com/vs-uulm/go-taf/plugins/trustmodels/vehiclecomputermigration"
