@@ -104,6 +104,7 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 				if err != nil {
 					tmm.logger.Info("New node added", "Identifier", identifier)
 				} else {
+					tmi.Initialize(nil) //TODO: Params?
 					tmm.tam.HandleNewTrustModelInstance(tmi, sessionID)
 				}
 			}

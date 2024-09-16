@@ -672,6 +672,20 @@ func (tam *Manager) Sessions() map[string]session.Session {
 }
 
 func (tam *Manager) HandleNewTrustModelInstance(instance core.TrustModelInstance, sessionID string) {
-	tam.logger.Warn("Implement me.", "TMI", instance.ID())
-	//TODO: do all the work necessary to instantiate the new TMI
+	tmiID := instance.ID()
+
+	//Add TMI to session
+	sessions := tam.Sessions()
+	session, exists := sessions[sessionID]
+	if !exists {
+		tam.logger.Error("Non-existing session used for adding a new TMI", "Session", sessionID, "TMI", instance.ID())
+
+	} else {
+		sessionTMIs := session.TrustModelInstances()
+		sessionTMIs[tmiID] = true
+	}
+
+	//init TMI
+	tmiInitCmd := command.CreateHandleTMIInit(tmiID, instance, sessionID)
+	tam.DispatchToWorker(tmiID, tmiInitCmd)
 }
