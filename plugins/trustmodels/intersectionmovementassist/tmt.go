@@ -1,6 +1,7 @@
 package intersectionmovementassist
 
 import (
+	"fmt"
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
@@ -46,8 +47,12 @@ func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
 
 func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]string) (core.TrustModelInstance, error) {
 	return &TrustModelInstance{
-		id:       identifier + "#" + t.TemplateName() + "@" + t.Version(),
+		id:       t.GenerateTrustModelInstanceID(identifier),
 		version:  0,
 		template: t,
 	}, nil
+}
+
+func (tmt TrustModelTemplate) GenerateTrustModelInstanceID(identifiers ...string) string {
+	return fmt.Sprintf("%s#%s@%s", identifiers[0], tmt.TemplateName(), tmt.Version())
 }

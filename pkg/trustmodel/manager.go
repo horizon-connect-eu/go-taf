@@ -105,7 +105,7 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 					tmm.logger.Info("New node added", "Identifier", identifier)
 				} else {
 					tmi.Initialize(nil) //TODO: Params?
-					tmm.tam.HandleNewTrustModelInstance(tmi, sessionID)
+					tmm.tam.AddNewTrustModelInstance(tmi, sessionID)
 				}
 			}
 		}
@@ -115,4 +115,15 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 
 func (tmm *Manager) handleNodeRemoved(identifier string) {
 	tmm.logger.Info("Node removed", "Identifier", identifier)
+
+	for sessionID, session := range tmm.tam.Sessions() {
+		if session.TrustModelTemplate().Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
+			targetTmiID := session.TrustModelTemplate().GenerateTrustModelInstanceID(identifier)
+			for tmiID := range session.TrustModelInstances() {
+				if tmiID == targetTmiID {
+					tmm.tam.RemoveTrustModelInstance(tmiID, sessionID)
+				}
+			}
+		}
+	}
 }

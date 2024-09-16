@@ -671,7 +671,7 @@ func (tam *Manager) Sessions() map[string]session.Session {
 	return tam.sessions
 }
 
-func (tam *Manager) HandleNewTrustModelInstance(instance core.TrustModelInstance, sessionID string) {
+func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, sessionID string) {
 	tmiID := instance.ID()
 
 	//Add TMI to session
@@ -688,4 +688,17 @@ func (tam *Manager) HandleNewTrustModelInstance(instance core.TrustModelInstance
 	//init TMI
 	tmiInitCmd := command.CreateHandleTMIInit(tmiID, instance, sessionID)
 	tam.DispatchToWorker(tmiID, tmiInitCmd)
+}
+
+func (tam *Manager) RemoveTrustModelInstance(tmiID string, sessionID string) {
+	sessions := tam.Sessions()
+	session, exists := sessions[sessionID]
+	if !exists {
+		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", tmiID)
+	} else {
+		tam.logger.Info("Removing TMI from Session", "Session", sessionID, "TMI", tmiID)
+		tam.DispatchToWorker(tmiID, command.CreateHandleTMIDestroy(tmiID))
+		delete(tam.atlResults, tmiID)
+		delete(session.TrustModelInstances(), tmiID)
+	}
 }

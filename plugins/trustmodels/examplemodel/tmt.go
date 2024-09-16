@@ -32,7 +32,7 @@ func (t TrustModelTemplate) TemplateName() string {
 
 func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
 	return &TrustModelInstance{
-		id:       t.TemplateName() + "@" + t.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
+		id:       t.GenerateTrustModelInstanceID(fmt.Sprintf("%000000d", rand.IntN(999999))),
 		version:  0,
 		template: t,
 	}, nil, nil
@@ -48,4 +48,8 @@ func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifie
 
 func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
 	return core.STATIC_TRUST_MODEL
+}
+
+func (tmt TrustModelTemplate) GenerateTrustModelInstanceID(identifiers ...string) string {
+	return fmt.Sprintf("%s#%s@%s", identifiers[0], tmt.TemplateName(), tmt.Version())
 }

@@ -43,7 +43,8 @@ type TrustAssessmentManager interface {
 	DispatchToWorker(tmiID string, cmd core.Command)
 	HandleATLUpdate(cmd command.HandleATLUpdate)
 	Sessions() map[string]session.Session
-	HandleNewTrustModelInstance(instance core.TrustModelInstance, sessionID string)
+	AddNewTrustModelInstance(instance core.TrustModelInstance, sessionID string)
+	RemoveTrustModelInstance(tmiID string, sessionID string)
 	Run()
 }
 
