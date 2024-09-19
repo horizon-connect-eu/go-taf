@@ -370,7 +370,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 		template:    tmt,
 		omega1:      omega1,
 		omega2:      omega2,
-		fingerprint: 0,
+		fingerprint: rand.Uint32N(999999999),
 	}, nil, nil
 }
 
