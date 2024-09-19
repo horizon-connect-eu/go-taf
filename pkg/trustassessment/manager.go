@@ -198,15 +198,27 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		delete(tam.sessions, sessionId)
 		sendErrorResponse("Error initializing session: " + err.Error())
 		return
-	}
-	if tMI != nil {
-		//add new TMI to session
-		sessionTMIs := newSession.TrustModelInstances()
-		sessionTMIs[tMI.ID()] = true
-	}
-	if dynamicSpawner != nil {
-		newSession.SetDynamicSpawner(dynamicSpawner)
-		//TODO:
+	} else {
+		if tMI != nil {
+			//add new TMI to session
+			sessionTMIs := newSession.TrustModelInstances()
+			sessionTMIs[tMI.ID()] = true
+		}
+		if dynamicSpawner != nil {
+			//register spawn function at session
+			newSession.SetDynamicSpawner(dynamicSpawner)
+
+			//iterate over existing nodes and spawn TMIs for these
+			for _, nodeIdentifier := range tam.tmm.ListRecentV2XNodes() {
+				tmi, err := dynamicSpawner.OnNewVehicle(nodeIdentifier, nil)
+				if err != nil {
+					tam.logger.Warn("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
+				} else {
+					tmi.Initialize(nil) //TODO: Params?
+					tam.AddNewTrustModelInstance(tmi, sessionId)
+				}
+			}
+		}
 	}
 
 	successHandler := func() {
