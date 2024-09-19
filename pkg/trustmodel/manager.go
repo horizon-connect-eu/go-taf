@@ -83,6 +83,7 @@ func (tmm *Manager) SetManagers(managers manager.TafManagers) {
 func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm]) {
 	sender := fmt.Sprintf("%g", cmd.OneWay.SourceID)
 	tmm.v2xObserver.AddNode(sender)
+	//TODO: check whether RefreshCPM messages are necessary
 }
 
 func (tmm *Manager) ResolveTMT(identifier string) core.TrustModelTemplate {
@@ -102,7 +103,7 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 			if spawner != nil {
 				tmi, err := spawner.OnNewVehicle(identifier, nil)
 				if err != nil {
-					tmm.logger.Info("New node added", "Identifier", identifier)
+					tmm.logger.Warn("Error while spawning trust model instance", "TMT", session.TrustModelTemplate(), "Identifier used for dynamic spawning", identifier)
 				} else {
 					tmi.Initialize(nil) //TODO: Params?
 					tmm.tam.AddNewTrustModelInstance(tmi, sessionID)
@@ -126,4 +127,8 @@ func (tmm *Manager) handleNodeRemoved(identifier string) {
 			}
 		}
 	}
+}
+
+func (tmm *Manager) ListRecentV2XNodes() []string {
+	return tmm.v2xObserver.Nodes()
 }
