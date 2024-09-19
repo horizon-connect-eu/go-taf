@@ -45,16 +45,6 @@ func CreateListener(ttlSeconds int, checkIntervalSeconds int) v2xObserver {
 	return listener
 }
 
-func (l *v2xObserver) AddNode(identifier string) {
-	l.lock.Lock()
-	defer l.lock.Unlock()
-	_, exists := l.nodes[identifier]
-	l.nodes[identifier] = time.Now().Unix()
-	if !exists {
-		l.notifyObserversOnNodeAdded(identifier)
-	}
-}
-
 func (l *v2xObserver) registerObserver(observer observer) {
 	l.observers[observer] = true
 }
@@ -75,13 +65,37 @@ func (l v2xObserver) notifyObserversOnNodeRemoved(identifier string) {
 	}
 }
 
+func (l *v2xObserver) AddNode(identifier string) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+
+	_, exists := l.nodes[identifier]
+	l.nodes[identifier] = time.Now().Unix()
+	if !exists {
+		l.notifyObserversOnNodeAdded(identifier)
+	}
+}
+
 func (l *v2xObserver) RemoveNode(identifier string) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
+
 	_, exists := l.nodes[identifier]
 	if exists {
 		delete(l.nodes, identifier)
 		l.notifyObserversOnNodeRemoved(identifier)
 	}
+}
 
+func (l *v2xObserver) Nodes() []string {
+	l.lock.RLock()
+	defer l.lock.RUnlock()
+
+	nodes := make([]string, len(l.nodes))
+	i := 0
+	for node := range l.nodes {
+		nodes[i] = node
+		i++
+	}
+	return nodes
 }
