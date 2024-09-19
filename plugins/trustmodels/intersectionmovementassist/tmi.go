@@ -9,10 +9,11 @@ import (
 )
 
 type TrustModelInstance struct {
-	id      string
-	version int
-
+	id       string
+	version  int
 	template TrustModelTemplate
+
+	sourceID string
 }
 
 func (e *TrustModelInstance) ID() string {
@@ -46,7 +47,7 @@ func (e *TrustModelInstance) Template() core.TrustModelTemplate {
 	return e.template
 }
 
-func (e *TrustModelInstance) Update(update core.Update) {
+func (e *TrustModelInstance) Update(update core.Update) bool {
 	//TODO implement me
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
@@ -55,6 +56,7 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	default:
 		//ignore
 	}
+	return true
 }
 
 func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {

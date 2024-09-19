@@ -12,7 +12,7 @@ type TrustModelInstance interface {
 	Structure() trustmodelstructure.TrustGraphStructure
 	Values() map[string][]trustmodelstructure.TrustRelationship
 	Template() TrustModelTemplate
-	Update(update Update)
+	Update(update Update) bool
 	Initialize(params map[string]interface{})
 	Cleanup()
 	RTLs() map[string]subjectivelogic.QueryableOpinion
