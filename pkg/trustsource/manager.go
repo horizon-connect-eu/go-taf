@@ -36,9 +36,9 @@ type Manager struct {
 	//Schema:ResponseID->Callback
 	pendingMessageCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command)
 	//subscriptionID->TMI ID
-	subscriptionIDtoTMI map[string]string
+	subscriptionIDtoFullTMI map[string]string
 	//TMI ID:subscriptionID->bool
-	tmiToSubscriptionID map[string]map[string]core.TrustSource
+	fullTMItoSubscriptionID map[string]map[string]core.TrustSource
 	//subscriptionID:Trustee:Source:EvidenceType->Value
 	subscriptionEvidence map[string]map[string]map[core.TrustSource]map[core.EvidenceType]int
 	//subscriptionID:Trustee:Source->QuantifierFunc
@@ -52,8 +52,8 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		logger:                  logging.CreateChildLogger(tafContext.Logger, "TSM"),
 		crypto:                  tafContext.Crypto,
 		outbox:                  channels.OutgoingMessageChannel,
-		tmiToSubscriptionID:     make(map[string]map[string]core.TrustSource),
-		subscriptionIDtoTMI:     make(map[string]string),
+		fullTMItoSubscriptionID: make(map[string]map[string]core.TrustSource),
+		subscriptionIDtoFullTMI: make(map[string]string),
 		subscriptionEvidence:    make(map[string]map[string]map[core.TrustSource]map[core.EvidenceType]int),
 		subscriptionQuantifiers: make(map[string]map[string]map[core.TrustSource]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion),
 	}
@@ -136,8 +136,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 	}
 
 	subscriptionID := *cmd.Notify.SubscriptionID
-	tmiID, exists := tsm.subscriptionIDtoTMI[subscriptionID]
-	util.UNUSED(tmiID)
+	tmiID, exists := tsm.subscriptionIDtoFullTMI[subscriptionID]
 	if !exists {
 		return
 	}
@@ -160,7 +159,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 	}
 	if len(updates) > 0 {
 		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
-		tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
+		tsm.tam.DispatchToWorkerByFullTMIID(tmiID, tmiUpdateCmd) //TODO:fix
 	}
 }
 
@@ -196,7 +195,9 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
 	util.UNUSED(cmd)
 }
 
-func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler) {
+func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler) {
+
+	tmt := session.TrustModelTemplate()
 
 	//When no handler has been set, create empty one
 	if handler == nil {
@@ -229,8 +230,8 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate,
 
 			//Assumption: If we are using AIV, we already have a single TMI.
 			var trustModelInstanceID string
-			for id := range session.TrustModelInstances() {
-				trustModelInstanceID = id
+			for _, fullTMI := range session.TrustModelInstances() {
+				trustModelInstanceID = fullTMI
 				break
 			}
 
@@ -274,14 +275,14 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate,
 					}
 
 					//add to map: TMI=>sub ID
-					_, exists := tsm.tmiToSubscriptionID[trustModelInstanceID]
+					_, exists := tsm.fullTMItoSubscriptionID[trustModelInstanceID]
 					if !exists {
-						tsm.tmiToSubscriptionID[trustModelInstanceID] = make(map[string]core.TrustSource)
+						tsm.fullTMItoSubscriptionID[trustModelInstanceID] = make(map[string]core.TrustSource)
 					}
-					tsm.tmiToSubscriptionID[trustModelInstanceID][*cmd.Response.SubscriptionID] = core.AIV
+					tsm.fullTMItoSubscriptionID[trustModelInstanceID][*cmd.Response.SubscriptionID] = core.AIV
 
 					//add to map: sub ID=>TMI
-					tsm.subscriptionIDtoTMI[*cmd.Response.SubscriptionID] = trustModelInstanceID
+					tsm.subscriptionIDtoFullTMI[*cmd.Response.SubscriptionID] = trustModelInstanceID
 
 					//create deeper maps
 					tsm.subscriptionEvidence[*cmd.Response.SubscriptionID] = make(map[string]map[core.TrustSource]map[core.EvidenceType]int)
@@ -341,8 +342,7 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate,
 	}
 }
 
-func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler) {
-	util.UNUSED(tmt)
+func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler) {
 
 	//When no handler has been set, create empty one
 	if handler == nil {
@@ -353,16 +353,14 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplat
 
 	//Collect TMIs
 	tMIs := make([]string, 0)
-	for tmi, active := range session.TrustModelInstances() {
-		if active {
-			tMIs = append(tMIs, tmi)
-		}
+	for _, tmi := range session.TrustModelInstances() {
+		tMIs = append(tMIs, tmi)
 	}
 
 	//TODO: Check whether this still works with 0 or multiple TMIs per session!
 	for _, trustModelInstanceID := range tMIs {
 		//Get Subscription ID(s) for TMI ID
-		subIDs, exists := tsm.tmiToSubscriptionID[trustModelInstanceID]
+		subIDs, exists := tsm.fullTMItoSubscriptionID[trustModelInstanceID]
 		if !exists {
 			_, reject := handler.Register()
 			reject(errors.New("Unknown trust model instance ID: " + trustModelInstanceID))
@@ -391,10 +389,10 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplat
 							return
 						}
 						//delete associated data structures/lookups
-						delete(tsm.subscriptionIDtoTMI, subID)
+						delete(tsm.subscriptionIDtoFullTMI, subID)
 						delete(tsm.subscriptionEvidence, subID)
 						delete(tsm.subscriptionQuantifiers, subID)
-						delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
+						delete(tsm.fullTMItoSubscriptionID[trustModelInstanceID], subID)
 
 						tsm.logger.Debug("Unregistering Subscription " + subID)
 
@@ -422,10 +420,10 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplat
 							return
 						}
 						//delete associated data structures/lookups
-						delete(tsm.subscriptionIDtoTMI, subID)
+						delete(tsm.subscriptionIDtoFullTMI, subID)
 						delete(tsm.subscriptionEvidence, subID)
 						delete(tsm.subscriptionQuantifiers, subID)
-						delete(tsm.tmiToSubscriptionID[trustModelInstanceID], subID)
+						delete(tsm.fullTMItoSubscriptionID[trustModelInstanceID], subID)
 
 						tsm.logger.Debug("Unregistering Subscription " + subID)
 
@@ -525,7 +523,7 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 				//create update operation for all TMIs of session
 				for tmiID := range session.TrustModelInstances() {
 					tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
-					tsm.tam.DispatchToWorker(tmiID, tmiUpdateCmd)
+					tsm.tam.DispatchToWorker(session, tmiID, tmiUpdateCmd)
 				}
 			default:
 				//Nothing to do

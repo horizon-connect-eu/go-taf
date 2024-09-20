@@ -117,13 +117,24 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 func (tmm *Manager) handleNodeRemoved(identifier string) {
 	tmm.logger.Info("Node removed", "Identifier", identifier)
 
-	for sessionID, session := range tmm.tam.Sessions() {
-		if session.TrustModelTemplate().Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
-			targetTmiID := session.TrustModelTemplate().GenerateTrustModelInstanceID(identifier)
-			for tmiID := range session.TrustModelInstances() {
-				if tmiID == targetTmiID {
-					tmm.tam.RemoveTrustModelInstance(tmiID, sessionID)
-				}
+	targetTMIIDs := make([]string, 0)
+	for _, tmt := range tmm.trustModelTemplateRepo {
+		if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
+			results, err := tmm.tam.QueryTMIs("//*/*/" + tmt.Identifier() + "/" + identifier)
+			if err == nil {
+				targetTMIIDs = append(targetTMIIDs, results...)
+			}
+		}
+	}
+
+	sessions := tmm.tam.Sessions()
+
+	for _, tmiID := range targetTMIIDs {
+		_, sessionID, _, _ := core.SplitFullTMIIdentifier(tmiID)
+		if session, exists := sessions[sessionID]; exists && session.State() == session2.ESTABLISHED {
+			sessionTMIs := session.TrustModelInstances()
+			if _, tmiExists := sessionTMIs[tmiID]; tmiExists {
+				tmm.tam.RemoveTrustModelInstance(tmiID, sessionID)
 			}
 		}
 	}

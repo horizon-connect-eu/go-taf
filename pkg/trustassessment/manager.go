@@ -46,6 +46,8 @@ type Manager struct {
 	tasSubscriptionsToSessionID map[string]string
 	//tas sub ID->Subscription
 	tasSubscriptions map[string]Subscription
+	//Queryable table of all TMIs
+	tmiTable *TrustModelInstanceTable
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
@@ -62,6 +64,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tlee
 		atlResults:                  make(map[string]core.AtlResultSet),
 		tasSubscriptionsToSessionID: make(map[string]string),
 		tasSubscriptions:            make(map[string]Subscription),
+		tmiTable:                    CreateTrustModelInstanceTable(),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -191,8 +194,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 	tam.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
-	//create new TMI for session //TODO: always possible for dynamic models?
-
+	//create new TMI and/or dynamic spawn function for session
 	tMI, dynamicSpawner, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
 	if err != nil {
 		delete(tam.sessions, sessionId)
@@ -202,20 +204,22 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		if tMI != nil {
 			//add new TMI to session
 			sessionTMIs := newSession.TrustModelInstances()
-			sessionTMIs[tMI.ID()] = true
+			sessionTMIs[tMI.ID()] = core.MergeFullTMIIdentifier(newSession.Client(), newSession.ID(), newSession.TrustModelTemplate().Identifier(), tMI.ID())
 		}
 		if dynamicSpawner != nil {
 			//register spawn function at session
 			newSession.SetDynamicSpawner(dynamicSpawner)
 
-			//iterate over existing nodes and spawn TMIs for these
-			for _, nodeIdentifier := range tam.tmm.ListRecentV2XNodes() {
-				tmi, err := dynamicSpawner.OnNewVehicle(nodeIdentifier, nil)
-				if err != nil {
-					tam.logger.Warn("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
-				} else {
-					tmi.Initialize(nil) //TODO: Params?
-					tam.AddNewTrustModelInstance(tmi, sessionId)
+			//iterate over existing triggers and spawn TMIs for these
+			if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
+				for _, nodeIdentifier := range tam.tmm.ListRecentV2XNodes() {
+					tmi, err := dynamicSpawner.OnNewVehicle(nodeIdentifier, nil)
+					if err != nil {
+						tam.logger.Warn("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
+					} else {
+						tmi.Initialize(nil) //TODO: Params?
+						tam.AddNewTrustModelInstance(tmi, sessionId)
+					}
 				}
 			}
 		}
@@ -232,10 +236,10 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 			//Dispatch new TMI instance to worker
 			tmiInitCmd := command.CreateHandleTMIInit(tMI.ID(), tMI, sessionId)
-			tam.DispatchToWorker(tMI.ID(), tmiInitCmd)
+			tam.DispatchToWorker(newSession, tMI.ID(), tmiInitCmd)
 		}
 
-		success := "Session with trust model template '" + tmt.TemplateName() + "@" + tmt.Version() + "' created."
+		success := "Session with trust model template '" + tmt.Identifier() + "' created."
 
 		response := tasmsg.TasInitResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
@@ -265,7 +269,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	ch := completionhandler.New(successHandler, errorHandler)
 
 	//Initialize Trust Source Quantifiers and Subscriptions
-	tam.tsm.SubscribeTrustSourceQuantifiers(tmt, newSession, ch)
+	tam.tsm.SubscribeTrustSourceQuantifiers(newSession, ch)
 
 	ch.Execute()
 }
@@ -298,7 +302,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		tam.logger.Error("Error while unregistering trust source quantifiers", "Error Message", err.Error(), "Session ID", currentSession.ID(), "TMT", currentSession.TrustModelTemplate().TemplateName())
 	})
 	//Foreach Trust Model Instance in Session, unregister trust source quantifiers
-	tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession.TrustModelTemplate(), currentSession, ch)
+	tam.tsm.UnsubscribeTrustSourceQuantifiers(currentSession, ch)
 	ch.Execute()
 
 	success := "Session with ID '" + cmd.Request.SessionID + "' successfully terminated."
@@ -312,7 +316,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 	//signal worker to destroy TMI
 	for tmiID := range currentSession.TrustModelInstances() {
-		tam.DispatchToWorker(tmiID, command.CreateHandleTMIDestroy(tmiID))
+		tam.DispatchToWorker(currentSession, tmiID, command.CreateHandleTMIDestroy(tmiID))
 	}
 
 	//remove ATL cache entries for this session
@@ -653,8 +657,13 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
 }
 
-func (tam *Manager) DispatchToWorker(tmiID string, cmd core.Command) {
-	workerId := tam.getShardWorkerById(tmiID)
+func (tam *Manager) DispatchToWorker(session session.Session, tmiID string, cmd core.Command) {
+	id := core.MergeFullTMIIdentifier(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
+	tam.DispatchToWorkerByFullTMIID(id, cmd)
+}
+
+func (tam *Manager) DispatchToWorkerByFullTMIID(fullTMI string, cmd core.Command) {
+	workerId := tam.getShardWorkerById(fullTMI)
 	tam.tamToWorkers[workerId] <- cmd
 }
 
@@ -694,12 +703,13 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 
 	} else {
 		sessionTMIs := session.TrustModelInstances()
-		sessionTMIs[tmiID] = true
+		sessionTMIs[tmiID] = "" //core.MergeTMIIdentifierBySession(session, tmiID)
+		tam.tmiTable.RegisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
 	}
 
 	//init TMI
 	tmiInitCmd := command.CreateHandleTMIInit(tmiID, instance, sessionID)
-	tam.DispatchToWorker(tmiID, tmiInitCmd)
+	tam.DispatchToWorker(session, tmiID, tmiInitCmd)
 }
 
 func (tam *Manager) RemoveTrustModelInstance(tmiID string, sessionID string) {
@@ -709,8 +719,14 @@ func (tam *Manager) RemoveTrustModelInstance(tmiID string, sessionID string) {
 		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", tmiID)
 	} else {
 		tam.logger.Info("Removing TMI from Session", "Session", sessionID, "TMI", tmiID)
-		tam.DispatchToWorker(tmiID, command.CreateHandleTMIDestroy(tmiID))
+		tam.DispatchToWorker(session, tmiID, command.CreateHandleTMIDestroy(tmiID))
+		tam.tmiTable.UnregisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
 		delete(tam.atlResults, tmiID)
 		delete(session.TrustModelInstances(), tmiID)
+
 	}
+}
+
+func (tam *Manager) QueryTMIs(query string) ([]string, error) {
+	return tam.tmiTable.QueryTMIs(query)
 }

@@ -40,11 +40,13 @@ type TrustAssessmentManager interface {
 	HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest])
 	HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest])
 	HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest])
-	DispatchToWorker(tmiID string, cmd core.Command)
+	DispatchToWorker(session session.Session, tmiID string, cmd core.Command)
+	DispatchToWorkerByFullTMIID(fullTMI string, cmd core.Command)
 	HandleATLUpdate(cmd command.HandleATLUpdate)
 	Sessions() map[string]session.Session
 	AddNewTrustModelInstance(instance core.TrustModelInstance, sessionID string)
 	RemoveTrustModelInstance(tmiID string, sessionID string)
+	QueryTMIs(query string) ([]string, error)
 	Run()
 }
 
@@ -58,8 +60,8 @@ type TrustSourceManager interface {
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
 	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
-	SubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler)
-	UnsubscribeTrustSourceQuantifiers(tmt core.TrustModelTemplate, session session.Session, handler *completionhandler.CompletionHandler)
+	SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
+	UnsubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
 	DispatchAivRequest(session session.Session)
 }
