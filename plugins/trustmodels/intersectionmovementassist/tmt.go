@@ -56,3 +56,7 @@ func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]st
 func (tmt TrustModelTemplate) GenerateTrustModelInstanceID(identifiers ...string) string {
 	return fmt.Sprintf("%s#%s@%s", identifiers[0], tmt.TemplateName(), tmt.Version())
 }
+
+func (tmt TrustModelTemplate) Identifier() string {
+	return fmt.Sprintf("%s@%s", tmt.TemplateName(), tmt.Version())
+}

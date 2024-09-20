@@ -21,8 +21,6 @@ func (e *TrustModelInstance) ID() string {
 }
 
 func (e *TrustModelInstance) Version() int {
-	//TODO implement me
-	//	panic("implement me")
 	return 0
 }
 
@@ -50,6 +48,9 @@ func (e *TrustModelInstance) Template() core.TrustModelTemplate {
 func (e *TrustModelInstance) Update(update core.Update) bool {
 	//TODO implement me
 	switch update := update.(type) {
+	case trustmodelupdate.RefreshCPM:
+		//TODO
+		util.UNUSED(update)
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		//TODO
 		util.UNUSED(update)
@@ -64,6 +65,7 @@ func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifi
 }
 
 func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
+	//TODO: get source ID from params
 	return
 }
 

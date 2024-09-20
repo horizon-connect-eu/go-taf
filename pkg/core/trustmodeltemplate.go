@@ -8,7 +8,8 @@ type TrustModelTemplate interface {
 	TrustSourceQuantifiers() []TrustSourceQuantifier
 	Description() string
 	Type() TrustModelTemplateType
-	GenerateTrustModelInstanceID(identifiers ...string) string
+	//GenerateTrustModelInstanceID(identifiers ...string) string
+	Identifier() string
 }
 
 type DynamicTrustModelInstanceSpawner interface {
