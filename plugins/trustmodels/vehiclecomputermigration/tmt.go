@@ -365,7 +365,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 	}
 
 	return &TrustModelInstance{
-		id:          tmt.GenerateTrustModelInstanceID(fmt.Sprintf("%000000d", rand.IntN(999999))), //TODO: replace with non-fixed ID
+		id:          fmt.Sprintf("%000000d", rand.IntN(999999)),
 		version:     0,
 		template:    tmt,
 		omega1:      omega1,
@@ -376,10 +376,6 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 
 func (tmt TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return tmt.trustSourceQuantifiers
-}
-
-func (tmt TrustModelTemplate) GenerateTrustModelInstanceID(identifiers ...string) string {
-	return fmt.Sprintf("%s#%s@%s", identifiers[0], tmt.TemplateName(), tmt.Version())
 }
 
 func (tmt TrustModelTemplate) Identifier() string {

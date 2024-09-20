@@ -47,16 +47,12 @@ func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
 
 func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]string) (core.TrustModelInstance, error) {
 	return &TrustModelInstance{
-		id:       t.GenerateTrustModelInstanceID(identifier),
+		id:       identifier,
 		version:  0,
 		template: t,
 	}, nil
 }
 
-func (tmt TrustModelTemplate) GenerateTrustModelInstanceID(identifiers ...string) string {
-	return fmt.Sprintf("%s#%s@%s", identifiers[0], tmt.TemplateName(), tmt.Version())
-}
-
-func (tmt TrustModelTemplate) Identifier() string {
-	return fmt.Sprintf("%s@%s", tmt.TemplateName(), tmt.Version())
+func (t TrustModelTemplate) Identifier() string {
+	return fmt.Sprintf("%s@%s", t.TemplateName(), t.Version())
 }
