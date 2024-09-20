@@ -14,7 +14,7 @@ const (
 
 type Session interface {
 	ID() string
-	TrustModelInstances() map[string]bool
+	TrustModelInstances() map[string]string
 	TrustModelTemplate() core.TrustModelTemplate
 	Client() string
 	HasTMI(tmiID string) bool
@@ -31,7 +31,7 @@ type Session interface {
 
 type Instance struct {
 	id            string
-	tMIs          map[string]bool
+	tMIs          map[string]string
 	client        string
 	state         State
 	tmt           core.TrustModelTemplate
@@ -42,7 +42,7 @@ type Instance struct {
 func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
 	return &Instance{
 		id:            id,
-		tMIs:          make(map[string]bool),
+		tMIs:          make(map[string]string),
 		subscriptions: make(map[string]bool),
 		client:        client,
 		tmt:           tmt,
@@ -55,7 +55,7 @@ func (s *Instance) ID() string {
 	return s.id
 }
 
-func (s *Instance) TrustModelInstances() map[string]bool {
+func (s *Instance) TrustModelInstances() map[string]string {
 	return s.tMIs
 }
 
@@ -91,11 +91,8 @@ func (s *Instance) TornDown() {
 }
 
 func (s *Instance) HasTMI(tmiID string) bool {
-	val, exists := s.tMIs[tmiID]
-	if !exists {
-		return false
-	}
-	return val
+	_, exists := s.tMIs[tmiID]
+	return exists
 }
 
 func (s *Instance) AddSubscription(identifier string) {
