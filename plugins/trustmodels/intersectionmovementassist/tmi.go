@@ -1,11 +1,13 @@
 package intersectionmovementassist
 
 import (
+	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+	"log/slog"
 )
 
 type TrustModelInstance struct {
@@ -49,8 +51,9 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 	//TODO implement me
 	switch update := update.(type) {
 	case trustmodelupdate.RefreshCPM:
-		//TODO
-		util.UNUSED(update)
+		//TODO: implement
+		slog.Warn("Received Update from Source: " + update.SourceID())
+		slog.Warn("Contained IDs: " + fmt.Sprintf("%+v", update.Objects()))
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		//TODO
 		util.UNUSED(update)

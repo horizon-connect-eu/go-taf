@@ -9,6 +9,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	session2 "github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 	"strings"
 )
@@ -83,7 +84,31 @@ func (tmm *Manager) SetManagers(managers manager.TafManagers) {
 func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm]) {
 	sender := fmt.Sprintf("%g", cmd.OneWay.SourceID)
 	tmm.v2xObserver.AddNode(sender)
+
 	//TODO: check whether RefreshCPM messages are necessary
+
+	targetTMIIDs := make([]string, 0)
+	for _, tmt := range tmm.trustModelTemplateRepo {
+		if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
+			results, err := tmm.tam.QueryTMIs("//*/*/" + tmt.Identifier() + "/" + sender)
+			if err == nil {
+				targetTMIIDs = append(targetTMIIDs, results...)
+			}
+		}
+	}
+
+	if len(targetTMIIDs) > 0 {
+		objects := make([]string, 0)
+
+		for _, object := range cmd.OneWay.PerceivedObjectContainer.Objects {
+			objects = append(objects, fmt.Sprintf("%g", object.ObjectID))
+		}
+
+		for _, fullTMIID := range targetTMIIDs {
+			updateCmd := command.CreateHandleTMIUpdate(fullTMIID, trustmodelupdate.CreateRefreshCPM(sender, objects))
+			tmm.tam.DispatchToWorkerByFullTMIID(fullTMIID, updateCmd)
+		}
+	}
 }
 
 func (tmm *Manager) ResolveTMT(identifier string) core.TrustModelTemplate {
@@ -129,9 +154,9 @@ func (tmm *Manager) handleNodeRemoved(identifier string) {
 
 	sessions := tmm.tam.Sessions()
 
-	for _, tmiID := range targetTMIIDs {
-		_, sessionID, _, _ := core.SplitFullTMIIdentifier(tmiID)
-		if session, exists := sessions[sessionID]; exists && session.State() == session2.ESTABLISHED {
+	for _, fullTMIID := range targetTMIIDs {
+		_, sessionID, _, tmiID := core.SplitFullTMIIdentifier(fullTMIID)
+		if session, exists := sessions[sessionID]; exists && sessions[sessionID].State() == session2.ESTABLISHED {
 			sessionTMIs := session.TrustModelInstances()
 			if _, tmiExists := sessionTMIs[tmiID]; tmiExists {
 				tmm.tam.RemoveTrustModelInstance(tmiID, sessionID)
