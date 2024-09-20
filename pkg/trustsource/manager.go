@@ -521,8 +521,8 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV))
 				}
 				//create update operation for all TMIs of session
-				for tmiID := range session.TrustModelInstances() {
-					tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
+				for tmiID, fullTmiID := range session.TrustModelInstances() {
+					tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
 					tsm.tam.DispatchToWorker(session, tmiID, tmiUpdateCmd)
 				}
 			default:

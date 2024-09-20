@@ -7,7 +7,6 @@ An AtlResultSet captures the output of a TLEE computation per proposition in thr
 */
 type AtlResultSet struct {
 	tmiID     string
-	sessionID string
 	version   int
 	slResults map[string]subjectivelogic.QueryableOpinion
 	ppResults map[string]float64
@@ -26,9 +25,6 @@ func CreateAtlResultSet(tmiID string, version int, slResults map[string]subjecti
 
 func (r AtlResultSet) TmiID() string {
 	return r.tmiID
-}
-func (r AtlResultSet) SessionID() string {
-	return r.sessionID
 }
 
 func (r AtlResultSet) Version() int {

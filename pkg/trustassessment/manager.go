@@ -235,7 +235,8 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 			tMI.Initialize(nil)
 
 			//Dispatch new TMI instance to worker
-			tmiInitCmd := command.CreateHandleTMIInit(tMI.ID(), tMI, sessionId)
+			fullTmiID := core.MergeFullTMIIdentifier(newSession.Client(), newSession.ID(), newSession.TrustModelTemplate().Identifier(), tMI.ID())
+			tmiInitCmd := command.CreateHandleTMIInit(fullTmiID, tMI)
 			tam.DispatchToWorker(newSession, tMI.ID(), tmiInitCmd)
 		}
 
@@ -367,18 +368,23 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		return
 	}
 
-	targets := cmd.Request.Query.Filter
-	if len(targets) == 0 {
+	queriedTargets := cmd.Request.Query.Filter
+	targets := make([]string, 0)
+	if len(queriedTargets) == 0 {
 		//when no specific target is specified, use all TMIs from session
-		for tmiID := range tmiSession.TrustModelInstances() {
-			targets = append(targets, tmiID)
+		for _, fullTmiID := range tmiSession.TrustModelInstances() {
+			targets = append(targets, fullTmiID)
 		}
 	} else {
 		//Check whether all specified targets exist. If at least one is missing, return with error
 		errors := make([]string, 0)
-		for _, target := range targets {
+		tmiIDs := tmiSession.TrustModelInstances()
+		for _, target := range queriedTargets {
 			if !tmiSession.HasTMI(target) {
 				errors = append(errors, "Target ID '"+target+"' not found.")
+			} else {
+				//replace short TMI ID by long TMI ID
+				targets = append(targets, tmiIDs[target])
 			}
 		}
 		if len(errors) > 0 {
@@ -392,14 +398,15 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		taResponseResults := make([]tasmsg.Result, 0)
 
 		//Iterate over TMI IDs in the Target Set
-		for _, tmiID := range targets {
-			atlResultSet, exists := tam.atlResults[tmiID]
+		for _, fullTmiID := range targets {
+			atlResultSet, exists := tam.atlResults[fullTmiID]
 
 			if exists {
 				propositions := make([]Proposition, 0)
 				for propositionID := range atlResultSet.ATLs() {
 					propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 				}
+				_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTmiID)
 				result := ResultEntry{
 					TmiID:        tmiID,
 					Propositions: propositions,
@@ -477,13 +484,17 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	}
 
 	//Set filter targets
-	filter := cmd.Request.Subscribe.Filter
-	if len(filter) > 0 {
+	queriedFilterTargets := cmd.Request.Subscribe.Filter
+	filterTargets := make([]string, 0)
+	if len(queriedFilterTargets) > 0 {
 		//Check whether all specified targets exist. If at least one is missing, return with error
 		errors := make([]string, 0)
-		for _, target := range filter {
+		fullTMIs := tmiSession.TrustModelInstances()
+		for _, target := range queriedFilterTargets {
 			if !tmiSession.HasTMI(target) {
 				errors = append(errors, "Target ID '"+target+"' not found.")
+			} else {
+				filterTargets = append(filterTargets, fullTMIs[target])
 			}
 		}
 		if len(errors) > 0 {
@@ -494,7 +505,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 
 	subscriptionID := tam.generateSubscriptionID()
 
-	subscription := NewSubscription(subscriptionID, sessionID, cmd.SubscriberTopic, filter, trigger)
+	subscription := NewSubscription(subscriptionID, sessionID, cmd.SubscriberTopic, filterTargets, trigger)
 	tam.tasSubscriptionsToSessionID[subscriptionID] = sessionID
 	tam.tasSubscriptions[subscriptionID] = subscription
 	//add to session
@@ -518,7 +529,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 
 	//Prepare initial TAS_NOTIFY
 	var targets []string
-	copy(filter, targets)
+	copy(filterTargets, targets)
 	if len(targets) == 0 {
 		//when no specific target is specified, use all TMIs from session
 		for tmiID := range tmiSession.TrustModelInstances() {
@@ -620,8 +631,8 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	tam.logger.Debug("ATL Update", "ResultSet", fmt.Sprintf("%+v", cmd.ResultSet))
-	tmiID := cmd.ResultSet.TmiID()
-	sessionID := cmd.Session
+	_, sessionID, _, _ := core.SplitFullTMIIdentifier(cmd.FullTMI)
+
 	_, exists := tam.sessions[sessionID]
 	if !exists {
 		return
@@ -629,7 +640,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 
 	//Check whether there are subscriptions for which the changes are relevant and send out notifications to subscribers
 	for _, subscriptionID := range tam.sessions[sessionID].ListSubscriptions() {
-		results := tam.tasSubscriptions[subscriptionID].HandleUpdate(tam.atlResults[tmiID], cmd.ResultSet)
+		results := tam.tasSubscriptions[subscriptionID].HandleUpdate(tam.atlResults[cmd.FullTMI], cmd.ResultSet)
 		if len(results) > 0 {
 			taResponseResults := make([]tasmsg.Update, 0)
 
@@ -653,7 +664,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	}
 
 	//overwrite result cache with new values
-	tam.atlResults[tmiID] = cmd.ResultSet
+	tam.atlResults[cmd.FullTMI] = cmd.ResultSet
 	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
 }
 
@@ -708,7 +719,9 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 	}
 
 	//init TMI
-	tmiInitCmd := command.CreateHandleTMIInit(tmiID, instance, sessionID)
+	fullTmiID := core.MergeFullTMIIdentifier(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), instance.ID())
+
+	tmiInitCmd := command.CreateHandleTMIInit(fullTmiID, instance)
 	tam.DispatchToWorker(session, tmiID, tmiInitCmd)
 }
 

@@ -17,7 +17,7 @@ type Worker struct {
 	id          int
 	workerQueue <-chan core.Command
 	logger      *slog.Logger
-	//tmiID->TMI
+	//full tmiID->TMI
 	tmis map[string]core.TrustModelInstance
 	//tmiID->SessionID
 	tmiSessions  map[string]string
@@ -70,27 +70,28 @@ func (worker *Worker) Run() {
 }
 
 func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
-	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.TmiID)
-	tmi, exists := worker.tmis[cmd.TmiID]
+	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTMI)
+	tmi, exists := worker.tmis[cmd.FullTMI]
 	if !exists {
 		return
 	}
 	tmi.Cleanup()
-	delete(worker.tmis, cmd.TmiID)
-	delete(worker.tmiSessions, cmd.TmiID)
+	delete(worker.tmis, cmd.FullTMI)
+	delete(worker.tmiSessions, cmd.FullTMI)
 }
 
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
-	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.TmiID)
-	worker.tmis[cmd.TmiID] = cmd.TMI
-	worker.tmiSessions[cmd.TmiID] = cmd.SessionID
+	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
+	worker.tmis[cmd.FullTMI] = cmd.TMI
+	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTMI)
+	worker.tmiSessions[cmd.FullTMI] = session
 
 	//Run TLEE
-	atls := worker.executeTLEE(worker.tmis[cmd.TmiID])
+	atls := worker.executeTLEE(worker.tmis[cmd.FullTMI])
 	//Run TDE
-	resultSet := worker.executeTDE(worker.tmis[cmd.TmiID], atls)
+	resultSet := worker.executeTDE(worker.tmis[cmd.FullTMI], atls)
 
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.SessionID)
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
 	worker.workersToTam <- atlUpdateCmd
 }
 
@@ -119,12 +120,13 @@ func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]su
 }
 
 func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
-	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.TmiID)
-	tmi, exists := worker.tmis[cmd.TmiID]
+	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.FullTmiID)
+
+	tmi, exists := worker.tmis[cmd.FullTmiID]
 	if !exists {
 		return
 	}
-	sessionID, _ := worker.tmiSessions[cmd.TmiID]
+	//sessionID, _ := worker.tmiSessions[cmd.TmiID]
 
 	//Execute TMI Updates
 	for _, update := range cmd.Updates {
@@ -135,6 +137,6 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	//Run TDE
 	resultSet := worker.executeTDE(tmi, atls)
 
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, sessionID)
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
 	worker.workersToTam <- atlUpdateCmd
 }
