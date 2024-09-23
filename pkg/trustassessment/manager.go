@@ -22,6 +22,7 @@ import (
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"hash/fnv"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 )
@@ -393,6 +394,8 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 	}
 
+	tam.logger.Warn("Targets", "List", fmt.Sprintf("%v", targets))
+
 	if cmd.Request.AllowCache == nil || *cmd.Request.AllowCache == true {
 		//Directly send response
 		taResponseResults := make([]tasmsg.Result, 0)
@@ -427,18 +430,29 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	} else {
-		//We need to call AIV Req first and wait for a response
-		if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
-			tam.tsm.DispatchAivRequest(tmiSession)
-			//Hacky way to emulate allowCache: dispatch AIV Request, then replay TAS_TA_REQUEST after 80 msec - hoping that the AIV Response has been delivered in the meantime
-			go func() {
-				time.Sleep(80 * time.Millisecond)
-				allowCachedNow := true
-				cmd.Request.AllowCache = &allowCachedNow
-				tam.channels.TAMChannel <- cmd
-			}()
+		if tam.sessions[sessionID].TrustModelTemplate().Type() == core.STATIC_TRUST_MODEL &&
+			(slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_APPLICATION_ISOLATION) ||
+				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_ACCESS_CONTROL) ||
+				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION) ||
+				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_CONTROL_FLOW_INTEGRITY) ||
+				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_SECURE_OTA) ||
+				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_SECURE_BOOT)) {
+			//We need to call AIV Req first and wait for a response
+			if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
+				tam.tsm.DispatchAivRequest(tmiSession)
+				//Hacky way to emulate allowCache: dispatch AIV Request, then replay TAS_TA_REQUEST after 80 msec - hoping that the AIV Response has been delivered in the meantime
+				go func() {
+					time.Sleep(80 * time.Millisecond)
+					allowCachedNow := true
+					cmd.Request.AllowCache = &allowCachedNow
+					tam.channels.TAMChannel <- cmd
+				}()
+			} else {
+				sendErrorResponse("No trust model instances found in this session")
+				return
+			}
 		} else {
-			sendErrorResponse("No trust model instances found in this session")
+			sendErrorResponse("Trust model template type does not allow non-cached requests.")
 			return
 		}
 	}
@@ -635,6 +649,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 
 	_, exists := tam.sessions[sessionID]
 	if !exists {
+		tam.logger.Debug("ATL Update for unknown session received", "sessionID", sessionID)
 		return
 	}
 
@@ -714,7 +729,7 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 
 	} else {
 		sessionTMIs := session.TrustModelInstances()
-		sessionTMIs[tmiID] = "" //core.MergeTMIIdentifierBySession(session, tmiID)
+		sessionTMIs[tmiID] = core.MergeFullTMIIdentifier(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
 		tam.tmiTable.RegisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
 	}
 

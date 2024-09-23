@@ -96,8 +96,16 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 }
 
 func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {
-	atls := worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
-	worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+	var atls map[string]subjectivelogic.QueryableOpinion
+	//Only call TLEE when the graph structure is existing and not empty; otherwise skip and return empty ATL set
+	if tmi.Structure() != nil && len(tmi.Structure().AdjacencyList()) > 0 { //TODO: Values?
+		worker.logger.Debug("TLEE Input", "TMI", tmi.String())
+		atls = worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+		worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+	} else {
+		atls = make(map[string]subjectivelogic.QueryableOpinion)
+		worker.logger.Debug("TLEE call omitted due to empty TMI", "Results", fmt.Sprintf("%+v", atls))
+	}
 	return atls
 }
 
