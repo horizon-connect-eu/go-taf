@@ -81,10 +81,11 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 			if !exists {
 				//Proposition has not yet existed, so add as changed!
 				propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
-			}
-			if !areIdenticalSubjectiveLogicOpinions(oldOpinion, newOpinion) {
-				//There is a change in the ATL, so add as changed.
-				propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+			} else {
+				if !areIdenticalSubjectiveLogicOpinions(oldOpinion, newOpinion) {
+					//There is a change in the ATL, so add as changed.
+					propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+				}
 			}
 		}
 	case TRUST_DECISION:
