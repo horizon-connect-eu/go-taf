@@ -80,7 +80,9 @@ func main() {
 
 	var tlee tleeinterface.TLEE
 	if tafConfig.TLEE.UseInternalTLEE {
-		tlee = &internaltlee.TLEE{}
+		tlee = &internaltlee.TLEE{
+			Logger: logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"),
+		}
 	} else {
 		tlee = &actualtlee.TLEE{}
 	}
