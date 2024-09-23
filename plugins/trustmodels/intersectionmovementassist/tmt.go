@@ -50,6 +50,7 @@ func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]st
 		id:       identifier,
 		version:  0,
 		template: t,
+		objects:  map[string]bool{},
 	}, nil
 }
 
