@@ -121,7 +121,7 @@ func (tmm *Manager) ResolveTMT(identifier string) core.TrustModelTemplate {
 }
 
 func (tmm *Manager) handleNodeAdded(identifier string) {
-	tmm.logger.Info("New node added", "Identifier", identifier)
+	tmm.logger.Info("New sender vehicle added", "Identifier", identifier)
 	for sessionID, session := range tmm.tam.Sessions() {
 		if session.TrustModelTemplate().Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
 			spawner := session.DynamicSpawner()
@@ -140,7 +140,7 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 }
 
 func (tmm *Manager) handleNodeRemoved(identifier string) {
-	tmm.logger.Info("Node removed", "Identifier", identifier)
+	tmm.logger.Info("Sender vehicle removed", "Identifier", identifier)
 
 	targetTMIIDs := make([]string, 0)
 	for _, tmt := range tmm.trustModelTemplateRepo {
