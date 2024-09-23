@@ -18,6 +18,7 @@ type TrustModelInstance interface {
 	Initialize(params map[string]interface{})
 	Cleanup()
 	RTLs() map[string]subjectivelogic.QueryableOpinion
+	String() string
 }
 
 func SplitFullTMIIdentifier(identifier string) (client string, sessionID string, tmtID string, tmiID string) {

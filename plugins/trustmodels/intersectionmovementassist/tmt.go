@@ -2,8 +2,11 @@ package intersectionmovementassist
 
 import (
 	"fmt"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
+
+var RTL, _ = subjectivelogic.NewOpinion(0, 1, 0, 0.5)
 
 type TrustModelTemplate struct {
 	name    string
@@ -47,10 +50,11 @@ func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
 
 func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]string) (core.TrustModelInstance, error) {
 	return &TrustModelInstance{
-		id:       identifier,
-		version:  0,
-		template: t,
-		objects:  map[string]bool{},
+		id:        identifier,
+		version:   0,
+		template:  t,
+		objects:   map[string]bool{},
+		staticRTL: &RTL,
 	}, nil
 }
 

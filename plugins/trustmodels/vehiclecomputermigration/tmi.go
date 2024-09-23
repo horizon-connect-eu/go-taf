@@ -84,3 +84,7 @@ func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 func (e *TrustModelInstance) Cleanup() {
 	return
 }
+
+func (e *TrustModelInstance) String() string {
+	return core.TMIAsString(e)
+}

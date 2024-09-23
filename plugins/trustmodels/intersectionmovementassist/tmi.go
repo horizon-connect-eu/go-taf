@@ -9,7 +9,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"hash/fnv"
-	"log/slog"
 	"sort"
 	"strings"
 )
@@ -25,6 +24,8 @@ type TrustModelInstance struct {
 	currentStructure   trustmodelstructure.TrustGraphStructure
 	currentValues      map[string][]trustmodelstructure.TrustRelationship
 	currentFingerprint uint32
+	rtls               map[string]subjectivelogic.QueryableOpinion
+	staticRTL          subjectivelogic.QueryableOpinion
 }
 
 func (e *TrustModelInstance) ID() string {
@@ -52,7 +53,8 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 			e.updateStructure()
 			e.updateFingerprint()
 			e.incrementVersion()
-			slog.Warn(fmt.Sprintf("%s", e))
+			e.updateValues()
+			//slog.Warn(fmt.Sprintf("%s", e))
 		}
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		//TODO
@@ -97,12 +99,14 @@ func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool 
 		}
 
 	}
+	/* TODO: Decide whether to keep or drop disappeared IDs
 	if len(removedObjects) > 0 {
 		topologyChanged = true
 		for object, _ := range removedObjects {
 			delete(e.objects, object)
 		}
 	}
+	*/
 	return topologyChanged
 }
 
@@ -130,28 +134,43 @@ updateStructure updates the internally kept structure according to the latest to
 */
 func (e *TrustModelInstance) updateStructure() {
 	//Objects (observations) that originate from the sender vehicle
-	objects := make([]string, len(e.objects))
+	objects := make([]string, len(e.objects)+1)
+	//Direct edges from the ego node to all others
+	egoTargets := make([]string, len(e.objects)+2)
 	for object := range e.objects {
 		objects = append(objects, objectIdentifier(object, e.sourceID))
+		egoTargets = append(egoTargets, objectIdentifier(object, e.sourceID))
 	}
+	objects = append(objects, objectIdentifier(e.sourceID, e.sourceID))
+	egoTargets = append(egoTargets, objectIdentifier(e.sourceID, e.sourceID))
 
-	//The root node (ego) vehicles has edges to all observations and the sender vehicle
-	egoTargets := make([]string, len(e.objects)+1)
-	copy(egoTargets, objects)
 	egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
 
 	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO("CumulativeFusion", []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier("ego"), egoTargets),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier(e.sourceID), objects),
 	})
-	//slog.Warn(internaltrustmodelstructure.TGSAsString(e.currentStructure))
 }
 
 /*
 updateValues updates the internally kept values according to the latest state.
 */
 func (e *TrustModelInstance) updateValues() {
-	//TODO
+	//TODO: implement
+
+	values := make(map[string][]trustmodelstructure.TrustRelationship)
+	rtls := make(map[string]subjectivelogic.QueryableOpinion)
+	for obj := range e.objects {
+		omega1, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)
+		values[objectIdentifier(obj, e.sourceID)] = []trustmodelstructure.TrustRelationship{
+			internaltrustmodelstructure.NewTrustRelationshipDTO(vehicleIdentifier("ego"), objectIdentifier(obj, e.sourceID), &omega1),
+		}
+		rtls[objectIdentifier(obj, e.sourceID)] = &omega1
+	}
+
+	e.currentValues = values
+	e.rtls = rtls
+
 }
 
 func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
@@ -164,11 +183,12 @@ func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 	}
 	e.version = 0
 	e.currentFingerprint = 0
+	e.rtls = map[string]subjectivelogic.QueryableOpinion{}
 	return
 }
 
 func (e *TrustModelInstance) Cleanup() {
-	//nothing to do
+	//nothing to do here (yet)
 	return
 }
 
@@ -181,8 +201,7 @@ func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRela
 }
 
 func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
-	//TODO: implement
-	return map[string]subjectivelogic.QueryableOpinion{}
+	return e.rtls
 }
 
 func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
@@ -205,5 +224,5 @@ func objectIdentifier(id string, source string) string {
 }
 
 func (e *TrustModelInstance) String() string {
-	return core.DumpTMI(e)
+	return core.TMIAsString(e)
 }

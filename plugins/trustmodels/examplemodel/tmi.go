@@ -69,3 +69,7 @@ func (e *TrustModelInstance) Cleanup() {
 func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
 	return map[string]subjectivelogic.QueryableOpinion{}
 }
+
+func (e *TrustModelInstance) String() string {
+	return core.TMIAsString(e)
+}
