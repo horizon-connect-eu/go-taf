@@ -29,3 +29,15 @@ func MergeFullTMIIdentifier(client string, sessionID string, tmtID string, tmiID
 	identifier := fmt.Sprintf("//%s/%s/%s/%s", client, sessionID, tmtID, tmiID)
 	return identifier
 }
+
+func DumpTMI(tmi TrustModelInstance) string {
+	result := []string{"Graph Structure"}
+	result = append(result, "Operator: "+tmi.Structure().Operator())
+	for _, list := range tmi.Structure().AdjacencyList() {
+		result = append(result, list.SourceNode()+"==>"+fmt.Sprintf("%+v", list.TargetNodes()))
+	}
+	graph := strings.Join(result, "\n")
+
+	output := fmt.Sprintf("Trust Model Instance\n---------------\nInternal ID:\t%s\nTMT:\t%s\nVersion:\t%d\nFingerprint:\t%d\n%s\n\n", tmi.ID(), tmi.Template().Identifier(), tmi.Version(), tmi.Fingerprint(), graph)
+	return output
+}
