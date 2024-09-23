@@ -498,6 +498,11 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	}
 
 	//Set filter targets
+	/*
+			TODO: check whether correct IDs are used (short vs full TMI IDs)
+		     * ATL Map uses full IDs
+			 * Client will use short IDs
+	*/
 	queriedFilterTargets := cmd.Request.Subscribe.Filter
 	filterTargets := make([]string, 0)
 	if len(queriedFilterTargets) > 0 {
@@ -546,22 +551,24 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	copy(filterTargets, targets)
 	if len(targets) == 0 {
 		//when no specific target is specified, use all TMIs from session
-		for tmiID := range tmiSession.TrustModelInstances() {
+		for _, tmiID := range tmiSession.TrustModelInstances() {
 			targets = append(targets, tmiID)
+			tam.logger.Warn("TMIID for initial target", "id", tmiID)
 		}
 	}
 
 	taResponseResults := make([]tasmsg.Update, 0)
 
 	//Iterate over TMI IDs in the Target Set
-	for _, tmiID := range targets {
-		atlResultSet, exists := tam.atlResults[tmiID]
+	for _, fullTMIID := range targets {
+		atlResultSet, exists := tam.atlResults[fullTMIID]
 
 		if exists {
 			propositions := make([]Proposition, 0)
 			for propositionID := range atlResultSet.ATLs() {
 				propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 			}
+			_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTMIID)
 			result := ResultEntry{
 				TmiID:        tmiID,
 				Propositions: propositions,
