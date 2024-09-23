@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+	trustmodelstructure2 "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"strings"
 )
@@ -31,14 +32,14 @@ func MergeFullTMIIdentifier(client string, sessionID string, tmtID string, tmiID
 	return identifier
 }
 
-func DumpTMI(tmi TrustModelInstance) string {
-	result := []string{"Graph Structure"}
-	result = append(result, "Operator: "+tmi.Structure().Operator())
-	for _, list := range tmi.Structure().AdjacencyList() {
-		result = append(result, list.SourceNode()+"==>"+fmt.Sprintf("%+v", list.TargetNodes()))
+func TMIAsString(tmi TrustModelInstance) string {
+	graph := trustmodelstructure2.DumpStructure(tmi.Structure())
+	values := trustmodelstructure2.DumpValues(tmi.Values())
+	output := fmt.Sprintf("Trust Model Instance\n---------------\nInternal ID:\t%s\nTMT:\t%s\nVersion:\t%d\nFingerprint:\t%d\n", tmi.ID(), tmi.Template().Identifier(), tmi.Version(), tmi.Fingerprint())
+	output = output + fmt.Sprintf("%s\n", graph)
+	output = output + fmt.Sprintf("%s\n", values)
+	if tmi.RTLs() != nil {
+		output = output + fmt.Sprintf("%v", tmi.RTLs())
 	}
-	graph := strings.Join(result, "\n")
-
-	output := fmt.Sprintf("Trust Model Instance\n---------------\nInternal ID:\t%s\nTMT:\t%s\nVersion:\t%d\nFingerprint:\t%d\n%s\n\n", tmi.ID(), tmi.Template().Identifier(), tmi.Version(), tmi.Fingerprint(), graph)
 	return output
 }
