@@ -324,9 +324,11 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, han
 						reject(errors.New(*cmd.Response.Error))
 						//TODO: remove session for MBD
 						return
+					} else {
+						//TODO: implement
+						tsm.logger.Warn(*cmd.Response.SubscriptionID)
+						resolve()
 					}
-					tsm.logger.Warn(*cmd.Response.SubscriptionID)
-					resolve()
 				default:
 					reject(errors.New("Unknown response type: " + cmd.Type().String()))
 				}

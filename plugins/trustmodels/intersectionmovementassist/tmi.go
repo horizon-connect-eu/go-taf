@@ -158,6 +158,8 @@ updateValues updates the internally kept values according to the latest state.
 func (e *TrustModelInstance) updateValues() {
 	//TODO: implement
 
+	//TODO: Trust between V_* and C_*_*: subjectivelogic.NewOpinion(1.0, 0.0, 0.0, 0.5), scope: observation
+
 	values := make(map[string][]trustmodelstructure.TrustRelationship)
 	rtls := make(map[string]subjectivelogic.QueryableOpinion)
 	for obj := range e.objects {
@@ -202,11 +204,6 @@ func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRela
 
 func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
 	return e.rtls
-}
-
-func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
-	//TODO: implement
-	return []core.TrustSourceQuantifier{}
 }
 
 /*
