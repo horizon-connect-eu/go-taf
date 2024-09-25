@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+var FullBelief, _ = subjectivelogic.NewOpinion(1, 0, 0, 0.5)
 var RTL, _ = subjectivelogic.NewOpinion(1, 0, 0, 0.5)
 var iDontKnow, _ = subjectivelogic.NewOpinion(0, 1, 0, 0.5)
 

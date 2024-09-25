@@ -156,23 +156,32 @@ func (e *TrustModelInstance) updateStructure() {
 updateValues updates the internally kept values according to the latest state.
 */
 func (e *TrustModelInstance) updateValues() {
-	//TODO: implement
-
-	//TODO: Trust between V_* and C_*_*: subjectivelogic.NewOpinion(1.0, 0.0, 0.0, 0.5), scope: observation
+	//TODO: finish implementation
 
 	values := make(map[string][]trustmodelstructure.TrustRelationship)
 	rtls := make(map[string]subjectivelogic.QueryableOpinion)
+
 	for obj := range e.objects {
-		omega1, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)
-		values[objectIdentifier(obj, e.sourceID)] = []trustmodelstructure.TrustRelationship{
-			internaltrustmodelstructure.NewTrustRelationshipDTO(vehicleIdentifier("ego"), objectIdentifier(obj, e.sourceID), &omega1),
+
+		ego := vehicleIdentifier("ego")
+		source := vehicleIdentifier(e.sourceID)
+		observation := objectIdentifier(obj, e.sourceID)
+		scope := observation
+
+		//set values
+		values[scope] = []trustmodelstructure.TrustRelationship{
+			//full belief between V_* and C_*_*
+			internaltrustmodelstructure.NewTrustRelationshipDTO(source, observation, &FullBelief),
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, &FullBelief), //TODO: use correct value
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, &FullBelief),      //TODO: use correct value
 		}
-		rtls[objectIdentifier(obj, e.sourceID)] = &omega1
+
+		//set RTL
+		rtls[observation] = &RTL
 	}
 
 	e.currentValues = values
 	e.rtls = rtls
-
 }
 
 func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
