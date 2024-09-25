@@ -3,7 +3,6 @@ package intersectionmovementassist
 import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	internaltrustmodelstructure "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
@@ -56,16 +55,24 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 			e.updateFingerprint()
 			e.incrementVersion()
 			e.updateValues()
-			//slog.Warn(fmt.Sprintf("%s", e))
 		}
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
-		if update.Trustee() == vehicleIdentifier(e.sourceID) {
-
-		} else {
-
+		trustee := update.Trustee()
+		if strings.HasPrefix(trustee, "V_") {
+			id, err := parseVehicleIdentifier(trustee)
+			if err == nil && id == e.sourceID {
+				e.sourceOpinion = update.Opinion()
+				e.updateValues()
+			}
+		} else if strings.HasPrefix(trustee, "C_") {
+			sourceID, objID, err := parseObjectIdentifier(trustee)
+			if err == nil && sourceID == e.sourceID {
+				if _, ok := e.objects[objID]; ok {
+					e.objects[objID] = update.Opinion()
+					e.updateValues()
+				}
+			}
 		}
-		//TODO
-		util.UNUSED(update)
 	default:
 		//ignore
 	}
@@ -99,6 +106,8 @@ func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool 
 			addedObjects[object] = struct{}{}
 		}
 	}
+
+	//For new objects: Add to topology with full uncertainty
 	if len(addedObjects) > 0 {
 		topologyChanged = true
 		for object, _ := range addedObjects {
@@ -168,7 +177,7 @@ func (e *TrustModelInstance) updateValues() {
 	values := make(map[string][]trustmodelstructure.TrustRelationship)
 	rtls := make(map[string]subjectivelogic.QueryableOpinion)
 
-	for obj := range e.objects {
+	for obj, opinion := range e.objects {
 
 		ego := vehicleIdentifier("ego")
 		source := vehicleIdentifier(e.sourceID)
@@ -179,8 +188,8 @@ func (e *TrustModelInstance) updateValues() {
 		values[scope] = []trustmodelstructure.TrustRelationship{
 			//full belief between V_* and C_*_*
 			internaltrustmodelstructure.NewTrustRelationshipDTO(source, observation, &FullBelief),
-			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, &FullBelief), //TODO: use correct value
-			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, &FullBelief),      //TODO: use correct value
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, opinion),    //TODO: use correct value
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, e.sourceOpinion), //TODO: use correct value
 		}
 
 		//set RTL
@@ -236,6 +245,9 @@ func objectIdentifier(id string, source string) string {
 	return fmt.Sprintf("C_%s_%s", source, id)
 }
 
+/*
+parseObjectIdentifier is a helper function to extract plain identifiers from an object identifier string.
+*/
 func parseObjectIdentifier(str string) (string, string, error) {
 	pattern := regexp.MustCompile(`^C_(\d+)_(\d+)$`)
 	res := pattern.FindStringSubmatch(str)
@@ -246,6 +258,9 @@ func parseObjectIdentifier(str string) (string, string, error) {
 	}
 }
 
+/*
+parseVehicleIdentifier is a helper function to extract plain identifiers from a vehicle identifier string.
+*/
 func parseVehicleIdentifier(str string) (string, error) {
 	pattern := regexp.MustCompile(`^V_(\d+|ego)$`)
 	res := pattern.FindStringSubmatch(str)
