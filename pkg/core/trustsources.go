@@ -30,6 +30,19 @@ const (
 	TCH
 )
 
+type MisbehaviorDetector uint16
+
+const (
+	DIST_PLAU MisbehaviorDetector = iota
+	SPEE_PLAU
+	SPEE_CONS
+	POS_SPEE_CONS
+	KALMAN_POS_CONS
+	KALMAN_POS_SPEED_CONS_SPEED
+	KALMAN_POS_SPEED_CONS_POS
+	LOCAL_PERCEPTION_VERIF
+)
+
 func (e EvidenceType) String() string {
 	switch e {
 	case UNKNOWN:

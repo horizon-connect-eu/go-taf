@@ -5,6 +5,8 @@ import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log"
+	"math"
+	"strconv"
 )
 
 var FullBelief, _ = subjectivelogic.NewOpinion(1, 0, 0, 0.5)
@@ -28,6 +30,28 @@ var tchOutputWeights = map[core.EvidenceType]int{
 	core.TCH_SECURE_OTA:                           0,
 	core.TCH_APPLICATION_ISOLATION:                0,
 	core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION: 2,
+}
+
+var mbdWeightsNoDetection = map[core.MisbehaviorDetector]float64{
+	core.DIST_PLAU:                   1,
+	core.SPEE_PLAU:                   1,
+	core.SPEE_CONS:                   1,
+	core.POS_SPEE_CONS:               1,
+	core.KALMAN_POS_CONS:             2,
+	core.KALMAN_POS_SPEED_CONS_SPEED: 2,
+	core.KALMAN_POS_SPEED_CONS_POS:   2,
+	core.LOCAL_PERCEPTION_VERIF:      2,
+}
+
+var mbdWeightsDetection = map[core.MisbehaviorDetector]float64{
+	core.DIST_PLAU:                   2,
+	core.SPEE_PLAU:                   2,
+	core.SPEE_CONS:                   2,
+	core.POS_SPEE_CONS:               2,
+	core.KALMAN_POS_CONS:             1,
+	core.KALMAN_POS_SPEED_CONS_SPEED: 1,
+	core.KALMAN_POS_SPEED_CONS_POS:   1,
+	core.LOCAL_PERCEPTION_VERIF:      2,
 }
 
 var trustSourceQuantifiers = []core.TrustSourceQuantifier{
@@ -58,7 +82,7 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 			for control, appraisal := range m {
 				delta, ok := tchExistenceWeights[control]
 
-				if ok { // Only if control is one of the forseen controls, belief and disbelief will be adjusted
+				if ok { // Only if control is one of the foreseen controls, belief and disbelief will be adjusted
 					if appraisal == -1 { // control not implemented
 						disbelief = disbelief + delta
 						uncertainty = uncertainty - delta
@@ -99,8 +123,35 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		TrustSource: core.MBD,
 		Evidence:    []core.EvidenceType{core.MBD_MISBEHAVIOR_REPORT},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-			//TODO: implement
-			return &iDontKnow
+			binaryFormat := strconv.FormatInt(int64(m[core.MBD_MISBEHAVIOR_REPORT]), 2)
+
+			for i := len(binaryFormat); i < 8; i++ {
+				binaryFormat = "0" + binaryFormat
+			}
+
+			sumWeights := 0.0
+			sumBelief := 0.0
+			sumDisbelief := 0.0
+
+			for i := 0; i < 8; i++ {
+				detector := core.MisbehaviorDetector(7 - i)
+				if string(binaryFormat[i]) == "0" {
+					sumWeights = sumWeights + mbdWeightsNoDetection[detector]
+					sumBelief = sumBelief + mbdWeightsNoDetection[detector]
+				} else {
+					sumWeights = sumWeights + mbdWeightsDetection[detector]
+					sumDisbelief = sumDisbelief + mbdWeightsDetection[detector]
+				}
+			}
+
+			exponentialValue := math.Pow(-1.3, -float64(sumWeights)) + 1
+			belief := (sumBelief / sumWeights) * exponentialValue
+			disbelief := (sumDisbelief / sumWeights) * exponentialValue
+			uncertainty := 1 - exponentialValue
+
+			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, uncertainty, 0.5)
+
+			return &sl
 		},
 	},
 }
