@@ -9,6 +9,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"hash/fnv"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -18,8 +19,9 @@ type TrustModelInstance struct {
 	version  int
 	template TrustModelTemplate
 
-	sourceID string
-	objects  map[string]bool
+	sourceID      string
+	sourceOpinion subjectivelogic.QueryableOpinion            // Opinion V_ego -> V_sourceID
+	objects       map[string]subjectivelogic.QueryableOpinion // X : Opinion V_ego -> C_sourceID_{X}
 
 	currentStructure   trustmodelstructure.TrustGraphStructure
 	currentValues      map[string][]trustmodelstructure.TrustRelationship
@@ -57,6 +59,11 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 			//slog.Warn(fmt.Sprintf("%s", e))
 		}
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
+		if update.Trustee() == vehicleIdentifier(e.sourceID) {
+
+		} else {
+
+		}
 		//TODO
 		util.UNUSED(update)
 	default:
@@ -95,7 +102,7 @@ func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool 
 	if len(addedObjects) > 0 {
 		topologyChanged = true
 		for object, _ := range addedObjects {
-			e.objects[object] = true
+			e.objects[object] = &FullUncertainty
 		}
 
 	}
@@ -227,6 +234,26 @@ objectIdentifier is a helper function to turn a plain identifier into an identif
 */
 func objectIdentifier(id string, source string) string {
 	return fmt.Sprintf("C_%s_%s", source, id)
+}
+
+func parseObjectIdentifier(str string) (string, string, error) {
+	pattern := regexp.MustCompile(`^C_(\d+)_(\d+)$`)
+	res := pattern.FindStringSubmatch(str)
+	if res != nil && len(res) == 3 {
+		return res[1], res[2], nil
+	} else {
+		return "", "", fmt.Errorf("Invalid object identifier '" + str + "'")
+	}
+}
+
+func parseVehicleIdentifier(str string) (string, error) {
+	pattern := regexp.MustCompile(`^V_(\d+|ego)$`)
+	res := pattern.FindStringSubmatch(str)
+	if res != nil && len(res) == 2 {
+		return res[1], nil
+	} else {
+		return "", fmt.Errorf("Invalid vehicle identifier '" + str + "'")
+	}
 }
 
 func (e *TrustModelInstance) String() string {
