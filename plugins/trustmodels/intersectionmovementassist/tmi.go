@@ -91,10 +91,13 @@ In case there are topology changes due to the update, the function returns true.
 func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool {
 	topologyChanged := false
 
-	removedObjects := make(map[string]struct{}) //old objects will be placed here and will be deleted in case they are still used
 	addedObjects := make(map[string]struct{})
-	for k, _ := range e.objects {
-		removedObjects[k] = struct{}{}
+	removedObjects := make(map[string]struct{}) //old objects will be placed here and will be deleted in case they are still used
+
+	for obj := range e.objects {
+		if obj != e.sourceID { //never remove the observation of vehicle on itself (C_{X}_{X})
+			removedObjects[obj] = struct{}{}
+		}
 	}
 
 	for _, object := range latestObjects {
@@ -110,7 +113,7 @@ func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool 
 	//For new objects: Add to topology with full uncertainty
 	if len(addedObjects) > 0 {
 		topologyChanged = true
-		for object, _ := range addedObjects {
+		for object := range addedObjects {
 			e.objects[object] = &FullUncertainty
 		}
 
@@ -141,8 +144,10 @@ func (e *TrustModelInstance) updateFingerprint() {
 	stringFingerprint := strings.Join(nodes, "")
 
 	algorithm := fnv.New32a()
-	algorithm.Write([]byte(stringFingerprint))
-	e.currentFingerprint = algorithm.Sum32()
+	_, err := algorithm.Write([]byte(stringFingerprint))
+	if err == nil {
+		e.currentFingerprint = algorithm.Sum32()
+	}
 }
 
 /*
@@ -150,16 +155,13 @@ updateStructure updates the internally kept structure according to the latest to
 */
 func (e *TrustModelInstance) updateStructure() {
 	//Objects (observations) that originate from the sender vehicle
-	objects := make([]string, len(e.objects)+1)
+	objects := make([]string, len(e.objects))
 	//Direct edges from the ego node to all others
-	egoTargets := make([]string, len(e.objects)+2)
+	egoTargets := make([]string, len(e.objects)+1)
 	for object := range e.objects {
 		objects = append(objects, objectIdentifier(object, e.sourceID))
 		egoTargets = append(egoTargets, objectIdentifier(object, e.sourceID))
 	}
-	objects = append(objects, objectIdentifier(e.sourceID, e.sourceID))
-	egoTargets = append(egoTargets, objectIdentifier(e.sourceID, e.sourceID))
-
 	egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
 
 	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO("CumulativeFusion", []trustmodelstructure.AdjacencyListEntry{
@@ -169,11 +171,9 @@ func (e *TrustModelInstance) updateStructure() {
 }
 
 /*
-updateValues updates the internally kept values according to the latest state.
+updateValues updates the internally kept values according to the latest state. Will also dynamically set RTL map to fixed RTL.
 */
 func (e *TrustModelInstance) updateValues() {
-	//TODO: finish implementation
-
 	values := make(map[string][]trustmodelstructure.TrustRelationship)
 	rtls := make(map[string]subjectivelogic.QueryableOpinion)
 
@@ -188,8 +188,10 @@ func (e *TrustModelInstance) updateValues() {
 		values[scope] = []trustmodelstructure.TrustRelationship{
 			//full belief between V_* and C_*_*
 			internaltrustmodelstructure.NewTrustRelationshipDTO(source, observation, &FullBelief),
-			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, opinion),    //TODO: use correct value
-			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, e.sourceOpinion), //TODO: use correct value
+			//opinion from V_ego on C_*_*
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, opinion),
+			//opinion from V_y on C_y_*
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, e.sourceOpinion),
 		}
 
 		//set RTL
@@ -211,6 +213,12 @@ func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 	e.version = 0
 	e.currentFingerprint = 0
 	e.rtls = map[string]subjectivelogic.QueryableOpinion{}
+	e.sourceOpinion = &FullUncertainty
+	e.objects[e.sourceID] = &FullUncertainty
+
+	e.updateStructure()
+	e.updateFingerprint()
+	e.updateValues()
 	return
 }
 
