@@ -154,7 +154,7 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
 		tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
 		//create update operation
-		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV)
+		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", *trusteeReport.TrusteeID, core.AIV)
 		updates = append(updates, update)
 	}
 	if len(updates) > 0 {
@@ -520,7 +520,7 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 					//call quantifier
 					ato := quantifiers[core.AIV](evidenceCollection)
 					tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
-					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, *trusteeReport.TrusteeID, core.AIV))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", *trusteeReport.TrusteeID, core.AIV))
 				}
 				//create update operation for all TMIs of session
 				for tmiID, fullTmiID := range session.TrustModelInstances() {

@@ -9,6 +9,7 @@ type UpdateAtomicTrustOpinion struct {
 	opinion     subjectivelogic.QueryableOpinion
 	trustSource core.TrustSource
 	trustee     string
+	trustor     string
 }
 
 func (u UpdateAtomicTrustOpinion) Opinion() subjectivelogic.QueryableOpinion {
@@ -23,11 +24,16 @@ func (u UpdateAtomicTrustOpinion) Trustee() string {
 	return u.trustee
 }
 
-func CreateAtomicTrustOpinionUpdate(opinion subjectivelogic.QueryableOpinion, trustee string, source core.TrustSource) UpdateAtomicTrustOpinion {
+func (u UpdateAtomicTrustOpinion) Trustor() string {
+	return u.trustor
+}
+
+func CreateAtomicTrustOpinionUpdate(opinion subjectivelogic.QueryableOpinion, trustor string, trustee string, source core.TrustSource) UpdateAtomicTrustOpinion {
 	return UpdateAtomicTrustOpinion{
 		opinion:     opinion,
 		trustSource: source,
 		trustee:     trustee,
+		trustor:     trustee,
 	}
 }
 
