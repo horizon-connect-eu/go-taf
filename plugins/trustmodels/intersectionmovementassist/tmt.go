@@ -11,14 +11,31 @@ var FullUncertainty, _ = subjectivelogic.NewOpinion(0, 0, 1, 0.5)
 var RTL, _ = subjectivelogic.NewOpinion(1, 0, 0, 0.5)
 
 type TrustModelTemplate struct {
-	name    string
-	version string
+	name          string
+	version       string
+	evidenceTypes []core.EvidenceType
 }
 
 func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
+
+	//Extract list of used trust sources from trustSourceQuantifierInstances
+	evidenceMap := make(map[core.EvidenceType]bool)
+	for _, quantifier := range trustSourceQuantifiers {
+		for _, evidence := range quantifier.Evidence {
+			evidenceMap[evidence] = true
+		}
+	}
+	evidenceTypes := make([]core.EvidenceType, len(evidenceMap))
+	i := 0
+	for k := range evidenceMap {
+		evidenceTypes[i] = k
+		i++
+	}
+
 	return TrustModelTemplate{
-		name:    name,
-		version: version,
+		name:          name,
+		version:       version,
+		evidenceTypes: evidenceTypes,
 	}
 }
 
@@ -58,9 +75,10 @@ func (t TrustModelTemplate) Identifier() string {
 
 func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
 	// TODO: implement
-	return []core.EvidenceType{}
+	return t.evidenceTypes
 }
 
 func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return trustSourceQuantifiers
+	//return []core.TrustSourceQuantifier{}
 }

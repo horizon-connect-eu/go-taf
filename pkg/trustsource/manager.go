@@ -337,6 +337,7 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, han
 			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
 			util.UNUSED(subReqId)
 		case core.TCH:
+			tsm.logger.Warn("TCH sub must be implemented")
 			//Nothing to do here (yet)
 		default:
 			panic("unknown Trust Source")
