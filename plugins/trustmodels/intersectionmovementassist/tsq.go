@@ -72,7 +72,7 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 
 			belief := 0.0
 			disbelief := 0.0
-			uncertainty := 1.0
+			//uncertainty := 1.0
 
 			for control, appraisal := range m {
 				delta, ok := tchExistenceWeights[control]
@@ -80,18 +80,18 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 				if ok { // Only if control is one of the foreseen controls, belief and disbelief will be adjusted
 					if appraisal == -1 { // control not implemented
 						disbelief = disbelief + delta
-						uncertainty = uncertainty - delta
+						//uncertainty = uncertainty - delta
 					} else if appraisal == 0 {
 						if tchOutputWeights[control] == 0 { // still add belief
 							belief = belief + delta
-							uncertainty = uncertainty - delta
+							//uncertainty = uncertainty - delta
 						} else if tchOutputWeights[control] == 1 { // add disbelief
 							disbelief = disbelief + delta
-							uncertainty = uncertainty - delta
+							//uncertainty = uncertainty - delta
 						} else if tchOutputWeights[control] == 2 { // complete disbelief
 							belief = 0.0
 							disbelief = 1.0
-							uncertainty = 0.0
+							//uncertainty = 0.0
 							break // complete disbelief because negative evidence of critical securityControl
 						} else {
 							// Invalid weight
@@ -99,14 +99,14 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 						}
 					} else if appraisal == 1 {
 						belief = belief + delta
-						uncertainty = uncertainty - delta
+						//uncertainty = uncertainty - delta
 					} else {
 						// No evidence for the control, e.g. appraisal -2 or no evidence received -> Results in higher uncertainty
 					}
 				}
 			}
 
-			sl.Modify(belief, disbelief, uncertainty, sl.BaseRate())
+			sl.Modify(belief, disbelief, 1-belief-disbelief, sl.BaseRate())
 
 			return &sl
 		},
@@ -139,12 +139,12 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 				}
 			}
 
-			exponentialValue := math.Pow(-1.3, -float64(sumWeights)) + 1
+			exponentialValue := -math.Pow(1.3, -float64(sumWeights)) + 1
 			belief := (sumBelief / sumWeights) * exponentialValue
 			disbelief := (sumDisbelief / sumWeights) * exponentialValue
-			uncertainty := 1 - exponentialValue
+			//uncertainty := 1 - exponentialValue
 
-			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, uncertainty, 0.5)
+			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-belief-disbelief, 0.5)
 
 			return &sl
 		},
