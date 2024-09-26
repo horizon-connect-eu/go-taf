@@ -59,7 +59,7 @@ type TrustSourceManager interface {
 	HandleMbdSubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDSubscribeResponse])
 	HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdmsg.MBDUnsubscribeResponse])
 	HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify])
-	HandleTchNotify(cmd command.HandleNotify[tchmsg.Message])
+	HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify])
 	SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
 	UnsubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))

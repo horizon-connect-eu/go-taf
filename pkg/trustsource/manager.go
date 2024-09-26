@@ -190,7 +190,7 @@ func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) 
 	util.UNUSED(cmd)
 }
 
-func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.Message]) {
+func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 	tsm.logger.Info("TODO: handle TCH_NOTIFY")
 	util.UNUSED(cmd)
 }

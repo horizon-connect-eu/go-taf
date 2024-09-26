@@ -1,29 +1,113 @@
 // This file was generated from JSON Schema using quicktype, do not modify it directly.
 // To parse and unparse this JSON data, add this code to your project and do:
 //
-//    message, err := UnmarshalMessage(bytes)
-//    bytes, err = message.Marshal()
+//    tchInitRequest, err := UnmarshalTchInitRequest(bytes)
+//    bytes, err = tchInitRequest.Marshal()
+//
+//    tchInitResponse, err := UnmarshalTchInitResponse(bytes)
+//    bytes, err = tchInitResponse.Marshal()
+//
+//    tchNotify, err := UnmarshalTchNotify(bytes)
+//    bytes, err = tchNotify.Marshal()
+//
+//    tchTcRequest, err := UnmarshalTchTcRequest(bytes)
+//    bytes, err = tchTcRequest.Marshal()
+//
+//    tasTcResponse, err := UnmarshalTasTcResponse(bytes)
+//    bytes, err = tasTcResponse.Marshal()
 
 package tchmsg
 
 import "encoding/json"
 
-func UnmarshalMessage(data []byte) (Message, error) {
-	var r Message
+func UnmarshalTchInitRequest(data []byte) (TchInitRequest, error) {
+	var r TchInitRequest
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *Message) Marshal() ([]byte, error) {
+func (r *TchInitRequest) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type Message struct {
-	Evidence  Evidence  `json:"evidence"`
-	TchReport TchReport `json:"tchReport"`
+func UnmarshalTchInitResponse(data []byte) (TchInitResponse, error) {
+	var r TchInitResponse
+	err := json.Unmarshal(data, &r)
+	return r, err
 }
 
-type Evidence struct {
+func (r *TchInitResponse) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalTchNotify(data []byte) (TchNotify, error) {
+	var r TchNotify
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TchNotify) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalTchTcRequest(data []byte) (TchTcRequest, error) {
+	var r TchTcRequest
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TchTcRequest) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalTasTcResponse(data []byte) (TasTcResponse, error) {
+	var r TasTcResponse
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TasTcResponse) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+type TchInitRequest struct {
+	Evidence *TCHINITREQUESTEvidence `json:"evidence,omitempty"`
+	// A non-empty list of pseudonym identifier(s) corresponding to vehicle(s).
+	Query []TCHINITREQUESTQuery `json:"query"`
+}
+
+type TCHINITREQUESTEvidence struct {
+	// Identifier to the public key associated with the MBD component. To be provided by the MBD
+	// crypto library.
+	KeyRef string `json:"keyRef"`
+	// Challenge in HEX format. To be provided by the MBD crypto library.
+	Nonce string `json:"nonce"`
+	// Signature of the query structure and the rest of the evidence attributes. To be provided
+	// by the MBD crypto library.
+	Signature string `json:"signature"`
+	// Signing algorithm. To be provided by the MBD crypto library.
+	SignatureAlgorithmType string `json:"signatureAlgorithmType"`
+	// Request creation date in UTC. To be provided by the MBD crypto library.
+	Timestamp string `json:"timestamp"`
+}
+
+// A query record with trustee identifier and claims.
+type TCHINITREQUESTQuery struct {
+	// This identifier corresponds to the pseudonym associated with an ego vehicle.
+	TrusteeIDs []string `json:"trusteeIDs"`
+}
+
+type TchInitResponse struct {
+	Error   *string `json:"error,omitempty"`
+	Success *string `json:"success,omitempty"`
+}
+
+type TchNotify struct {
+	Evidence  TCHNOTIFYEvidence `json:"evidence"`
+	TchReport TchReport         `json:"tchReport"`
+}
+
+type TCHNOTIFYEvidence struct {
 	KeyRef                 string `json:"keyRef"`
 	Signature              string `json:"signature"`
 	SignatureAlgorithmType string `json:"signatureAlgorithmType"`
@@ -59,4 +143,50 @@ type AttestationReport struct {
 	Appraisal int64  `json:"appraisal"`
 	Claim     string `json:"claim"`
 	Timestamp string `json:"timestamp"`
+}
+
+type TchTcRequest struct {
+	Evidence *TCHTCREQUESTEvidence `json:"evidence,omitempty"`
+	// A non-empty list of trustee devices and associated claims as targets.
+	Query []TCHTCREQUESTQuery `json:"query"`
+}
+
+type TCHTCREQUESTEvidence struct {
+	// Identifier to the public key associated with the MBD component. To be provided by the MBD
+	// crypto library.
+	KeyRef string `json:"keyRef"`
+	// Challenge in HEX format. To be provided by the MBD crypto library.
+	Nonce string `json:"nonce"`
+	// Signature of the query structure and the rest of the evidence attributes. To be provided
+	// by the MBD crypto library.
+	Signature string `json:"signature"`
+	// Signing algorithm. To be provided by the MBD crypto library.
+	SignatureAlgorithmType string `json:"signatureAlgorithmType"`
+	// Request creation date in UTC. To be provided by the MBD crypto library.
+	Timestamp string `json:"timestamp"`
+}
+
+// A query record with trustee identifier and claims.
+type TCHTCREQUESTQuery struct {
+	// A list of specific claims that are requested. If empty, all available claims should be
+	// reported.
+	RequestedClaims []RequestedClaim `json:"requestedClaims"`
+	// List of kafka topic identifiers where the TCH_NOTIFY message shall be sent.
+	TchNotifyDestinationTopics []string `json:"tchNotifyDestinationTopics,omitempty"`
+	// This identifier corresponds to the pseudonym associated with an ego vehicle.
+	TrusteeID string `json:"trusteeID"`
+}
+
+// A list of requested claims along with a debug flag
+type RequestedClaim struct {
+	// The value to be emulated within the TCH_NOTIFY. If not specified, TCH will fetch the
+	// actual appraisal related to this claim
+	Debug *int64 `json:"debug,omitempty"`
+	// Name of the requested claim
+	Name *string `json:"name,omitempty"`
+}
+
+type TasTcResponse struct {
+	Error   *string `json:"error,omitempty"`
+	Success *string `json:"success,omitempty"`
 }

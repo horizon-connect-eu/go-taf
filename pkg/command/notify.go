@@ -8,7 +8,7 @@ import (
 )
 
 type notify interface {
-	aivmsg.AivNotify | mbdmsg.MBDNotify | tchmsg.Message
+	aivmsg.AivNotify | mbdmsg.MBDNotify | tchmsg.TchNotify
 }
 
 type HandleNotify[R notify] struct {
@@ -37,8 +37,8 @@ func CreateMbdNotify(msg mbdmsg.MBDNotify, sender string) HandleNotify[mbdmsg.MB
 	}
 }
 
-func CreateTchNotify(msg tchmsg.Message, sender string) HandleNotify[tchmsg.Message] {
-	return HandleNotify[tchmsg.Message]{
+func CreateTchNotify(msg tchmsg.TchNotify, sender string) HandleNotify[tchmsg.TchNotify] {
+	return HandleNotify[tchmsg.TchNotify]{
 		Notify:      msg,
 		Sender:      sender,
 		commandType: core.HANDLE_TCH_NOTIFY,
