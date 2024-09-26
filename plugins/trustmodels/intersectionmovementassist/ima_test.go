@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestLoadJson(t *testing.T) {
+func TestTrustSourceQuantifierFunctions(t *testing.T) {
 	param := map[core.EvidenceType]int{
 		core.TCH_SECURE_BOOT:                          1,
 		core.TCH_ACCESS_CONTROL:                       0,
