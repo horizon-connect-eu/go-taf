@@ -32,7 +32,11 @@ const (
 	TAS_TEARDOWN_RESPONSE         = "TAS_TEARDOWN_RESPONSE"
 	TAS_UNSUBSCRIBE_REQUEST       = "TAS_UNSUBSCRIBE_REQUEST"
 	TAS_UNSUBSCRIBE_RESPONSE      = "TAS_UNSUBSCRIBE_RESPONSE"
+	TCH_INIT_REQUEST              = "TCH_INIT_REQUEST"
+	TCH_INIT_RESPONSE             = "TCH_INIT_RESPONSE"
 	TCH_NOTIFY                    = "TCH_NOTIFY"
+	TCH_TC_REQUEST                = "TCH_TC_REQUEST"
+	TCH_TC_RESPONSE               = "TCH_TC_RESPONSE"
 	TEST_MESSAGE                  = "TEST_MESSAGE"
 	V2X_CPM                       = "V2X_CPM"
 	V2X_NTM                       = "V2X_NTM"
@@ -68,7 +72,11 @@ var SchemaMap = map[string]MessageSchema{
 	TAS_TEARDOWN_RESPONSE:         TAS_TEARDOWN_RESPONSE,
 	TAS_UNSUBSCRIBE_REQUEST:       TAS_UNSUBSCRIBE_REQUEST,
 	TAS_UNSUBSCRIBE_RESPONSE:      TAS_UNSUBSCRIBE_RESPONSE,
+	TCH_INIT_REQUEST:              TCH_INIT_REQUEST,
+	TCH_INIT_RESPONSE:             TCH_INIT_RESPONSE,
 	TCH_NOTIFY:                    TCH_NOTIFY,
+	TCH_TC_REQUEST:                TCH_TC_REQUEST,
+	TCH_TC_RESPONSE:               TCH_TC_RESPONSE,
 	TEST_MESSAGE:                  TEST_MESSAGE,
 	V2X_CPM:                       V2X_CPM,
 	V2X_NTM:                       V2X_NTM}
@@ -103,7 +111,11 @@ var ServiceMap = map[MessageSchema]string{
 	TAS_TEARDOWN_RESPONSE:         "TAS",
 	TAS_UNSUBSCRIBE_REQUEST:       "TAS",
 	TAS_UNSUBSCRIBE_RESPONSE:      "TAS",
+	TCH_INIT_REQUEST:              "UNKNOWN",
+	TCH_INIT_RESPONSE:             "UNKNOWN",
 	TCH_NOTIFY:                    "ECI",
+	TCH_TC_REQUEST:                "UNKNOWN",
+	TCH_TC_RESPONSE:               "UNKNOWN",
 	TEST_MESSAGE:                  "INVALID",
 	V2X_CPM:                       "V2X",
 	V2X_NTM:                       "V2X"}
