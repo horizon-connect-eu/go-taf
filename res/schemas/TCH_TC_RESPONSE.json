@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TCH_TC_RESPONSE/",
+  "title": "TAS_TC_RESPONSE",
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "success"
+      ]
+    },
+    {
+      "required": [
+        "error"
+      ]
+    }
+  ]
+}
+

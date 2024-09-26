@@ -248,7 +248,7 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.channels.TAMChannel <- cmd
 				}
 			case messages.TCH_NOTIFY:
-				tchNotify, err := tchmsg.UnmarshalMessage(msg)
+				tchNotify, err := tchmsg.UnmarshalTchNotify(msg)
 				if err != nil {
 					ch.tafContext.Logger.Error("Error unmarshalling TCH_NOTIFY: " + err.Error())
 				} else if ok, errs := checkNotifyFields(rawMsg); !ok {
@@ -418,7 +418,7 @@ func UnmarshallMessage(schema messages.MessageSchema, msg []byte) (interface{}, 
 	case messages.TAS_UNSUBSCRIBE_RESPONSE:
 		extractedStruct, err = tasmsg.UnmarshalTasUnsubscribeResponse(msg)
 	case messages.TCH_NOTIFY:
-		extractedStruct, err = tchmsg.UnmarshalMessage(msg)
+		extractedStruct, err = tchmsg.UnmarshalTchNotify(msg)
 	case messages.V2X_CPM:
 		extractedStruct, err = v2xmsg.UnmarshalV2XCpm(msg)
 	case messages.V2X_NTM:

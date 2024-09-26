@@ -136,7 +136,7 @@ func (tam *Manager) Run() {
 				tsm.HandleMbdUnsubscribeResponse(cmd)
 			case command.HandleNotify[mbdmsg.MBDNotify]:
 				tsm.HandleMbdNotify(cmd)
-			case command.HandleNotify[tchmsg.Message]:
+			case command.HandleNotify[tchmsg.TchNotify]:
 				tsm.HandleTchNotify(cmd)
 			// TMM Message Handling
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
