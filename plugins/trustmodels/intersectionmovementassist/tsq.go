@@ -38,7 +38,7 @@ var mbdWeightsNoDetection = map[core.MisbehaviorDetector]float64{
 	core.LOCAL_PERCEPTION_VERIF:      2,
 }
 
-var mbdWeightsDetection = map[core.MisbehaviorDetector]float64{
+var defaultMBDWeightsDetection = map[core.MisbehaviorDetector]float64{
 	core.DIST_PLAU:                   2,
 	core.SPEE_PLAU:                   2,
 	core.SPEE_CONS:                   2,
@@ -47,6 +47,21 @@ var mbdWeightsDetection = map[core.MisbehaviorDetector]float64{
 	core.KALMAN_POS_SPEED_CONS_SPEED: 1,
 	core.KALMAN_POS_SPEED_CONS_POS:   1,
 	core.LOCAL_PERCEPTION_VERIF:      2,
+}
+
+func createTrustSourceQuantifiers(params map[string]string) []core.TrustSourceQuantifier {
+	mbdWeightsDetection := make(map[core.MisbehaviorDetector]float64)
+	for key, defaultValue := range defaultMBDWeightsDetection {
+		mbdWeightsDetection[key] = defaultValue
+	}
+
+	if params != nil {
+		//TODO: update  with params
+	}
+
+	//TODO: return TSQs with local mbdWeightsDetection, etc.
+
+	return []core.TrustSourceQuantifier{}
 }
 
 var trustSourceQuantifiers = []core.TrustSourceQuantifier{
@@ -134,8 +149,8 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 					sumWeights = sumWeights + mbdWeightsNoDetection[detector]
 					sumBelief = sumBelief + mbdWeightsNoDetection[detector]
 				} else {
-					sumWeights = sumWeights + mbdWeightsDetection[detector]
-					sumDisbelief = sumDisbelief + mbdWeightsDetection[detector]
+					sumWeights = sumWeights + defaultMBDWeightsDetection[detector]
+					sumDisbelief = sumDisbelief + defaultMBDWeightsDetection[detector]
 				}
 			}
 
