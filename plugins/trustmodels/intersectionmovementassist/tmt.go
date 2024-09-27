@@ -48,9 +48,14 @@ func (t TrustModelTemplate) TemplateName() string {
 	return t.name
 }
 
-func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
+func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) ([]core.TrustSourceQuantifier, core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
 	t.params = params
-	return nil, t, nil
+	tsqs, err := createTrustSourceQuantifiers(params)
+	if err != nil {
+		return nil, nil, nil, err
+	} else {
+		return tsqs, nil, t, nil
+	}
 }
 
 func (t TrustModelTemplate) Description() string {
@@ -99,6 +104,6 @@ func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
 }
 
 func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
-	return trustSourceQuantifiers
-	//return []core.TrustSourceQuantifier{}
+	//return trustSourceQuantifiers
+	return []core.TrustSourceQuantifier{}
 }

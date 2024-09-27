@@ -3,9 +3,8 @@ package core
 type TrustModelTemplate interface {
 	TemplateName() string
 	Version() string
-	Spawn(params map[string]string, context TafContext) (TrustModelInstance, DynamicTrustModelInstanceSpawner, error)
+	Spawn(params map[string]string, context TafContext) ([]TrustSourceQuantifier, TrustModelInstance, DynamicTrustModelInstanceSpawner, error)
 	EvidenceTypes() []EvidenceType
-	TrustSourceQuantifiers() []TrustSourceQuantifier
 	Description() string
 	Type() TrustModelTemplateType
 	//GenerateTrustModelInstanceID(identifiers ...string) string

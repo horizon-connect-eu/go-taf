@@ -197,8 +197,6 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) 
 
 func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler) {
 
-	tmt := session.TrustModelTemplate()
-
 	//When no handler has been set, create empty one
 	if handler == nil {
 		handler = completionhandler.New(func() {}, func(err error) {
@@ -209,7 +207,7 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, han
 	subscriptions := make(map[core.TrustSource]map[string][]core.EvidenceType)
 	quantifiers := make(map[core.TrustSource]core.Quantifier)
 
-	for _, item := range tmt.TrustSourceQuantifiers() {
+	for _, item := range session.TrustSourceQuantifiers() {
 
 		quantifiers[item.TrustSource] = item.Quantifier
 		for _, evidence := range item.Evidence {
@@ -454,12 +452,10 @@ func (tsm *Manager) RegisterCallback(messageType messages.MessageSchema, request
 
 func (tsm *Manager) DispatchAivRequest(session session.Session) {
 
-	tmt := session.TrustModelTemplate()
-
 	query := make(map[core.TrustSource]map[string][]core.EvidenceType)
 	quantifiers := make(map[core.TrustSource]core.Quantifier)
 
-	for _, item := range tmt.TrustSourceQuantifiers() {
+	for _, item := range session.TrustSourceQuantifiers() {
 
 		quantifiers[item.TrustSource] = item.Quantifier
 		for _, evidence := range item.Evidence {

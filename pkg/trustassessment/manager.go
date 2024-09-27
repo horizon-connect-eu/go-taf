@@ -196,12 +196,13 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 	tam.logger.Info("Session created:", "Session ID", newSession.ID(), "Client", newSession.Client())
 
 	//create new TMI and/or dynamic spawn function for session
-	tMI, dynamicSpawner, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
+	tsqs, tMI, dynamicSpawner, err := tmt.Spawn(cmd.Request.Params, tam.tafContext)
 	if err != nil {
 		delete(tam.sessions, sessionId)
 		sendErrorResponse("Error initializing session: " + err.Error())
 		return
 	} else {
+		newSession.SetTrustSourceQuantifiers(tsqs)
 		if tMI != nil {
 			//add new TMI to session
 			sessionTMIs := newSession.TrustModelInstances()

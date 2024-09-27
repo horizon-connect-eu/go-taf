@@ -27,6 +27,8 @@ type Session interface {
 	RemoveSubscription(identifier string)
 	SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner)
 	DynamicSpawner() core.DynamicTrustModelInstanceSpawner
+	SetTrustSourceQuantifiers([]core.TrustSourceQuantifier)
+	TrustSourceQuantifiers() []core.TrustSourceQuantifier
 }
 
 type Instance struct {
@@ -37,6 +39,7 @@ type Instance struct {
 	tmt           core.TrustModelTemplate
 	subscriptions map[string]bool
 	spawner       core.DynamicTrustModelInstanceSpawner
+	tsqs          []core.TrustSourceQuantifier
 }
 
 func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
@@ -114,4 +117,12 @@ func (s *Instance) ListSubscriptions() []string {
 		i++
 	}
 	return subs
+}
+
+func (s *Instance) SetTrustSourceQuantifiers(tsqs []core.TrustSourceQuantifier) {
+	s.tsqs = tsqs
+}
+
+func (s *Instance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
+	return s.tsqs
 }

@@ -30,8 +30,8 @@ func (t TrustModelTemplate) TemplateName() string {
 	return t.name
 }
 
-func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
-	return &TrustModelInstance{
+func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) ([]core.TrustSourceQuantifier, core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
+	return nil, &TrustModelInstance{
 		id:       fmt.Sprintf("%000000d", rand.IntN(999999)),
 		version:  0,
 		template: t,
