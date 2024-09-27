@@ -14,6 +14,7 @@ type TrustModelTemplate struct {
 	name          string
 	version       string
 	evidenceTypes []core.EvidenceType
+	params        map[string]string
 }
 
 func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
@@ -48,6 +49,7 @@ func (t TrustModelTemplate) TemplateName() string {
 }
 
 func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) (core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
+	t.params = params
 	return nil, t, nil
 }
 
@@ -60,6 +62,24 @@ func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
 }
 
 func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]string) (core.TrustModelInstance, error) {
+	initialParams := t.params
+	newParams := params
+	params = map[string]string{}
+	//add parameters set at Spawn()
+	if initialParams != nil {
+		for key, value := range initialParams {
+			params[key] = value
+		}
+	}
+	//add parameters set at OnNewVehicle()
+	if newParams != nil {
+		for key, value := range newParams {
+			params[key] = value
+		}
+	}
+
+	//TODO: use params to set weights at runtime
+
 	return &TrustModelInstance{
 		id:        identifier,
 		version:   0,
