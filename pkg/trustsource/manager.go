@@ -364,13 +364,18 @@ func (tsm *Manager) addSessionToTrustSourceSubscription(session session.Session,
 
 func (tsm *Manager) addSessionToAivSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
 	tsm.addSessionToTrustSourceSubscription(session, handler, core.AIV)
-	//TODO: only subscribe if there is no subscription and no subscription
-	tsm.subscribeAIV(handler)
+	//TODO: make more robust in case of concurrent subscribe operations
+	//TODO: make session-specific subscriptions
+	if len(tsm.trustSourceSubscriptions[core.AIV]) == 1 {
+		tsm.subscribeAIV(handler)
+	}
 }
 func (tsm *Manager) addSessionToMbdSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
 	tsm.addSessionToTrustSourceSubscription(session, handler, core.MBD)
-	//TODO: only subscribe if there is no subscription and no subscription
-	tsm.subscribeMBD(handler)
+	//TODO: make more robust in case of concurrent subscribe operations
+	if len(tsm.trustSourceSubscriptions[core.MBD]) == 1 {
+		tsm.subscribeMBD(handler)
+	}
 }
 func (tsm *Manager) addSessionToTchSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
 	tsm.addSessionToTrustSourceSubscription(session, handler, core.TCH)
