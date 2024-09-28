@@ -16,6 +16,7 @@ func TestTrustSourceQuantifierFunctions(t *testing.T) {
 		core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION: -1,
 	}
 
+	trustSourceQuantifiers, _ := createTrustSourceQuantifiers(nil)
 	sl := trustSourceQuantifiers[0].Quantifier(param)
 
 	t.Logf(sl.String())
