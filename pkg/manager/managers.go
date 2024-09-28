@@ -70,5 +70,6 @@ type TrustModelManager interface {
 	SetManagers(managers TafManagers)
 	HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 	ResolveTMT(identifier string) core.TrustModelTemplate
+	GetAllTMTs() []core.TrustModelTemplate
 	ListRecentV2XNodes() []string
 }

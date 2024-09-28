@@ -64,6 +64,7 @@ func (tmm *Manager) initializeTrustModelTemplateTypes() {
 			case core.VEHICLE_TRIGGERED_TRUST_MODEL:
 				//register TMM as handler for V2X observer
 				tmm.v2xObserver.registerObserver(tmm)
+			default: //Nothing to do
 			}
 		}
 	}
@@ -118,6 +119,17 @@ func (tmm *Manager) ResolveTMT(identifier string) core.TrustModelTemplate {
 	} else {
 		return tmt
 	}
+}
+
+func (tmm *Manager) GetAllTMTs() []core.TrustModelTemplate {
+	tmts := make([]core.TrustModelTemplate, len(tmm.trustModelTemplateRepo))
+
+	i := 0
+	for _, v := range tmm.trustModelTemplateRepo {
+		tmts[i] = v
+		i++
+	}
+	return tmts
 }
 
 func (tmm *Manager) handleNodeAdded(identifier string) {
