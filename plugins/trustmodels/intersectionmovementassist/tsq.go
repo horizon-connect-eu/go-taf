@@ -2,9 +2,9 @@ package intersectionmovementassist
 
 import (
 	"errors"
-	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/trustsource"
 	"log"
 	"math"
 	"strconv"
@@ -29,36 +29,36 @@ var defaultTCHOutputWeights = map[core.EvidenceType]float64{
 	core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION: 2,
 }
 
-var defaultMBDWeightsNoDetection = map[core.MisbehaviorDetector]float64{
-	core.MBD_DIST_PLAU:                   1,
-	core.MBD_SPEE_PLAU:                   1,
-	core.MBD_SPEE_CONS:                   1,
-	core.MBD_POS_SPEE_CONS:               1,
-	core.MBD_KALMAN_POS_CONS:             2,
-	core.MBD_KALMAN_POS_SPEED_CONS_SPEED: 2,
-	core.MBD_KALMAN_POS_SPEED_CONS_POS:   2,
-	core.MBD_LOCAL_PERCEPTION_VERIF:      2,
+var defaultMBDWeightsNoDetection = map[trustsource.MisbehaviorDetector]float64{
+	trustsource.MBD_DIST_PLAU:                   1,
+	trustsource.MBD_SPEE_PLAU:                   1,
+	trustsource.MBD_SPEE_CONS:                   1,
+	trustsource.MBD_POS_SPEE_CONS:               1,
+	trustsource.MBD_KALMAN_POS_CONS:             2,
+	trustsource.MBD_KALMAN_POS_SPEED_CONS_SPEED: 2,
+	trustsource.MBD_KALMAN_POS_SPEED_CONS_POS:   2,
+	trustsource.MBD_LOCAL_PERCEPTION_VERIF:      2,
 }
 
-var defaultMBDWeightsDetection = map[core.MisbehaviorDetector]float64{
-	core.MBD_DIST_PLAU:                   2,
-	core.MBD_SPEE_PLAU:                   2,
-	core.MBD_SPEE_CONS:                   2,
-	core.MBD_POS_SPEE_CONS:               2,
-	core.MBD_KALMAN_POS_CONS:             1,
-	core.MBD_KALMAN_POS_SPEED_CONS_SPEED: 1,
-	core.MBD_KALMAN_POS_SPEED_CONS_POS:   1,
-	core.MBD_LOCAL_PERCEPTION_VERIF:      2,
+var defaultMBDWeightsDetection = map[trustsource.MisbehaviorDetector]float64{
+	trustsource.MBD_DIST_PLAU:                   2,
+	trustsource.MBD_SPEE_PLAU:                   2,
+	trustsource.MBD_SPEE_CONS:                   2,
+	trustsource.MBD_POS_SPEE_CONS:               2,
+	trustsource.MBD_KALMAN_POS_CONS:             1,
+	trustsource.MBD_KALMAN_POS_SPEED_CONS_SPEED: 1,
+	trustsource.MBD_KALMAN_POS_SPEED_CONS_POS:   1,
+	trustsource.MBD_LOCAL_PERCEPTION_VERIF:      2,
 }
 
 func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQuantifier, error) {
-	mbdWeightsDetection := make(map[core.MisbehaviorDetector]float64)
+	mbdWeightsDetection := make(map[trustsource.MisbehaviorDetector]float64)
 
 	for key, defaultValue := range defaultMBDWeightsDetection {
 		mbdWeightsDetection[key] = defaultValue
 	}
 
-	mbdWeightsNoDetection := make(map[core.MisbehaviorDetector]float64)
+	mbdWeightsNoDetection := make(map[trustsource.MisbehaviorDetector]float64)
 
 	for key, defaultValue := range defaultMBDWeightsNoDetection {
 		mbdWeightsNoDetection[key] = defaultValue
@@ -83,8 +83,8 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			if strings.Contains(key, "MBD_D") {
 				detector := strings.SplitAfterN(key, "_", 2)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					detectorType := core.MisbehaviorDetectorByName("MBD_" + detector)
-					if detectorType == core.MBD_UNKNOWN {
+					detectorType := trustsource.MisbehaviorDetectorByName("MBD_" + detector)
+					if detectorType == trustsource.MBD_UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
 						mbdWeightsDetection[detectorType] = floatValue
@@ -95,8 +95,8 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			} else if strings.Contains(key, "MBD_ND") {
 				detector := strings.SplitAfterN(key, "_", 2)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					detectorType := core.MisbehaviorDetectorByName("MBD_" + detector)
-					if detectorType == core.MBD_UNKNOWN {
+					detectorType := trustsource.MisbehaviorDetectorByName("MBD_" + detector)
+					if detectorType == trustsource.MBD_UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
 						mbdWeightsNoDetection[detectorType] = floatValue
@@ -210,7 +210,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			sumDisbelief := 0.0
 
 			for i := 0; i < 8; i++ {
-				detector := core.MisbehaviorDetector(7 - i)
+				detector := trustsource.MisbehaviorDetector(7 - i)
 				if string(binaryFormat[i]) == "0" {
 					sumWeights = sumWeights + mbdWeightsNoDetection[detector]
 					sumBelief = sumBelief + mbdWeightsNoDetection[detector]
@@ -234,108 +234,6 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 	//TODO: return TSQs with local mbdWeightsDetection, etc.
 
 	return []core.TrustSourceQuantifier{tchQuantifier, mbdQuantifier}, nil
-}
-
-var trustSourceQuantifiers = []core.TrustSourceQuantifier{
-	{
-		Trustor:     "V_ego",
-		Trustee:     "V_*",
-		Scope:       "C_*_*",
-		TrustSource: core.TCH,
-		Evidence:    []core.EvidenceType{core.TCH_SECURE_BOOT, core.TCH_SECURE_OTA, core.TCH_ACCESS_CONTROL, core.TCH_APPLICATION_ISOLATION, core.TCH_CONTROL_FLOW_INTEGRITY, core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-			sl, _ := subjectivelogic.NewOpinion(.0, .0, 1.0, 0.5)
-
-			fmt.Printf("%+v ", defaultTCHExistenceWeights)
-
-			var sum = 0.0
-			for _, val := range defaultTCHExistenceWeights {
-				sum += val
-			}
-
-			if sum > 1.0 { // sum of existence weights is not allowed to exceed 1.0
-				log.Fatalf("Sum existence weights of the TCH trust source exceeds 1.0")
-			}
-
-			belief := 0.0
-			disbelief := 0.0
-			//uncertainty := 1.0
-
-			for control, appraisal := range m {
-				delta, ok := defaultTCHExistenceWeights[control]
-
-				if ok { // Only if control is one of the foreseen controls, belief and disbelief will be adjusted
-					if appraisal == -1 { // control not implemented
-						disbelief = disbelief + delta
-						//uncertainty = uncertainty - delta
-					} else if appraisal == 0 {
-						if defaultTCHOutputWeights[control] == 0 { // still add belief
-							belief = belief + delta
-							//uncertainty = uncertainty - delta
-						} else if defaultTCHOutputWeights[control] == 1 { // add disbelief
-							disbelief = disbelief + delta
-							//uncertainty = uncertainty - delta
-						} else if defaultTCHOutputWeights[control] == 2 { // complete disbelief
-							belief = 0.0
-							disbelief = 1.0
-							//uncertainty = 0.0
-							break // complete disbelief because negative evidence of critical securityControl
-						} else {
-							// Invalid weight
-							// TODO: Error handling
-						}
-					} else if appraisal == 1 {
-						belief = belief + delta
-						//uncertainty = uncertainty - delta
-					} else {
-						// No evidence for the control, e.g. appraisal -2 or no evidence received -> Results in higher uncertainty
-					}
-				}
-			}
-
-			sl.Modify(belief, disbelief, 1-belief-disbelief, sl.BaseRate())
-
-			return &sl
-		},
-	},
-	{
-		Trustor:     "V_ego",
-		Trustee:     "C_*_*",
-		Scope:       "C_*_*",
-		TrustSource: core.MBD,
-		Evidence:    []core.EvidenceType{core.MBD_MISBEHAVIOR_REPORT},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-			binaryFormat := strconv.FormatInt(int64(m[core.MBD_MISBEHAVIOR_REPORT]), 2)
-
-			for i := len(binaryFormat); i < 8; i++ {
-				binaryFormat = "0" + binaryFormat
-			}
-
-			sumWeights := 0.0
-			sumBelief := 0.0
-			sumDisbelief := 0.0
-
-			for i := 0; i < 8; i++ {
-				detector := core.MisbehaviorDetector(7 - i)
-				if string(binaryFormat[i]) == "0" {
-					sumWeights = sumWeights + defaultMBDWeightsNoDetection[detector]
-					sumBelief = sumBelief + defaultMBDWeightsNoDetection[detector]
-				} else {
-					sumWeights = sumWeights + defaultMBDWeightsDetection[detector]
-					sumDisbelief = sumDisbelief + defaultMBDWeightsDetection[detector]
-				}
-			}
-
-			exponentialValue := -math.Pow(1.3, -float64(sumWeights)) + 1
-			belief := (sumBelief / sumWeights) * exponentialValue
-			disbelief := (sumDisbelief / sumWeights) * exponentialValue
-			//uncertainty := 1 - exponentialValue
-
-			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-belief-disbelief, 0.5)
-
-			return &sl
-		},
-	},
 }
 
 func init() {

@@ -19,9 +19,10 @@ type TrustModelTemplate struct {
 
 func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
 
-	//Extract list of used trust sources from trustSourceQuantifierInstances
+	//Extract list of used trust sources from TrustSourceQuantifiers
+	tsqs, _ := createTrustSourceQuantifiers(nil)
 	evidenceMap := make(map[core.EvidenceType]bool)
-	for _, quantifier := range trustSourceQuantifiers {
+	for _, quantifier := range tsqs {
 		for _, evidence := range quantifier.Evidence {
 			evidenceMap[evidence] = true
 		}
@@ -70,20 +71,18 @@ func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]st
 	initialParams := t.params
 	newParams := params
 	params = map[string]string{}
-	//add parameters set at Spawn()
+	//add parameters set at Spawn() call
 	if initialParams != nil {
 		for key, value := range initialParams {
 			params[key] = value
 		}
 	}
-	//add parameters set at OnNewVehicle()
+	//add/overwrite parameters set at OnNewVehicle() call
 	if newParams != nil {
 		for key, value := range newParams {
 			params[key] = value
 		}
 	}
-
-	//TODO: use params to set weights at runtime
 
 	return &TrustModelInstance{
 		id:        identifier,
@@ -101,9 +100,4 @@ func (t TrustModelTemplate) Identifier() string {
 func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
 	// TODO: implement
 	return t.evidenceTypes
-}
-
-func (t TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
-	//return trustSourceQuantifiers
-	return []core.TrustSourceQuantifier{}
 }
