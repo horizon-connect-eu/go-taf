@@ -601,7 +601,6 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errMsg,
 			SessionID:              sessionID,
-			SubscriptionID:         nil,
 			Success:                nil,
 		}
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
