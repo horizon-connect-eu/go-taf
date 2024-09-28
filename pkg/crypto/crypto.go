@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"log/slog"
 )
 
@@ -106,14 +107,39 @@ func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	if cr.cryptoEnabled {
 		nonceByteArray, err := crypto.FromHexToByteArray(notify.AivEvidence.Nonce)
 		if err != nil {
-			return false, errors.New("failed to decode nonce from AIV_RESPONSE")
+			return false, errors.New("failed to decode nonce from AIV_NOTIFY")
 		}
 		trusteeReportByteStream, err := json.Marshal(notify.TrusteeReports)
 		if err != nil {
-			return false, errors.New("failed to decode trustee report from AIV_RESPONSE")
+			return false, errors.New("failed to decode trustee report from AIV_NOTIFY")
 		}
 		byteStreamToBeSigned := append(nonceByteArray, trusteeReportByteStream...)
 		verificationResult, err := crypto.Verify(byteStreamToBeSigned, notify.AivEvidence.Signature, notify.AivEvidence.KeyRef+".pem")
+		if err != nil {
+			return false, err
+		} else {
+			return verificationResult, nil
+		}
+	} else {
+		//Don't do anything
+		return true, nil
+	}
+}
+
+func (cr *Crypto) VerifyTchNotify(notify *tchmsg.TchNotify) (bool, error) {
+	if cr.cryptoEnabled {
+		/*
+			nonceByteArray, err := crypto.FromHexToByteArray(notify.?)
+			if err != nil {
+				return false, errors.New("failed to decode nonce from AIV_RESPONSE")
+			}
+		*/
+		trusteeReportByteStream, err := json.Marshal(notify.TchReport)
+		if err != nil {
+			return false, errors.New("failed to decode trustee report from AIV_RESPONSE")
+		}
+		byteStreamToBeSigned := trusteeReportByteStream //append(nonceByteArray, trusteeReportByteStream...)
+		verificationResult, err := crypto.Verify(byteStreamToBeSigned, notify.Evidence.Signature, notify.Evidence.KeyRef+".pem")
 		if err != nil {
 			return false, err
 		} else {
