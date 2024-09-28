@@ -2,8 +2,8 @@ package trustsource
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
-	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/util"
@@ -36,27 +36,27 @@ type Manager struct {
 	//Schema:ResponseID->Callback
 	pendingMessageCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command)
 	//subscriptionID->TMI ID
-	subscriptionIDtoFullTMI map[string]string
-	//TMI ID:subscriptionID->bool
-	fullTMItoSubscriptionID map[string]map[string]core.TrustSource
-	//subscriptionID:Trustee:Source:EvidenceType->Value
-	subscriptionEvidence map[string]map[string]map[core.TrustSource]map[core.EvidenceType]int
-	//subscriptionID:Trustee:Source->QuantifierFunc
-	subscriptionQuantifiers map[string]map[string]map[core.TrustSource]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion
+
+	//Trust Source: Session ID -> TrustSourceQuantifiers
+	trustSourceSubscriptions map[core.TrustSource]map[string][]core.TrustSourceQuantifier
+	//Trust Source: Trustee ID: Evidence Type -> value
+	latestSubscriptionEvidence map[core.TrustSource]map[string]map[core.EvidenceType]int
+	//Trust Source: Subscription ID -> true
+	subscriptions map[core.TrustSource]map[string]bool
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tsm := &Manager{
-		config:                  tafContext.Configuration,
-		tafContext:              tafContext,
-		logger:                  logging.CreateChildLogger(tafContext.Logger, "TSM"),
-		crypto:                  tafContext.Crypto,
-		outbox:                  channels.OutgoingMessageChannel,
-		fullTMItoSubscriptionID: make(map[string]map[string]core.TrustSource),
-		subscriptionIDtoFullTMI: make(map[string]string),
-		subscriptionEvidence:    make(map[string]map[string]map[core.TrustSource]map[core.EvidenceType]int),
-		subscriptionQuantifiers: make(map[string]map[string]map[core.TrustSource]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion),
+		config:                     tafContext.Configuration,
+		tafContext:                 tafContext,
+		logger:                     logging.CreateChildLogger(tafContext.Logger, "TSM"),
+		crypto:                     tafContext.Crypto,
+		outbox:                     channels.OutgoingMessageChannel,
+		trustSourceSubscriptions:   make(map[core.TrustSource]map[string][]core.TrustSourceQuantifier),
+		latestSubscriptionEvidence: make(map[core.TrustSource]map[string]map[core.EvidenceType]int),
+		subscriptions:              make(map[core.TrustSource]map[string]bool),
 	}
+	tsm.logger.Info("Initializing Trust Source Manager")
 
 	tsm.pendingMessageCallbacks = map[messages.MessageSchema]map[string]func(cmd core.Command){
 		messages.AIV_SUBSCRIBE_RESPONSE:   make(map[string]func(cmd core.Command)),
@@ -66,13 +66,26 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		messages.AIV_RESPONSE:             make(map[string]func(cmd core.Command)),
 	}
 
-	tsm.logger.Info("Initializing Trust Source Manager")
 	return tsm, nil
 }
 
 func (tsm *Manager) SetManagers(managers manager.TafManagers) {
 	tsm.tam = managers.TAM
 	tsm.tmm = managers.TMM
+
+	//With access to the TMM, we can now check the available TMTs for potential trust sources requested later on
+	potentialTrustSources := make(map[core.TrustSource]bool)
+	for _, tmt := range tsm.tmm.GetAllTMTs() {
+		for _, evidence := range tmt.EvidenceTypes() {
+			potentialTrustSources[evidence.Source()] = true
+		}
+	}
+	//For each type of trust source, initialize some data structures
+	for trustSourceType := range potentialTrustSources {
+		tsm.trustSourceSubscriptions[trustSourceType] = make(map[string][]core.TrustSourceQuantifier)
+		tsm.latestSubscriptionEvidence[trustSourceType] = make(map[string]map[core.EvidenceType]int)
+		tsm.subscriptions[trustSourceType] = make(map[string]bool)
+	}
 }
 
 /* ------------ ------------ AIV Message Handling ------------ ------------ */
@@ -135,31 +148,49 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 		}
 	}
 
-	subscriptionID := *cmd.Notify.SubscriptionID
-	tmiID, exists := tsm.subscriptionIDtoFullTMI[subscriptionID]
+	//Check whether subscription is known, otherwise return
+	_, exists := tsm.subscriptions[core.AIV][cmd.Notify.SubscriptionID]
 	if !exists {
+		tsm.logger.Warn("Unknown subscription for AIV_NOTIFY, discarding message", "Subscription ID", cmd.Notify.SubscriptionID)
 		return
 	}
 
-	updates := make([]core.Update, 0)
-
+	//extract raw evidence from the message and store it into latestEvidence
+	updatedTrustees := make(map[string]bool)
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
-		for _, report := range trusteeReport.AttestationReport {
-			evidence := report.Claim
-			tsm.logger.Debug("Received new evidence from AIV", "SubscriptionID", subscriptionID, "Source", core.AIV.String(), "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
-			tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV][core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
+		trusteeID := *trusteeReport.TrusteeID
+		for _, attestationReport := range trusteeReport.AttestationReport {
+			if tsm.latestSubscriptionEvidence[core.AIV][trusteeID] == nil {
+				tsm.latestSubscriptionEvidence[core.AIV][trusteeID] = make(map[core.EvidenceType]int)
+			}
+			//TODO: Discuss with Artur: Reset tsm.latestEvidence[core.AIV][id][evidenceType] map or keep previous evidence values?
+			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
+			value := int(attestationReport.Appraisal)
+			tsm.latestSubscriptionEvidence[core.AIV][trusteeID][evidenceType] = value
+			updatedTrustees[trusteeID] = true
 		}
-		evidence := tsm.subscriptionEvidence[subscriptionID][*trusteeReport.TrusteeID][core.AIV]
-		//call quantifier
-		ato := tsm.subscriptionQuantifiers[subscriptionID][*trusteeReport.TrusteeID][core.AIV](evidence)
-		tsm.logger.Info("Opinion for " + *trusteeReport.TrusteeID + ": " + ato.String())
-		//create update operation
-		update := trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", *trusteeReport.TrusteeID, core.AIV)
-		updates = append(updates, update)
 	}
-	if len(updates) > 0 {
-		tmiUpdateCmd := command.CreateHandleTMIUpdate(tmiID, updates...)
-		tsm.tam.DispatchToWorkerByFullTMIID(tmiID, tmiUpdateCmd) //TODO:fix
+
+	//Iterate over all sessions register for AIV, call quantifiers and relay updates
+	for sessionId, tsqs := range tsm.trustSourceSubscriptions[core.AIV] {
+		sess := tsm.tam.Sessions()[sessionId]
+		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+		updates := make([]core.Update, 0)
+		for trustee := range updatedTrustees {
+			for _, tsq := range tsqs {
+				if tsq.Trustee == trustee { //TODO
+					ato := tsq.Quantifier(tsm.latestSubscriptionEvidence[core.AIV][trustee])
+					tsm.logger.Info("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", tsm.latestSubscriptionEvidence[core.AIV][trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.AIV))
+				}
+			}
+		}
+		if len(updates) > 0 {
+			for tmiID, fullTmiID := range sess.TrustModelInstances() {
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				tsm.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
+			}
+		}
 	}
 }
 
@@ -186,261 +217,220 @@ func (tsm *Manager) HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdm
 }
 
 func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
-	tsm.logger.Info("TODO: handle MBD_NOTIFY")
-	util.UNUSED(cmd)
+
+	//Check whether subscription is known, otherwise return
+	_, exists := tsm.subscriptions[core.MBD][cmd.Notify.SubscriptionID]
+	if !exists {
+		tsm.logger.Warn("Unknown subscription for MBD_NOTIFY, discarding message", "Subscription ID", cmd.Notify.SubscriptionID)
+		return
+	}
+
+	updatedTrustees := make(map[string]bool)
+	sourceID := cmd.Notify.CpmReport.Content.V2XPduEvidence.SourceID
+	for _, observation := range cmd.Notify.CpmReport.Content.ObservationSet {
+		id := fmt.Sprintf("C_%d_%d", int(sourceID), int(observation.TargetID))
+		if tsm.latestSubscriptionEvidence[core.MBD][id] == nil {
+			tsm.latestSubscriptionEvidence[core.MBD][id] = make(map[core.EvidenceType]int)
+		}
+		tsm.latestSubscriptionEvidence[core.MBD][id][core.MBD_MISBEHAVIOR_REPORT] = int(observation.Check)
+		updatedTrustees[id] = true
+	}
+
+	//Iterate over all sessions register for MBD, call quantifiers and relay updates
+	for sessionId, tsqs := range tsm.trustSourceSubscriptions[core.MBD] {
+		sess := tsm.tam.Sessions()[sessionId]
+		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+		updates := make([]core.Update, 0)
+		for trustee := range updatedTrustees {
+			for _, tsq := range tsqs {
+				if tsq.Trustor == "V_ego" && tsq.Trustee == "C_*_*" {
+					ato := tsq.Quantifier(tsm.latestSubscriptionEvidence[core.MBD][trustee])
+					tsm.logger.Info("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", tsm.latestSubscriptionEvidence[core.MBD][trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.MBD))
+				}
+			}
+		}
+		if len(updates) > 0 {
+			for tmiID, fullTmiID := range sess.TrustModelInstances() {
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				tsm.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
+			}
+		}
+	}
 }
+
+/* ------------ ------------ TCH Message Handling ------------ ------------ */
 
 func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
-	tsm.logger.Info("TODO: handle TCH_NOTIFY")
-	util.UNUSED(cmd)
-}
-
-func (tsm *Manager) SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler) {
-
-	//When no handler has been set, create empty one
-	if handler == nil {
-		handler = completionhandler.New(func() {}, func(err error) {
-		})
-		defer handler.Execute()
+	valid, err := tsm.crypto.VerifyTchNotify(&cmd.Notify)
+	if err != nil {
+		tsm.logger.Error("Error verifying TCH_NOTIFY", "Cause", err)
+		return
 	}
-
-	subscriptions := make(map[core.TrustSource]map[string][]core.EvidenceType)
-	quantifiers := make(map[core.TrustSource]core.Quantifier)
-
-	for _, item := range session.TrustSourceQuantifiers() {
-
-		quantifiers[item.TrustSource] = item.Quantifier
-		for _, evidence := range item.Evidence {
-			if subscriptions[evidence.Source()] == nil {
-				subscriptions[evidence.Source()] = make(map[string][]core.EvidenceType)
-			}
-			if subscriptions[evidence.Source()][item.Trustee] == nil {
-				subscriptions[evidence.Source()][item.Trustee] = make([]core.EvidenceType, 0)
-			}
-			subscriptions[evidence.Source()][item.Trustee] = append(subscriptions[evidence.Source()][item.Trustee], evidence)
-
-		}
-	}
-
-	for source, trustees := range subscriptions {
-		switch source {
-		case core.AIV:
-
-			//Assumption: If we are using AIV, we already have a single TMI.
-			var trustModelInstanceID string
-			for _, fullTMI := range session.TrustModelInstances() {
-				trustModelInstanceID = fullTMI
-				break
-			}
-
-			subscribeField := make([]aivmsg.Subscribe, 0)
-
-			for trusteeID, evidenceList := range trustees {
-
-				evidenceStringList := make([]string, 0)
-				for _, evidence := range evidenceList {
-					evidenceStringList = append(evidenceStringList, evidence.String())
-				}
-
-				subscribeField = append(subscribeField, aivmsg.Subscribe{
-					TrusteeID:       trusteeID,
-					RequestedClaims: evidenceStringList,
-				})
-			}
-
-			subMsg := aivmsg.AivSubscribeRequest{
-				AttestationCertificate: tsm.crypto.AttestationCertificate(),
-				CheckInterval:          int64(tsm.config.Evidence.AIV.CheckInterval),
-				Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
-				Subscribe:              subscribeField,
-			}
-			err := tsm.crypto.SignAivSubscribeRequest(&subMsg)
-			util.UNUSED(err)
-			subReqId := tsm.GenerateRequestId()
-			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
-			if err != nil {
-				tsm.logger.Error("Error marshalling response", "error", err)
-			}
-
-			resolve, reject := handler.Register()
-
-			tsm.RegisterCallback(messages.AIV_SUBSCRIBE_RESPONSE, subReqId, func(recvCmd core.Command) {
-				switch cmd := recvCmd.(type) {
-				case command.HandleResponse[aivmsg.AivSubscribeResponse]:
-					if cmd.Response.Error != nil {
-						reject(errors.New(*cmd.Response.Error))
-						return
-					}
-
-					//add to map: TMI=>sub ID
-					_, exists := tsm.fullTMItoSubscriptionID[trustModelInstanceID]
-					if !exists {
-						tsm.fullTMItoSubscriptionID[trustModelInstanceID] = make(map[string]core.TrustSource)
-					}
-					tsm.fullTMItoSubscriptionID[trustModelInstanceID][*cmd.Response.SubscriptionID] = core.AIV
-
-					//add to map: sub ID=>TMI
-					tsm.subscriptionIDtoFullTMI[*cmd.Response.SubscriptionID] = trustModelInstanceID
-
-					//create deeper maps
-					tsm.subscriptionEvidence[*cmd.Response.SubscriptionID] = make(map[string]map[core.TrustSource]map[core.EvidenceType]int)
-					tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID] = make(map[string]map[core.TrustSource]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion)
-
-					for trusteeID, evidenceList := range trustees {
-						tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID] = make(map[core.TrustSource]map[core.EvidenceType]int)
-						tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID][core.AIV] = make(map[core.EvidenceType]int)
-						tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID][trusteeID] = make(map[core.TrustSource]func(map[core.EvidenceType]int) subjectivelogic.QueryableOpinion)
-						tsm.subscriptionQuantifiers[*cmd.Response.SubscriptionID][trusteeID][core.AIV] = quantifiers[core.AIV]
-						for _, evidence := range evidenceList {
-							tsm.subscriptionEvidence[*cmd.Response.SubscriptionID][trusteeID][core.AIV][evidence] = MISSING_EVIDENCE
-						}
-					}
-					resolve()
-				default:
-					reject(errors.New("Unknown response type: " + cmd.Type().String()))
-				}
-			})
-			//Send response message
-			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
-
-		case core.MBD:
-			subMsg := mbdmsg.MBDSubscribeRequest{
-				AttestationCertificate: tsm.crypto.AttestationCertificate(),
-				Subscribe:              true,
-			}
-			subReqId := tsm.GenerateRequestId()
-			bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
-			if err != nil {
-				tsm.logger.Error("Error marshalling response", "error", err)
-			}
-
-			resolve, reject := handler.Register()
-			tsm.RegisterCallback(messages.MBD_SUBSCRIBE_RESPONSE, subReqId, func(recvCmd core.Command) {
-				switch cmd := recvCmd.(type) {
-				case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
-					if cmd.Response.Error != nil {
-						reject(errors.New(*cmd.Response.Error))
-						//TODO: remove session for MBD
-						return
-					} else {
-						//TODO: implement
-						tsm.logger.Warn(*cmd.Response.SubscriptionID)
-						resolve()
-					}
-				default:
-					reject(errors.New("Unknown response type: " + cmd.Type().String()))
-				}
-			})
-			//Send response message
-			tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
-			util.UNUSED(subReqId)
-		case core.TCH:
-			tsm.logger.Warn("TCH sub must be implemented")
-			//Nothing to do here (yet)
-		default:
-			panic("unknown Trust Source")
-		}
-	}
-}
-
-func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler) {
-
-	//When no handler has been set, create empty one
-	if handler == nil {
-		handler = completionhandler.New(func() {}, func(err error) {
-		})
-		defer handler.Execute()
-	}
-
-	//Collect TMIs
-	tMIs := make([]string, 0)
-	for _, tmi := range session.TrustModelInstances() {
-		tMIs = append(tMIs, tmi)
-	}
-
-	//TODO: Check whether this still works with 0 or multiple TMIs per session!
-	for _, trustModelInstanceID := range tMIs {
-		//Get Subscription ID(s) for TMI ID
-		subIDs, exists := tsm.fullTMItoSubscriptionID[trustModelInstanceID]
-		if !exists {
-			_, reject := handler.Register()
-			reject(errors.New("Unknown trust model instance ID: " + trustModelInstanceID))
+	if !valid {
+		if tsm.config.Crypto.IgnoreVerificationResults {
+			tsm.logger.Warn("\n********************** WARNING **********************\n*   Ignoring failed TCH_NOTIFY verification     *\n************************ WARNING ********************")
+		} else {
+			tsm.logger.Warn("TCH_NOTIFY could not be verified, discarding message")
 			return
 		}
-		for subID, source := range subIDs {
+	}
 
-			resolve, reject := handler.Register()
+	//extract raw evidence from the message and store it into latestEvidence
+	trusteeID := cmd.Notify.TchReport.TrusteeID
+	updatedTrustees := make(map[string]bool)
+	for _, trusteeReport := range cmd.Notify.TchReport.TrusteeReports {
+		componentID := trusteeReport.ComponentID
+		for _, attestationReport := range trusteeReport.AttestationReport {
+			id := trusteeID
+			if componentID != nil {
+				id = fmt.Sprintf("%s_%s", trusteeID, *componentID)
+			}
+			if tsm.latestSubscriptionEvidence[core.TCH][id] == nil {
+				tsm.latestSubscriptionEvidence[core.TCH][id] = make(map[core.EvidenceType]int)
+			}
+			//TODO: Discuss with Artur: Reset tsm.latestEvidence[core.AIV][id][evidenceType] map or keep previous evidence values?
+			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
+			value := int(attestationReport.Appraisal)
+			tsm.latestSubscriptionEvidence[core.TCH][id][evidenceType] = value
+			updatedTrustees[id] = true
+		}
+	}
 
-			switch source {
-			case core.AIV:
-				unsubMsg := aivmsg.AivUnsubscribeRequest{
-					AttestationCertificate: tsm.crypto.AttestationCertificate(),
-					SubscriptionID:         subID,
+	//Iterate over all sessions register for TCH, call quantifiers and relay updates
+	for sessionId, tsqs := range tsm.trustSourceSubscriptions[core.TCH] {
+		sess := tsm.tam.Sessions()[sessionId]
+		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+		updates := make([]core.Update, 0)
+		for trustee := range updatedTrustees {
+			for _, tsq := range tsqs {
+				if tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" {
+					ato := tsq.Quantifier(tsm.latestSubscriptionEvidence[core.TCH][trustee])
+					tsm.logger.Info("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", tsm.latestSubscriptionEvidence[core.TCH][trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", "V_"+trustee, core.TCH))
 				}
-				unsubReqId := tsm.GenerateRequestId()
-				bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
-				if err != nil {
-					tsm.logger.Error("Error marshalling response", "error", err)
-				}
-				tsm.RegisterCallback(messages.AIV_UNSUBSCRIBE_RESPONSE, unsubReqId, func(recvCmd core.Command) {
-					switch cmd := recvCmd.(type) {
-					case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
-						if cmd.Response.Error != nil {
-							reject(errors.New(*cmd.Response.Error))
-							return
-						}
-						//delete associated data structures/lookups
-						delete(tsm.subscriptionIDtoFullTMI, subID)
-						delete(tsm.subscriptionEvidence, subID)
-						delete(tsm.subscriptionQuantifiers, subID)
-						delete(tsm.fullTMItoSubscriptionID[trustModelInstanceID], subID)
-
-						tsm.logger.Debug("Unregistering Subscription " + subID)
-
-						resolve()
-					default:
-						reject(errors.New("Unknown response type: " + cmd.Type().String()))
-					}
-				})
-				tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
-			case core.MBD:
-				unsubMsg := mbdmsg.MBDUnsubscribeRequest{
-					AttestationCertificate: tsm.crypto.AttestationCertificate(),
-					SubscriptionID:         subID,
-				}
-				unsubReqId := tsm.GenerateRequestId()
-				bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
-				if err != nil {
-					tsm.logger.Error("Error marshalling response", "error", err)
-				}
-				tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_REQUEST, unsubReqId, func(recvCmd core.Command) {
-					switch cmd := recvCmd.(type) {
-					case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
-						if cmd.Response.Error != nil {
-							reject(errors.New(*cmd.Response.Error))
-							return
-						}
-						//delete associated data structures/lookups
-						delete(tsm.subscriptionIDtoFullTMI, subID)
-						delete(tsm.subscriptionEvidence, subID)
-						delete(tsm.subscriptionQuantifiers, subID)
-						delete(tsm.fullTMItoSubscriptionID[trustModelInstanceID], subID)
-
-						tsm.logger.Debug("Unregistering Subscription " + subID)
-
-						resolve()
-					default:
-						reject(errors.New("Unknown response type: " + cmd.Type().String()))
-					}
-				})
-				tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
-			case core.TCH:
-				//Nothing to do here (yet)
-			default:
-				panic("unknown Trust Source")
+			}
+		}
+		if len(updates) > 0 {
+			for tmiID, fullTmiID := range sess.TrustModelInstances() {
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				tsm.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
 			}
 		}
 	}
+}
+
+/* ------------ ------------ TrustSourceQuantifier  Handling ------------ ------------ */
+
+func (tsm *Manager) SubscribeTrustSourceQuantifiers(sess session.Session, handler *completionhandler.CompletionHandler) {
+
+	tsm.logger.Warn("SubscribeTrustSourceQuantifiers called")
+
+	//When no handler has been set, create empty one
+	if handler == nil {
+		handler = completionhandler.New(func() {}, func(err error) {
+		})
+		defer handler.Execute()
+	}
+
+	trustSources := make(map[core.TrustSource]bool)
+	for _, tsq := range sess.TrustSourceQuantifiers() {
+		trustSources[tsq.TrustSource] = true
+	}
+
+	for trustSource := range trustSources {
+		switch trustSource {
+		case core.AIV:
+			tsm.addSessionToAivSubscription(sess, handler)
+		case core.MBD:
+			tsm.addSessionToMbdSubscription(sess, handler)
+		case core.TCH:
+			tsm.addSessionToTchSubscription(sess, handler)
+		default:
+			//nothing to do
+		}
+	}
+}
+
+func (tsm *Manager) addSessionToTrustSourceSubscription(session session.Session, handler *completionhandler.CompletionHandler, trustSource core.TrustSource) {
+	tsqs := make([]core.TrustSourceQuantifier, 0)
+	for _, tsq := range session.TrustSourceQuantifiers() {
+		if tsq.TrustSource == trustSource {
+			tsqs = append(tsqs, tsq)
+		}
+	}
+	tsm.trustSourceSubscriptions[trustSource][session.ID()] = tsqs
+}
+
+func (tsm *Manager) addSessionToAivSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	tsm.addSessionToTrustSourceSubscription(session, handler, core.AIV)
+	//TODO: only subscribe if there is no subscription and no subscription
+	tsm.subscribeAIV(handler)
+}
+func (tsm *Manager) addSessionToMbdSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	tsm.addSessionToTrustSourceSubscription(session, handler, core.MBD)
+	//TODO: only subscribe if there is no subscription and no subscription
+	tsm.subscribeMBD(handler)
+}
+func (tsm *Manager) addSessionToTchSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	tsm.addSessionToTrustSourceSubscription(session, handler, core.TCH)
+}
+
+func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(sess session.Session, handler *completionhandler.CompletionHandler) {
+	//When no handler has been set, create empty one
+	if handler == nil {
+		handler = completionhandler.New(func() {}, func(err error) {
+		})
+		defer handler.Execute()
+	}
+
+	trustSources := make(map[core.TrustSource]bool)
+	for _, tsq := range sess.TrustSourceQuantifiers() {
+		trustSources[tsq.TrustSource] = true
+	}
+
+	for trustSource := range trustSources {
+		switch trustSource {
+		case core.AIV:
+			tsm.removeSessionFromAivSubscription(sess, handler)
+		case core.MBD:
+			tsm.removeSessionFromMbdSubscription(sess, handler)
+		case core.TCH:
+			tsm.removeSessionFromTchSubscription(sess, handler)
+		default:
+			//nothing to do
+		}
+	}
+}
+
+func (tsm *Manager) removeSessionFromAivSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	delete(tsm.trustSourceSubscriptions[core.AIV], session.ID())
+	//TODO: implement more robustly
+	if len(tsm.trustSourceSubscriptions[core.AIV]) == 0 {
+		var subId string
+		for key := range tsm.subscriptions[core.AIV] {
+			subId = key
+			break
+		}
+		tsm.unsubscribeAIV(subId, handler)
+	}
+}
+
+func (tsm *Manager) removeSessionFromMbdSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	delete(tsm.trustSourceSubscriptions[core.MBD], session.ID())
+	//TODO: implement more robustly
+	if len(tsm.trustSourceSubscriptions[core.MBD]) == 0 {
+		var subId string
+		for key := range tsm.subscriptions[core.MBD] {
+			subId = key
+			break
+		}
+		tsm.unsubscribeMBD(subId, handler)
+	}
+}
+
+func (tsm *Manager) removeSessionFromTchSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
+	delete(tsm.trustSourceSubscriptions[core.TCH], session.ID())
 }
 
 /*
@@ -455,17 +445,17 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 	query := make(map[core.TrustSource]map[string][]core.EvidenceType)
 	quantifiers := make(map[core.TrustSource]core.Quantifier)
 
-	for _, item := range session.TrustSourceQuantifiers() {
+	for _, tsq := range session.TrustSourceQuantifiers() {
 
-		quantifiers[item.TrustSource] = item.Quantifier
-		for _, evidence := range item.Evidence {
+		quantifiers[tsq.TrustSource] = tsq.Quantifier
+		for _, evidence := range tsq.Evidence {
 			if query[evidence.Source()] == nil {
 				query[evidence.Source()] = make(map[string][]core.EvidenceType)
 			}
-			if query[evidence.Source()][item.Trustee] == nil {
-				query[evidence.Source()][item.Trustee] = make([]core.EvidenceType, 0)
+			if query[evidence.Source()][tsq.Trustee] == nil {
+				query[evidence.Source()][tsq.Trustee] = make([]core.EvidenceType, 0)
 			}
-			query[evidence.Source()][item.Trustee] = append(query[evidence.Source()][item.Trustee], evidence)
+			query[evidence.Source()][tsq.Trustee] = append(query[evidence.Source()][tsq.Trustee], evidence)
 
 		}
 	}
@@ -533,8 +523,166 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 	}
 }
 
+func (tsm *Manager) subscribeAIV(handler *completionhandler.CompletionHandler) {
+
+	trustees := make(map[string][]core.EvidenceType)
+	for _, session := range tsm.tam.Sessions() { //TODO: potential bug if some TMTs are not yet in use but require AIV as well
+		for _, tsq := range session.TrustSourceQuantifiers() {
+			for _, evidence := range tsq.Evidence {
+				if trustees[tsq.Trustee] == nil {
+					trustees[tsq.Trustee] = make([]core.EvidenceType, 0)
+				}
+				trustees[tsq.Trustee] = append(trustees[tsq.Trustee], evidence)
+			}
+		}
+	}
+
+	subscribeField := make([]aivmsg.Subscribe, 0)
+	for trusteeID, evidenceList := range trustees {
+
+		evidenceStringList := make([]string, 0)
+		for _, evidence := range evidenceList {
+			evidenceStringList = append(evidenceStringList, evidence.String())
+		}
+
+		subscribeField = append(subscribeField, aivmsg.Subscribe{
+			TrusteeID:       trusteeID,
+			RequestedClaims: evidenceStringList,
+		})
+	}
+
+	subMsg := aivmsg.AivSubscribeRequest{
+		AttestationCertificate: tsm.crypto.AttestationCertificate(),
+		CheckInterval:          int64(tsm.config.Evidence.AIV.CheckInterval),
+		Evidence:               aivmsg.AIVSUBSCRIBEREQUESTEvidence{},
+		Subscribe:              subscribeField,
+	}
+	err := tsm.crypto.SignAivSubscribeRequest(&subMsg)
+	util.UNUSED(err)
+	subReqId := tsm.GenerateRequestId()
+	bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
+	if err != nil {
+		tsm.logger.Error("Error marshalling response", "error", err)
+	}
+
+	resolve, reject := handler.Register()
+
+	tsm.RegisterCallback(messages.AIV_SUBSCRIBE_RESPONSE, subReqId, func(recvCmd core.Command) {
+		switch cmd := recvCmd.(type) {
+		case command.HandleResponse[aivmsg.AivSubscribeResponse]:
+			if cmd.Response.Error != nil {
+				reject(errors.New(*cmd.Response.Error))
+				return
+			}
+			tsm.logger.Info("AIV Subscription ID" + *cmd.Response.SubscriptionID)
+			tsm.subscriptions[core.AIV][*cmd.Response.SubscriptionID] = true
+			resolve()
+		default:
+			reject(errors.New("Unknown response type: " + cmd.Type().String()))
+		}
+	})
+	//Send response message
+	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
+}
+
+func (tsm *Manager) subscribeMBD(handler *completionhandler.CompletionHandler) {
+	subMsg := mbdmsg.MBDSubscribeRequest{
+		AttestationCertificate: tsm.crypto.AttestationCertificate(),
+		Subscribe:              true,
+	}
+	subReqId := tsm.GenerateRequestId()
+	bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_SUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, subReqId, subMsg)
+	if err != nil {
+		tsm.logger.Error("Error marshalling response", "error", err)
+	}
+
+	resolve, reject := handler.Register()
+	tsm.RegisterCallback(messages.MBD_SUBSCRIBE_RESPONSE, subReqId, func(recvCmd core.Command) {
+		switch cmd := recvCmd.(type) {
+		case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
+			if cmd.Response.Error != nil {
+				reject(errors.New(*cmd.Response.Error))
+				//TODO: cleanup?
+				return
+			} else {
+				tsm.logger.Info("MBD Subscription ID" + *cmd.Response.SubscriptionID)
+				tsm.subscriptions[core.MBD][*cmd.Response.SubscriptionID] = true
+				resolve()
+			}
+		default:
+			reject(errors.New("Unknown response type: " + cmd.Type().String()))
+		}
+	})
+	//Send response message
+	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
+}
+
+func (tsm *Manager) unsubscribeAIV(subID string, handler *completionhandler.CompletionHandler) {
+	resolve, reject := handler.Register()
+
+	unsubMsg := aivmsg.AivUnsubscribeRequest{
+		AttestationCertificate: tsm.crypto.AttestationCertificate(),
+		SubscriptionID:         subID,
+	}
+	unsubReqId := tsm.GenerateRequestId()
+	bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.AIV_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
+	if err != nil {
+		tsm.logger.Error("Error marshalling response", "error", err)
+	}
+	tsm.RegisterCallback(messages.AIV_UNSUBSCRIBE_RESPONSE, unsubReqId, func(recvCmd core.Command) {
+		switch cmd := recvCmd.(type) {
+		case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+			if cmd.Response.Error != nil {
+				reject(errors.New(*cmd.Response.Error))
+				return
+			}
+			//delete associated data structures/lookups
+			delete(tsm.subscriptions[core.AIV], subID)
+
+			tsm.logger.Debug("Unregistering AIV Subscription " + subID)
+
+			resolve()
+		default:
+			reject(errors.New("Unknown response type: " + cmd.Type().String()))
+		}
+	})
+	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.AivEndpoint)
+}
+
+func (tsm *Manager) unsubscribeMBD(subID string, handler *completionhandler.CompletionHandler) {
+	resolve, reject := handler.Register()
+
+	unsubMsg := mbdmsg.MBDUnsubscribeRequest{
+		AttestationCertificate: tsm.crypto.AttestationCertificate(),
+		SubscriptionID:         subID,
+	}
+	unsubReqId := tsm.GenerateRequestId()
+	bytes, err := communication.BuildSubscriptionRequest(tsm.config.Communication.TafEndpoint, messages.MBD_UNSUBSCRIBE_REQUEST, tsm.config.Communication.TafEndpoint, tsm.config.Communication.TafEndpoint, unsubReqId, unsubMsg)
+	if err != nil {
+		tsm.logger.Error("Error marshalling response", "error", err)
+	}
+	tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_REQUEST, unsubReqId, func(recvCmd core.Command) {
+		switch cmd := recvCmd.(type) {
+		case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+			if cmd.Response.Error != nil {
+				reject(errors.New(*cmd.Response.Error))
+				return
+			}
+			//delete associated data structures/lookups
+			delete(tsm.subscriptions[core.MBD], subID)
+
+			tsm.logger.Debug("Unregistering MBD Subscription " + subID)
+
+			resolve()
+		default:
+			reject(errors.New("Unknown response type: " + cmd.Type().String()))
+		}
+	})
+	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
+}
+
 func (tsm *Manager) GenerateRequestId() string {
-	//When debug configuration provides fixed session ID, use this ID
+	//When debug configuration provides fixed session ID, use that ID
 	if tsm.config.Debug.FixedRequestID != "" {
 		return tsm.config.Debug.FixedRequestID
 	} else {
