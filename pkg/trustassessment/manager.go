@@ -597,7 +597,7 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 	subscriptionID := cmd.Request.SubscriptionID
 
 	sendErrorResponse := func(errMsg string) {
-		response := tasmsg.TasSubscribeResponse{
+		response := tasmsg.TasUnsubscribeResponse{
 			AttestationCertificate: tam.crypto.AttestationCertificate(),
 			Error:                  &errMsg,
 			SessionID:              sessionID,

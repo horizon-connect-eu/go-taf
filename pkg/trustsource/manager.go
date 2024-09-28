@@ -661,9 +661,9 @@ func (tsm *Manager) unsubscribeMBD(subID string, handler *completionhandler.Comp
 	if err != nil {
 		tsm.logger.Error("Error marshalling response", "error", err)
 	}
-	tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_REQUEST, unsubReqId, func(recvCmd core.Command) {
+	tsm.RegisterCallback(messages.MBD_UNSUBSCRIBE_RESPONSE, unsubReqId, func(recvCmd core.Command) {
 		switch cmd := recvCmd.(type) {
-		case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+		case command.HandleResponse[mbdmsg.MBDUnsubscribeResponse]:
 			if cmd.Response.Error != nil {
 				reject(errors.New(*cmd.Response.Error))
 				return
