@@ -757,17 +757,18 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 	tam.DispatchToWorker(session, tmiID, tmiInitCmd)
 }
 
-func (tam *Manager) RemoveTrustModelInstance(tmiID string, sessionID string) {
+func (tam *Manager) RemoveTrustModelInstance(fullTMIid string, sessionID string) {
 	sessions := tam.Sessions()
 	session, exists := sessions[sessionID]
 	if !exists {
-		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", tmiID)
+		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", fullTMIid)
 		return
 	} else {
-		tam.logger.Debug("Removing TMI from Session", "Session", sessionID, "TMI", tmiID)
-		tam.DispatchToWorker(session, tmiID, command.CreateHandleTMIDestroy(tmiID))
+		_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTMIid)
+		tam.logger.Debug("Removing TMI from Session", "Session", sessionID, "TMI", fullTMIid)
+		tam.DispatchToWorker(session, fullTMIid, command.CreateHandleTMIDestroy(fullTMIid))
 		tam.tmiTable.UnregisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
-		delete(tam.atlResults, tmiID)
+		delete(tam.atlResults, fullTMIid)
 		delete(session.TrustModelInstances(), tmiID)
 	}
 }

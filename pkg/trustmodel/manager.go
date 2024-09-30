@@ -169,7 +169,7 @@ func (tmm *Manager) handleNodeRemoved(identifier string) {
 		if session, exists := sessions[sessionID]; exists && sessions[sessionID].State() == session2.ESTABLISHED {
 			sessionTMIs := session.TrustModelInstances()
 			if _, tmiExists := sessionTMIs[tmiID]; tmiExists {
-				tmm.tam.RemoveTrustModelInstance(tmiID, sessionID)
+				tmm.tam.RemoveTrustModelInstance(fullTMIID, sessionID)
 			}
 		}
 	}
