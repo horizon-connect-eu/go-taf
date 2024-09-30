@@ -69,17 +69,6 @@ func (worker *Worker) Run() {
 	}
 }
 
-func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
-	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTMI)
-	tmi, exists := worker.tmis[cmd.FullTMI]
-	if !exists {
-		return
-	}
-	tmi.Cleanup()
-	delete(worker.tmis, cmd.FullTMI)
-	delete(worker.tmiSessions, cmd.FullTMI)
-}
-
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
 	worker.tmis[cmd.FullTMI] = cmd.TMI
@@ -93,6 +82,41 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 
 	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
 	worker.workersToTam <- atlUpdateCmd
+}
+
+func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
+	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.FullTmiID)
+
+	tmi, exists := worker.tmis[cmd.FullTmiID]
+	if !exists {
+		return
+	}
+	//sessionID, _ := worker.tmiSessions[cmd.TmiID]
+
+	//Execute TMI Updates
+	for _, update := range cmd.Updates {
+		tmi.Update(update)
+	}
+	//Run TLEE
+	atls := worker.executeTLEE(tmi)
+	//Run TDE
+	resultSet := worker.executeTDE(tmi, atls)
+
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+	worker.workersToTam <- atlUpdateCmd
+}
+
+func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
+	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTMI)
+	tmi, exists := worker.tmis[cmd.FullTMI]
+	if !exists {
+		worker.logger.Error("Unknown FULL ID: " + cmd.FullTMI)
+		return
+	}
+	tmi.Cleanup()
+	delete(worker.tmis, cmd.FullTMI)
+	delete(worker.tmiSessions, cmd.FullTMI)
+	//TODO: potential concurrency flag: send ATL update to wipe cache entry
 }
 
 func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {
@@ -125,26 +149,4 @@ func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]su
 	}
 	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), atls, projectedProbabilities, trustDecisions)
 	return resultSet
-}
-
-func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
-	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.FullTmiID)
-
-	tmi, exists := worker.tmis[cmd.FullTmiID]
-	if !exists {
-		return
-	}
-	//sessionID, _ := worker.tmiSessions[cmd.TmiID]
-
-	//Execute TMI Updates
-	for _, update := range cmd.Updates {
-		tmi.Update(update)
-	}
-	//Run TLEE
-	atls := worker.executeTLEE(tmi)
-	//Run TDE
-	resultSet := worker.executeTDE(tmi, atls)
-
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
-	worker.workersToTam <- atlUpdateCmd
 }

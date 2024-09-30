@@ -73,7 +73,7 @@ func (tmm *Manager) initializeTrustModelTemplateTypes() {
 
 func (tmm *Manager) initializeTrustModelTemplates() {
 	for tmtName, tmt := range tmm.trustModelTemplateRepo {
-		tmm.logger.Info(tmtName, "Description", tmt.Description(), "Evidence Sources", fmt.Sprintf("%+v", tmt.EvidenceTypes()), "Trust Model Type", tmt.Type())
+		tmm.logger.Debug(tmtName, "Description", tmt.Description(), "Evidence Sources", fmt.Sprintf("%+v", tmt.EvidenceTypes()), "Trust Model Type", tmt.Type())
 	}
 }
 
@@ -86,21 +86,19 @@ func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 	sender := fmt.Sprintf("%g", cmd.OneWay.SourceID)
 	tmm.v2xObserver.AddNode(sender)
 
-	//TODO: check whether RefreshCPM messages are necessary
-
+	//check whether TMIs are interesteed in RefreshCPM messages
 	targetTMIIDs := make([]string, 0)
 	for _, tmt := range tmm.trustModelTemplateRepo {
 		if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
+			//relevant TMIs must have a VEHICLE_TRIGGERED_TRUST_MODEL TMT and the TMI ID must be identical to the sender
 			results, err := tmm.tam.QueryTMIs("//*/*/" + tmt.Identifier() + "/" + sender)
 			if err == nil {
 				targetTMIIDs = append(targetTMIIDs, results...)
 			}
 		}
 	}
-
 	if len(targetTMIIDs) > 0 {
 		objects := make([]string, 0)
-
 		for _, object := range cmd.OneWay.PerceivedObjectContainer.Objects {
 			objects = append(objects, fmt.Sprintf("%g", object.ObjectID))
 		}
@@ -133,7 +131,7 @@ func (tmm *Manager) GetAllTMTs() []core.TrustModelTemplate {
 }
 
 func (tmm *Manager) handleNodeAdded(identifier string) {
-	tmm.logger.Info("New sender vehicle added", "Identifier", identifier)
+	tmm.logger.Debug("New sender vehicle added", "Identifier", identifier)
 	for sessionID, session := range tmm.tam.Sessions() {
 		if session.TrustModelTemplate().Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
 			spawner := session.DynamicSpawner()
@@ -152,7 +150,7 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 }
 
 func (tmm *Manager) handleNodeRemoved(identifier string) {
-	tmm.logger.Info("Sender vehicle removed", "Identifier", identifier)
+	tmm.logger.Debug("Sender vehicle removed", "Identifier", identifier)
 
 	targetTMIIDs := make([]string, 0)
 	for _, tmt := range tmm.trustModelTemplateRepo {

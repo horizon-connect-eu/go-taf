@@ -162,7 +162,7 @@ func (tam *Manager) generateSessionId() string {
 }
 
 func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest]) {
-	tam.logger.Info("Received TAS_INIT command", "Trust Model", cmd.Request.TrustModelTemplate)
+	tam.logger.Debug("Received TAS_INIT command", "Trust Model Template", cmd.Request.TrustModelTemplate, "Client", cmd.Sender)
 
 	sendErrorResponse := func(errorMsg string) {
 		response := tasmsg.TasInitResponse{
@@ -174,6 +174,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		//Send error message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
@@ -217,7 +218,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 				for _, nodeIdentifier := range tam.tmm.ListRecentV2XNodes() {
 					tmi, err := dynamicSpawner.OnNewVehicle(nodeIdentifier, nil)
 					if err != nil {
-						tam.logger.Warn("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
+						tam.logger.Error("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
 					} else {
 						tmi.Initialize(nil) //TODO: Params?
 						tam.AddNewTrustModelInstance(tmi, sessionId)
@@ -231,7 +232,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 
 		if tMI != nil {
 			//add new TMI to list of all TMIs of the TAM
-			tam.logger.Info("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
+			tam.logger.Debug("TMI spawned:", "TMI ID", tMI.ID(), "Session ID", newSession.ID(), "Client", newSession.Client())
 
 			//Initialize TMI
 			tMI.Initialize(nil)
@@ -251,9 +252,10 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 			Success:                &success,
 		}
 
-		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
-		if err != nil {
+		bytes, errr := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_INIT_RESPONSE, cmd.RequestID, response)
+		if errr != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		//Send response message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
@@ -278,7 +280,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 }
 
 func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.TasTeardownRequest]) {
-	tam.logger.Info("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID)
+	tam.logger.Debug("Received TAS_TEARDOWN command", "Session ID", cmd.Request.SessionID, "Client", cmd.Sender)
 	currentSession, exists := tam.sessions[cmd.Request.SessionID]
 	if !exists {
 		errorMsg := "Session ID '" + cmd.Request.SessionID + "' not found."
@@ -291,6 +293,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		//Send error message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
@@ -317,28 +320,24 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 	//TODO: force unsubscription of TAS subscription, if existing
 
-	//signal worker to destroy TMI
-	for tmiID := range currentSession.TrustModelInstances() {
-		tam.DispatchToWorker(currentSession, tmiID, command.CreateHandleTMIDestroy(tmiID))
-	}
-
-	//remove ATL cache entries for this session
-	for tmiID := range currentSession.TrustModelInstances() {
-		delete(tam.atlResults, tmiID)
-	}
-
-	//remove TMI(s) associated to this session
-	for tmiID := range currentSession.TrustModelInstances() {
+	for tmiID, fullTMIID := range currentSession.TrustModelInstances() {
+		//signal worker to destroy TMI
+		tam.DispatchToWorker(currentSession, tmiID, command.CreateHandleTMIDestroy(fullTMIID))
+		//remove ATL cache entries for this session
+		delete(tam.atlResults, fullTMIID)
+		//remove TMI(s) associated to this session
 		delete(currentSession.TrustModelInstances(), tmiID)
 	}
 
 	//remove session data
 	currentSession.TornDown()
+	tam.logger.Info("Removing session", "Session ID", currentSession.ID(), "Client", currentSession.Client())
 	delete(tam.sessions, currentSession.ID())
 
 	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TEARDOWN_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
+		return
 	}
 	//Send response message
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
@@ -346,6 +345,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 }
 
 func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest]) {
+	tam.logger.Debug("Received TAS_TA_REQUEST command", "Session ID", cmd.Request.SessionID, "Client", cmd.Sender)
 	sessionID := cmd.Request.SessionID
 
 	sendErrorResponse := func(errMsg string) {
@@ -357,6 +357,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	}
@@ -395,7 +396,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		}
 	}
 
-	tam.logger.Warn("Targets", "List", fmt.Sprintf("%v", targets))
+	tam.logger.Debug("TAS_TA_Request Query Targets", "List", fmt.Sprintf("%v", targets))
 
 	if cmd.Request.AllowCache == nil || *cmd.Request.AllowCache == true {
 		//Directly send response
@@ -428,6 +429,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_TA_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	} else {
@@ -461,6 +463,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 }
 
 func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]) {
+	tam.logger.Debug("Received TAS_SUBSCRIBE_REQUEST command", "Session ID", cmd.Request.SessionID, "Client", cmd.Sender)
 	sessionID := cmd.Request.SessionID
 
 	sendErrorResponse := func(errMsg string) {
@@ -474,6 +477,7 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 		bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	}
@@ -543,9 +547,10 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
+		return
 	}
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
-	tam.logger.Info("Subscription started", "Session ID", sessionID, "Subscription ID", subscriptionID)
+	tam.logger.Debug("TAS Subscription started", "Session ID", sessionID, "Subscription ID", subscriptionID)
 
 	//Prepare initial TAS_NOTIFY
 	var targets []string
@@ -554,7 +559,6 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 		//when no specific target is specified, use all TMIs from session
 		for _, tmiID := range tmiSession.TrustModelInstances() {
 			targets = append(targets, tmiID)
-			tam.logger.Warn("TMIID for initial target", "id", tmiID)
 		}
 	}
 
@@ -588,11 +592,13 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 	bytes, err = communication.BuildOneWayMessage(tam.config.Communication.TafEndpoint, messages.TAS_NOTIFY, initialNotify)
 	if err != nil {
 		tam.logger.Error("Error marshalling notification", "error", err)
+		return
 	}
 	tam.outbox <- core.NewMessage(bytes, "", cmd.SubscriberTopic)
 }
 
 func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]) {
+	tam.logger.Debug("Received TAS_UNSUBSCRIBE_REQUEST command", "Subscription ID", cmd.Request.SubscriptionID, "Session ID", cmd.Request.SessionID, "Client", cmd.Sender)
 	sessionID := cmd.Request.SessionID
 	subscriptionID := cmd.Request.SubscriptionID
 
@@ -606,6 +612,7 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
+			return
 		}
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	}
@@ -645,9 +652,10 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 	bytes, err := communication.BuildSubscriptionResponse(tam.config.Communication.TafEndpoint, messages.TAS_UNSUBSCRIBE_RESPONSE, cmd.RequestID, response)
 	if err != nil {
 		tam.logger.Error("Error marshalling response", "error", err)
+		return
 	}
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
-	tam.logger.Info("Subscription terminated", "Session ID", sessionID, "Subscription ID", subscriptionID)
+	tam.logger.Debug("TAS Subscription terminated", "Session ID", sessionID, "Subscription ID", subscriptionID)
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
@@ -680,6 +688,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 			bytes, err := communication.BuildOneWayMessage(tam.config.Communication.TafEndpoint, messages.TAS_NOTIFY, notify)
 			if err != nil {
 				tam.logger.Error("Error marshalling notification", "error", err)
+				return
 			}
 			tam.outbox <- core.NewMessage(bytes, "", tam.tasSubscriptions[subscriptionID].SubscriberTopic())
 		}
@@ -733,6 +742,7 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 	session, exists := sessions[sessionID]
 	if !exists {
 		tam.logger.Error("Non-existing session used for adding a new TMI", "Session", sessionID, "TMI", instance.ID())
+		return
 
 	} else {
 		sessionTMIs := session.TrustModelInstances()
@@ -752,13 +762,13 @@ func (tam *Manager) RemoveTrustModelInstance(tmiID string, sessionID string) {
 	session, exists := sessions[sessionID]
 	if !exists {
 		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", tmiID)
+		return
 	} else {
-		tam.logger.Info("Removing TMI from Session", "Session", sessionID, "TMI", tmiID)
+		tam.logger.Debug("Removing TMI from Session", "Session", sessionID, "TMI", tmiID)
 		tam.DispatchToWorker(session, tmiID, command.CreateHandleTMIDestroy(tmiID))
 		tam.tmiTable.UnregisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
 		delete(tam.atlResults, tmiID)
 		delete(session.TrustModelInstances(), tmiID)
-
 	}
 }
 
