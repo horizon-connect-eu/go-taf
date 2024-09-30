@@ -69,7 +69,7 @@ bench: format
 PLUGIN_FILES = $(shell find plugins/ -type f -name '*.go')
 
 cmd/plugin_loader.go: $(PLUGIN_FILES)
-	go generate cmd/main.go
+	GOARCH= GOOS= go generate cmd/main.go
 
 PROJECT_NAME = go-taf
 
