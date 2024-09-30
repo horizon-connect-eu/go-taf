@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+/*
+LOGGING HIERARCHY: DEBUG < INFO < WARN < ERROR
+*/
+
 const (
 	PLAIN  = "PLAIN"
 	PRETTY = "PRETTY"
