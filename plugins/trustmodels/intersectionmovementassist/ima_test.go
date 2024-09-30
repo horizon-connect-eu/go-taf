@@ -29,4 +29,15 @@ func TestTrustSourceQuantifierFunctions(t *testing.T) {
 
 	t.Logf(sl2.String())
 
+	params := make(map[string]string)
+	params["MBD_ND_SPEE_CONS"] = "2"
+	params["MBD_D_SPEE_PLAU"] = "2"
+	params["TCH_EXISTENCE_SECURE_BOOT"] = "3"
+	params["TCH_OUTPUT_SECURE_BOOT"] = "3"
+
+	trustSourceQuantifiers2, _ := createTrustSourceQuantifiers(params)
+
+	trustSourceQuantifiers2[0].Quantifier(param)
+	trustSourceQuantifiers2[1].Quantifier(param)
+
 }
