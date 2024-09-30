@@ -23,7 +23,7 @@ func Validate(messageSchema message.MessageSchema, message string) (bool, []stri
 	if err != nil {
 		return false, nil, err
 	} else if !result.Valid() {
-		errMsgs := make([]string, len(result.Errors()))
+		errMsgs := make([]string, 0)
 		for _, desc := range result.Errors() {
 			errMsgs = append(errMsgs, fmt.Sprintf("%s", desc))
 		}

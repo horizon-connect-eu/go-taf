@@ -135,7 +135,7 @@ Therefore, it takes the all the dynamic nodes, concatenates their
 sorted string identifiers and calculates a hash value.
 */
 func (e *TrustModelInstance) updateFingerprint() {
-	nodes := make([]string, len(e.objects))
+	nodes := make([]string, 0)
 	for object := range e.objects {
 		nodes = append(nodes, object)
 	}
