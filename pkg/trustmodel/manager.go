@@ -21,7 +21,7 @@ type Manager struct {
 	tsm        manager.TrustSourceManager
 	//trustmodeltemplate identifier->TMT
 	trustModelTemplateRepo map[string]core.TrustModelTemplate
-	v2xObserver            v2xObserver
+	v2xObserver            V2xObserver
 	crypto                 *crypto.Crypto
 	outbox                 chan core.Message
 }

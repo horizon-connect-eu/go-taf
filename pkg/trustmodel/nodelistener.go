@@ -5,18 +5,11 @@ import (
 	"time"
 )
 
-type v2xObserver struct {
+type V2xObserver struct {
 	nodes     map[string]int64
 	observers map[observer]bool
 	lock      *sync.RWMutex
 	ttl       int
-}
-
-type subject interface {
-	registerObserver(observer observer)
-	removeObserver(observer observer)
-	notifyObserversOnNodeAdded(identifier string)
-	notifyObserversOnNodeRemoved(identifier string)
 }
 
 type observer interface {
@@ -24,8 +17,8 @@ type observer interface {
 	handleNodeRemoved(identifier string)
 }
 
-func CreateListener(ttlSeconds int, checkIntervalSeconds int) v2xObserver {
-	listener := v2xObserver{
+func CreateListener(ttlSeconds int, checkIntervalSeconds int) V2xObserver {
+	listener := V2xObserver{
 		nodes:     make(map[string]int64),
 		observers: make(map[observer]bool),
 		lock:      &sync.RWMutex{},
@@ -45,27 +38,27 @@ func CreateListener(ttlSeconds int, checkIntervalSeconds int) v2xObserver {
 	return listener
 }
 
-func (l *v2xObserver) registerObserver(observer observer) {
+func (l *V2xObserver) registerObserver(observer observer) {
 	l.observers[observer] = true
 }
 
-func (l *v2xObserver) removeObserver(observer observer) {
+func (l *V2xObserver) removeObserver(observer observer) {
 	delete(l.observers, observer)
 }
 
-func (l v2xObserver) notifyObserversOnNodeAdded(identifier string) {
+func (l *V2xObserver) notifyObserversOnNodeAdded(identifier string) {
 	for observer, _ := range l.observers {
 		observer.handleNodeAdded(identifier)
 	}
 }
 
-func (l v2xObserver) notifyObserversOnNodeRemoved(identifier string) {
+func (l *V2xObserver) notifyObserversOnNodeRemoved(identifier string) {
 	for observer, _ := range l.observers {
 		observer.handleNodeRemoved(identifier)
 	}
 }
 
-func (l *v2xObserver) AddNode(identifier string) {
+func (l *V2xObserver) AddNode(identifier string) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
@@ -76,7 +69,7 @@ func (l *v2xObserver) AddNode(identifier string) {
 	}
 }
 
-func (l *v2xObserver) RemoveNode(identifier string) {
+func (l *V2xObserver) RemoveNode(identifier string) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
@@ -87,7 +80,7 @@ func (l *v2xObserver) RemoveNode(identifier string) {
 	}
 }
 
-func (l *v2xObserver) Nodes() []string {
+func (l *V2xObserver) Nodes() []string {
 	l.lock.RLock()
 	defer l.lock.RUnlock()
 

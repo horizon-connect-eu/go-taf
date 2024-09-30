@@ -528,8 +528,8 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 func (tsm *Manager) subscribeAIV(handler *completionhandler.CompletionHandler) {
 
 	trustees := make(map[string][]core.EvidenceType)
-	for _, session := range tsm.tam.Sessions() { //TODO: potential bug if some TMTs are not yet in use but require AIV as well
-		for _, tsq := range session.TrustSourceQuantifiers() {
+	for _, sess := range tsm.tam.Sessions() { //TODO: potential bug if some TMTs are not yet in use but require AIV as well
+		for _, tsq := range sess.TrustSourceQuantifiers() {
 			for _, evidence := range tsq.Evidence {
 				if trustees[tsq.Trustee] == nil {
 					trustees[tsq.Trustee] = make([]core.EvidenceType, 0)
