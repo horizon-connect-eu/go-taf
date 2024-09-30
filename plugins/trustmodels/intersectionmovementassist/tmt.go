@@ -98,6 +98,5 @@ func (t TrustModelTemplate) Identifier() string {
 }
 
 func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
-	// TODO: implement
 	return t.evidenceTypes
 }

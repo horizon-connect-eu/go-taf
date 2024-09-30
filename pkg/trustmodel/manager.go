@@ -140,7 +140,9 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 				if err != nil {
 					tmm.logger.Warn("Error while spawning trust model instance", "TMT", session.TrustModelTemplate(), "Identifier used for dynamic spawning", identifier)
 				} else {
-					tmi.Initialize(nil) //TODO: Params?
+					tmi.Initialize(map[string]interface{}{
+						"sourceID": identifier,
+					})
 					tmm.tam.AddNewTrustModelInstance(tmi, sessionID)
 				}
 			}

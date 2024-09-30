@@ -118,7 +118,7 @@ func (e *TrustModelInstance) processTopologyUpdate(latestObjects []string) bool 
 		}
 
 	}
-	/* TODO: Decide whether to keep or drop disappeared IDs
+	/* Currently, we keep disappearing IDs. The following code would drop them.
 	if len(removedObjects) > 0 {
 		topologyChanged = true
 		for object, _ := range removedObjects {

@@ -220,7 +220,9 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 					if err != nil {
 						tam.logger.Error("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", nodeIdentifier)
 					} else {
-						tmi.Initialize(nil) //TODO: Params?
+						tmi.Initialize(map[string]interface{}{
+							"SourceId": nodeIdentifier,
+						})
 						tam.AddNewTrustModelInstance(tmi, sessionId)
 					}
 				}
@@ -262,11 +264,18 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		tam.sessions[sessionId].Established()
 	}
 	errorHandler := func(err error) {
-		//TODO: undo session, TMI, etc.
+
 		sendErrorResponse("Error initializing session: " + err.Error())
 		//Cleanup TMI creation
 		if tMI != nil {
 			tMI.Cleanup()
+			//Cleanup
+			fullTMIid := core.MergeFullTMIIdentifier(newSession.Client(), newSession.ID(), newSession.TrustModelTemplate().Identifier(), tMI.ID())
+			tam.tmiTable.UnregisterTMI(newSession.Client(), newSession.ID(), newSession.TrustModelTemplate().Identifier(), tMI.ID())
+			//signal worker to destroy TMI
+			tam.DispatchToWorker(newSession, tMI.ID(), command.CreateHandleTMIDestroy(fullTMIid))
+			//remove ATL cache entries for this session
+			delete(tam.atlResults, fullTMIid)
 		}
 		delete(tam.sessions, sessionId)
 	}
