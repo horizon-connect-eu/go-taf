@@ -69,7 +69,7 @@ func (ch CommunicationInterface) Run() {
 			case <-ch.tafContext.Context.Done():
 				return
 			case msg := <-ch.channels.OutgoingMessageChannel:
-				//ch.tafContext.Logger.Info("Msg to be sent:", "Msg", string(msg.Bytes()))
+				ch.tafContext.Logger.Debug("Sending message", "Target Topic", msg.Destination())
 				ch.internalOutbox <- msg
 			}
 		}
@@ -108,10 +108,6 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 		select {
 		case rcvdMsg := <-ch.internalInbox:
 
-			msgStr := string(rcvdMsg.Bytes())
-			//ch.tafContext.Logger.Info("Received message", "Message:", msgStr[0:min(200, len(msgStr)-1)], "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
-			ch.tafContext.Logger.Info("Received message", "Message:", msgStr, "Sender", rcvdMsg.Source(), "Topic", rcvdMsg.Destination())
-
 			var msg json.RawMessage //Placeholder for the remaining JSON later be unmarshaled using the correct type.
 			rawMsg := GenericJSONHeaderMessage{
 				Message: &msg,
@@ -120,7 +116,10 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 			//Parse message tpye-agnostically to get type and later unmarshal correct type
 			if err := json.Unmarshal(rcvdMsg.Bytes(), &rawMsg); err != nil {
 				ch.tafContext.Logger.Error("Error while unmarshalling JSON: " + err.Error())
+				break
 			}
+
+			ch.tafContext.Logger.Debug("Received new message", "Message Type", rawMsg.MessageType, "Sender", rawMsg.Sender, "Target Topic", rcvdMsg.Destination())
 
 			schema, exists := messages.SchemaMap[rawMsg.MessageType]
 			if !exists {

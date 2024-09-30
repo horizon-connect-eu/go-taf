@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"log/slog"
@@ -75,10 +76,9 @@ func handleOutgoingMessages(tafContext core.TafContext, logger *slog.Logger, pro
 
 			select {
 			case success := <-producer.Successes():
-				//				logger.Info("Message sent", "Message:", string(msg.Bytes()), "Offset", success.Offset)
 				msgAsStr := string(msg.Bytes())
-				//logger.Info("Sent message", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message Excerpt:", msgAsStr[0:min(200, len(msgAsStr)-1)], "Offset", success.Offset)
-				logger.Info("Sent message", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message:", msgAsStr, "Offset", success.Offset)
+				//logger.Info("Sent message", "Sender", msg.Source(), "Receiving Topic", msg.Destination(), "Message:", msgAsStr, "Offset", success.Offset)
+				util.UNUSED(success, msgAsStr)
 			case err := <-producer.Errors():
 				logger.Error(fmt.Sprintf("Failed to send message: %v", err))
 			}
