@@ -155,9 +155,9 @@ updateStructure updates the internally kept structure according to the latest to
 */
 func (e *TrustModelInstance) updateStructure() {
 	//Objects (observations) that originate from the sender vehicle
-	objects := make([]string, len(e.objects))
+	objects := make([]string, 0)
 	//Direct edges from the ego node to all others
-	egoTargets := make([]string, len(e.objects)+1)
+	egoTargets := make([]string, 0)
 	for object := range e.objects {
 		objects = append(objects, objectIdentifier(object, e.sourceID))
 		egoTargets = append(egoTargets, objectIdentifier(object, e.sourceID))
