@@ -1,8 +1,6 @@
-package trustsource
+package mbd
 
-import (
-	"strings"
-)
+import "strings"
 
 type MisbehaviorDetector uint16
 

@@ -19,6 +19,7 @@ import (
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
+	"github.com/vs-uulm/go-taf/pkg/trustsource/tch"
 	"log/slog"
 	"math"
 	"strings"
@@ -43,6 +44,8 @@ type Manager struct {
 	latestSubscriptionEvidence map[core.TrustSource]map[string]map[core.EvidenceType]int
 	//Trust Source: Subscription ID -> true
 	subscriptions map[core.TrustSource]map[string]bool
+
+	tchHandler *tch.TchHandler
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
@@ -87,6 +90,10 @@ func (tsm *Manager) SetManagers(managers manager.TafManagers) {
 		tsm.latestSubscriptionEvidence[trustSourceType] = make(map[string]map[core.EvidenceType]int)
 		tsm.subscriptions[trustSourceType] = make(map[string]bool)
 		listOfTrustSources = append(listOfTrustSources, trustSourceType.String())
+
+		if trustSourceType == core.TCH {
+			tsm.tchHandler = tch.CreateTchHandler(tsm.tam, tsm.tmm, tsm, tsm.logger)
+		}
 	}
 	tsm.logger.Info("Registering known trust sources", "Trust Sources", strings.Join(listOfTrustSources, ", "))
 }
@@ -276,46 +283,7 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) 
 		}
 	}
 
-	//Extract raw evidence from the message and store it into latestEvidence
-	trusteeID := cmd.Notify.TchReport.TrusteeID
-	updatedTrustees := make(map[string]bool)
-	for _, trusteeReport := range cmd.Notify.TchReport.TrusteeReports {
-		componentID := trusteeReport.ComponentID
-		id := trusteeID
-		if componentID != nil {
-			id = fmt.Sprintf("%s_%s", trusteeID, *componentID)
-		}
-		//Discard old evidence and always create a new map
-		tsm.latestSubscriptionEvidence[core.TCH][id] = make(map[core.EvidenceType]int)
-		for _, attestationReport := range trusteeReport.AttestationReport {
-			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
-			value := int(attestationReport.Appraisal)
-			tsm.latestSubscriptionEvidence[core.TCH][id][evidenceType] = value
-			updatedTrustees[id] = true
-		}
-	}
-
-	//Iterate over all sessions register for TCH, call quantifiers and relay updates
-	for sessionId, tsqs := range tsm.trustSourceSubscriptions[core.TCH] {
-		sess := tsm.tam.Sessions()[sessionId]
-		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
-		updates := make([]core.Update, 0)
-		for trustee := range updatedTrustees {
-			for _, tsq := range tsqs {
-				if tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" {
-					ato := tsq.Quantifier(tsm.latestSubscriptionEvidence[core.TCH][trustee])
-					tsm.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", tsm.latestSubscriptionEvidence[core.TCH][trustee]))
-					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", "V_"+trustee, core.TCH))
-				}
-			}
-		}
-		if len(updates) > 0 {
-			for tmiID, fullTmiID := range sess.TrustModelInstances() {
-				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
-				tsm.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
-			}
-		}
-	}
+	tsm.tchHandler.HandleNotify(cmd)
 }
 
 /* ------------ ------------ TrustSourceQuantifier  Handling ------------ ------------ */
@@ -341,7 +309,7 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(sess session.Session, handle
 		case core.MBD:
 			tsm.addSessionToMbdSubscription(sess, handler)
 		case core.TCH:
-			tsm.addSessionToTchSubscription(sess, handler)
+			tsm.tchHandler.AddSession(sess, handler)
 		default:
 			//nothing to do
 		}
@@ -368,7 +336,8 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(sess session.Session, hand
 		case core.MBD:
 			tsm.removeSessionFromMbdSubscription(sess, handler)
 		case core.TCH:
-			tsm.removeSessionFromTchSubscription(sess, handler)
+			tsm.tchHandler.RemoveSession(sess, handler)
+
 		default:
 			//nothing to do
 		}
@@ -400,9 +369,6 @@ func (tsm *Manager) addSessionToMbdSubscription(session session.Session, handler
 		tsm.subscribeMBD(handler)
 	}
 }
-func (tsm *Manager) addSessionToTchSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
-	tsm.addSessionToTrustSourceSubscription(session, handler, core.TCH)
-}
 
 func (tsm *Manager) removeSessionFromAivSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
 	delete(tsm.trustSourceSubscriptions[core.AIV], session.ID())
@@ -428,10 +394,6 @@ func (tsm *Manager) removeSessionFromMbdSubscription(session session.Session, ha
 		}
 		tsm.unsubscribeMBD(subId, handler)
 	}
-}
-
-func (tsm *Manager) removeSessionFromTchSubscription(session session.Session, handler *completionhandler.CompletionHandler) {
-	delete(tsm.trustSourceSubscriptions[core.TCH], session.ID())
 }
 
 /*

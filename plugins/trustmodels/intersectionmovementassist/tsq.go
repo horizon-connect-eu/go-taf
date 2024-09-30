@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/trustsource"
+	"github.com/vs-uulm/go-taf/pkg/trustsource/mbd"
 	"log"
 	"math"
 	"strconv"
@@ -29,36 +29,36 @@ var defaultTCHOutputWeights = map[core.EvidenceType]float64{
 	core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION: 2,
 }
 
-var defaultMBDWeightsNoDetection = map[trustsource.MisbehaviorDetector]float64{
-	trustsource.MBD_DIST_PLAU:                   1,
-	trustsource.MBD_SPEE_PLAU:                   1,
-	trustsource.MBD_SPEE_CONS:                   1,
-	trustsource.MBD_POS_SPEE_CONS:               1,
-	trustsource.MBD_KALMAN_POS_CONS:             2,
-	trustsource.MBD_KALMAN_POS_SPEED_CONS_SPEED: 2,
-	trustsource.MBD_KALMAN_POS_SPEED_CONS_POS:   2,
-	trustsource.MBD_LOCAL_PERCEPTION_VERIF:      2,
+var defaultMBDWeightsNoDetection = map[mbd.MisbehaviorDetector]float64{
+	mbd.MBD_DIST_PLAU:                   1,
+	mbd.MBD_SPEE_PLAU:                   1,
+	mbd.MBD_SPEE_CONS:                   1,
+	mbd.MBD_POS_SPEE_CONS:               1,
+	mbd.MBD_KALMAN_POS_CONS:             2,
+	mbd.MBD_KALMAN_POS_SPEED_CONS_SPEED: 2,
+	mbd.MBD_KALMAN_POS_SPEED_CONS_POS:   2,
+	mbd.MBD_LOCAL_PERCEPTION_VERIF:      2,
 }
 
-var defaultMBDWeightsDetection = map[trustsource.MisbehaviorDetector]float64{
-	trustsource.MBD_DIST_PLAU:                   2,
-	trustsource.MBD_SPEE_PLAU:                   2,
-	trustsource.MBD_SPEE_CONS:                   2,
-	trustsource.MBD_POS_SPEE_CONS:               2,
-	trustsource.MBD_KALMAN_POS_CONS:             1,
-	trustsource.MBD_KALMAN_POS_SPEED_CONS_SPEED: 1,
-	trustsource.MBD_KALMAN_POS_SPEED_CONS_POS:   1,
-	trustsource.MBD_LOCAL_PERCEPTION_VERIF:      2,
+var defaultMBDWeightsDetection = map[mbd.MisbehaviorDetector]float64{
+	mbd.MBD_DIST_PLAU:                   2,
+	mbd.MBD_SPEE_PLAU:                   2,
+	mbd.MBD_SPEE_CONS:                   2,
+	mbd.MBD_POS_SPEE_CONS:               2,
+	mbd.MBD_KALMAN_POS_CONS:             1,
+	mbd.MBD_KALMAN_POS_SPEED_CONS_SPEED: 1,
+	mbd.MBD_KALMAN_POS_SPEED_CONS_POS:   1,
+	mbd.MBD_LOCAL_PERCEPTION_VERIF:      2,
 }
 
 func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQuantifier, error) {
-	mbdWeightsDetection := make(map[trustsource.MisbehaviorDetector]float64)
+	mbdWeightsDetection := make(map[mbd.MisbehaviorDetector]float64)
 
 	for key, defaultValue := range defaultMBDWeightsDetection {
 		mbdWeightsDetection[key] = defaultValue
 	}
 
-	mbdWeightsNoDetection := make(map[trustsource.MisbehaviorDetector]float64)
+	mbdWeightsNoDetection := make(map[mbd.MisbehaviorDetector]float64)
 
 	for key, defaultValue := range defaultMBDWeightsNoDetection {
 		mbdWeightsNoDetection[key] = defaultValue
@@ -83,8 +83,8 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			if strings.Contains(key, "MBD_D") {
 				detector := strings.SplitAfterN(key, "_", 3)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					detectorType := trustsource.MisbehaviorDetectorByName("MBD_" + detector)
-					if detectorType == trustsource.MBD_UNKNOWN {
+					detectorType := mbd.MisbehaviorDetectorByName("MBD_" + detector)
+					if detectorType == mbd.MBD_UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
 						mbdWeightsDetection[detectorType] = floatValue
@@ -95,8 +95,8 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			} else if strings.Contains(key, "MBD_ND") {
 				detector := strings.SplitAfterN(key, "_", 3)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					detectorType := trustsource.MisbehaviorDetectorByName("MBD_" + detector)
-					if detectorType == trustsource.MBD_UNKNOWN {
+					detectorType := mbd.MisbehaviorDetectorByName("MBD_" + detector)
+					if detectorType == mbd.MBD_UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
 						mbdWeightsNoDetection[detectorType] = floatValue
@@ -222,7 +222,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			sumDisbelief := 0.0
 
 			for i := 0; i < 8; i++ {
-				detector := trustsource.MisbehaviorDetector(7 - i)
+				detector := mbd.MisbehaviorDetector(7 - i)
 				if string(binaryFormat[i]) == "0" {
 					sumWeights = sumWeights + mbdWeightsNoDetection[detector]
 					sumBelief = sumBelief + mbdWeightsNoDetection[detector]

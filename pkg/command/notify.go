@@ -7,11 +7,11 @@ import (
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 )
 
-type notify interface {
+type NotifyMessage interface {
 	aivmsg.AivNotify | mbdmsg.MBDNotify | tchmsg.TchNotify
 }
 
-type HandleNotify[R notify] struct {
+type HandleNotify[R NotifyMessage] struct {
 	Notify      R
 	Sender      string
 	commandType core.CommandType
