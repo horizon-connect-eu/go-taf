@@ -47,7 +47,7 @@ func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifi
 	return []core.TrustSourceQuantifier{}
 }
 
-func (e *TrustModelInstance) Update(update core.Update) {
+func (e *TrustModelInstance) Update(update core.Update) bool {
 	//TODO implement me
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
@@ -56,6 +56,7 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	default:
 		//ignore
 	}
+	return true
 }
 
 func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
@@ -67,4 +68,8 @@ func (e *TrustModelInstance) Cleanup() {
 }
 func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
 	return map[string]subjectivelogic.QueryableOpinion{}
+}
+
+func (e *TrustModelInstance) String() string {
+	return core.TMIAsString(e)
 }

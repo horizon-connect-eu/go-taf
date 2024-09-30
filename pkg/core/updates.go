@@ -22,13 +22,19 @@ const (
 		Remove Trust Object from Trust Model
 	*/
 	REMOVE_TRUST_OBJECT
+	/*
+		Update a Trust Model based upon a CPM information
+	*/
+	REFRESH_CPM
 )
 
 func (u UpdateOp) String() string {
-	return [...]string{"NO_OP",
+	return [...]string{
+		"NO_OP",
 		"UPDATE_ATO",
 		"ADD_TRUST_OBJECT",
 		"REMOVE_TRUST_OBJECT",
+		"REFRESH_CPM",
 	}[u]
 }
 

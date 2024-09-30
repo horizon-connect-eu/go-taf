@@ -10,10 +10,9 @@ import (
 	"testing"
 )
 
-func TestLoadJson(t *testing.T) {
+func TestTMI(t *testing.T) {
 	tmt := CreateTrustModelTemplate("test", "0.0.1", "test")
 	context := core.TafContext{}
-	channels := core.TafChannels{}
 
 	/*tmi, _ := tmt.Spawn(make(map[string]string), context, channels)
 
@@ -184,7 +183,7 @@ func TestLoadJson(t *testing.T) {
 	values_init["VC1_RTL_UNCERTAINTY"] = "0.8"
 	values_init["VC1_RTL_BASERATE"] = "0.5"
 
-	tmi2, _ := tmt.Spawn(values_init, context, channels)
+	tsq, tmi2, _, _ := tmt.Spawn(values_init, context)
 
 	// Test Scenario2
 	evidenceMap2 := make(map[core.EvidenceType]int)
@@ -193,7 +192,7 @@ func TestLoadJson(t *testing.T) {
 	evidenceMap2[core.AIV_ACCESS_CONTROL] = 1
 	evidenceMap2[core.AIV_CONTROL_FLOW_INTEGRITY] = 1
 
-	slOpinion2 := tmi2.Template().TrustSourceQuantifiers()[1].Quantifier(evidenceMap2)
+	slOpinion2 := tsq[1].Quantifier(evidenceMap2)
 	if (math.Round(slOpinion2.Belief()*100)/100) != 0.3 || (math.Round(slOpinion2.Disbelief()*100)/100) != 1.0 || (math.Round(slOpinion2.Uncertainty()*100)/100) != 0.7 {
 		t.Error("Incorrect trust opinion")
 	}

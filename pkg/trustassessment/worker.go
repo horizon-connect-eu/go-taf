@@ -17,7 +17,7 @@ type Worker struct {
 	id          int
 	workerQueue <-chan core.Command
 	logger      *slog.Logger
-	//tmiID->TMI
+	//full tmiID->TMI
 	tmis map[string]core.TrustModelInstance
 	//tmiID->SessionID
 	tmiSessions  map[string]string
@@ -69,34 +69,67 @@ func (worker *Worker) Run() {
 	}
 }
 
-func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
-	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.TmiID)
-	tmi, exists := worker.tmis[cmd.TmiID]
-	if !exists {
-		return
-	}
-	tmi.Cleanup()
-	delete(worker.tmis, cmd.TmiID)
-	delete(worker.tmiSessions, cmd.TmiID)
-}
-
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
-	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.TmiID)
-	worker.tmis[cmd.TmiID] = cmd.TMI
-	worker.tmiSessions[cmd.TmiID] = cmd.SessionID
+	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
+	worker.tmis[cmd.FullTMI] = cmd.TMI
+	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTMI)
+	worker.tmiSessions[cmd.FullTMI] = session
 
 	//Run TLEE
-	atls := worker.executeTLEE(worker.tmis[cmd.TmiID])
+	atls := worker.executeTLEE(worker.tmis[cmd.FullTMI])
 	//Run TDE
-	resultSet := worker.executeTDE(worker.tmis[cmd.TmiID], atls)
+	resultSet := worker.executeTDE(worker.tmis[cmd.FullTMI], atls)
 
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.SessionID)
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
 	worker.workersToTam <- atlUpdateCmd
 }
 
+func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
+	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.FullTmiID)
+
+	tmi, exists := worker.tmis[cmd.FullTmiID]
+	if !exists {
+		return
+	}
+	//sessionID, _ := worker.tmiSessions[cmd.TmiID]
+
+	//Execute TMI Updates
+	for _, update := range cmd.Updates {
+		tmi.Update(update)
+	}
+	//Run TLEE
+	atls := worker.executeTLEE(tmi)
+	//Run TDE
+	resultSet := worker.executeTDE(tmi, atls)
+
+	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+	worker.workersToTam <- atlUpdateCmd
+}
+
+func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
+	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTMI)
+	tmi, exists := worker.tmis[cmd.FullTMI]
+	if !exists {
+		worker.logger.Error("Unknown FULL ID: " + cmd.FullTMI)
+		return
+	}
+	tmi.Cleanup()
+	delete(worker.tmis, cmd.FullTMI)
+	delete(worker.tmiSessions, cmd.FullTMI)
+	//TODO: potential concurrency flag: send ATL update to wipe cache entry
+}
+
 func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {
-	atls := worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
-	worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+	var atls map[string]subjectivelogic.QueryableOpinion
+	//Only call TLEE when the graph structure is existing and not empty; otherwise skip and return empty ATL set
+	if tmi.Structure() != nil && len(tmi.Structure().AdjacencyList()) > 0 { //TODO: Values?
+		//worker.logger.Debug("TLEE Input", "TMI", tmi.String())
+		atls = worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+		worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+	} else {
+		atls = make(map[string]subjectivelogic.QueryableOpinion)
+		worker.logger.Debug("TLEE call omitted due to empty TMI", "Results", fmt.Sprintf("%+v", atls))
+	}
 	return atls
 }
 
@@ -116,25 +149,4 @@ func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]su
 	}
 	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), atls, projectedProbabilities, trustDecisions)
 	return resultSet
-}
-
-func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
-	worker.logger.Info("Updating Trust Model Instance with ID " + cmd.TmiID)
-	tmi, exists := worker.tmis[cmd.TmiID]
-	if !exists {
-		return
-	}
-	sessionID, _ := worker.tmiSessions[cmd.TmiID]
-
-	//Execute TMI Updates
-	for _, update := range cmd.Updates {
-		tmi.Update(update)
-	}
-	//Run TLEE
-	atls := worker.executeTLEE(tmi)
-	//Run TDE
-	resultSet := worker.executeTDE(tmi, atls)
-
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, sessionID)
-	worker.workersToTam <- atlUpdateCmd
 }

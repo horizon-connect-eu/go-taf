@@ -6,7 +6,7 @@
 	"properties": {
 		"subscriptionId": {
 			"description":"The unique identifier used for linking notifications with a specific subscription.",
-			"type": "string" 
+			"type": "string"
 		},
 		"trusteeReports": {
 			"description": "",
@@ -84,6 +84,7 @@
 		}
 	},
 	"required": [
+		"subscriptionId",
 		"trusteeReports",
 		"aivEvidence"
 	]

@@ -64,7 +64,7 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 	result := make([]ResultEntry, 0)
 	propositions := make([]Proposition, 0)
 
-	if oldATLs.SessionID() != newATLs.SessionID() || oldATLs.TmiID() != newATLs.TmiID() {
+	if oldATLs.TmiID() != newATLs.TmiID() {
 		return result
 	}
 	if len(s.filter) > 0 {

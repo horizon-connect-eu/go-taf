@@ -6,13 +6,13 @@ import (
 
 type HandleTMIUpdate struct {
 	commandType core.CommandType
-	TmiID       string
+	FullTmiID   string
 	Updates     []core.Update
 }
 
-func CreateHandleTMIUpdate(tmiID string, updates ...core.Update) HandleTMIUpdate {
+func CreateHandleTMIUpdate(FullTmiID string, updates ...core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
-		TmiID:       tmiID,
+		FullTmiID:   FullTmiID,
 		Updates:     updates,
 		commandType: core.HANDLE_TMI_UPDATE,
 	}
@@ -24,17 +24,15 @@ func (r HandleTMIUpdate) Type() core.CommandType {
 
 type HandleTMIInit struct {
 	commandType core.CommandType
-	TmiID       string
-	SessionID   string
+	FullTMI     string
 	TMI         core.TrustModelInstance
 }
 
-func CreateHandleTMIInit(tmiID string, TMI core.TrustModelInstance, SessionID string) HandleTMIInit {
+func CreateHandleTMIInit(fullTMIid string, TMI core.TrustModelInstance) HandleTMIInit {
 	return HandleTMIInit{
 
-		TmiID:       tmiID,
 		TMI:         TMI,
-		SessionID:   SessionID,
+		FullTMI:     fullTMIid,
 		commandType: core.HANDLE_TMI_INIT,
 	}
 }
@@ -45,12 +43,12 @@ func (r HandleTMIInit) Type() core.CommandType {
 
 type HandleTMIDestroy struct {
 	commandType core.CommandType
-	TmiID       string
+	FullTMI     string
 }
 
-func CreateHandleTMIDestroy(tmiID string) HandleTMIDestroy {
+func CreateHandleTMIDestroy(fullTMIid string) HandleTMIDestroy {
 	return HandleTMIDestroy{
-		TmiID:       tmiID,
+		FullTMI:     fullTMIid,
 		commandType: core.HANDLE_TMI_DESTROY,
 	}
 }
@@ -61,14 +59,14 @@ func (r HandleTMIDestroy) Type() core.CommandType {
 
 type HandleATLUpdate struct {
 	commandType core.CommandType
-	Session     string
+	FullTMI     string
 	ResultSet   core.AtlResultSet
 }
 
-func CreateHandleATLUpdate(atl core.AtlResultSet, session string) HandleATLUpdate {
+func CreateHandleATLUpdate(atl core.AtlResultSet, fullTMI string) HandleATLUpdate {
 	return HandleATLUpdate{
 		ResultSet:   atl,
-		Session:     session,
+		FullTMI:     fullTMI,
 		commandType: core.HANDLE_ATL_UPDATE,
 	}
 }

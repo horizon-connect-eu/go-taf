@@ -14,7 +14,7 @@ const (
 
 type Session interface {
 	ID() string
-	TrustModelInstances() map[string]bool
+	TrustModelInstances() map[string]string
 	TrustModelTemplate() core.TrustModelTemplate
 	Client() string
 	HasTMI(tmiID string) bool
@@ -25,25 +25,32 @@ type Session interface {
 	AddSubscription(identifier string)
 	ListSubscriptions() []string
 	RemoveSubscription(identifier string)
+	SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner)
+	DynamicSpawner() core.DynamicTrustModelInstanceSpawner
+	SetTrustSourceQuantifiers([]core.TrustSourceQuantifier)
+	TrustSourceQuantifiers() []core.TrustSourceQuantifier
 }
 
 type Instance struct {
 	id            string
-	tMIs          map[string]bool
+	tMIs          map[string]string
 	client        string
 	state         State
 	tmt           core.TrustModelTemplate
 	subscriptions map[string]bool
+	spawner       core.DynamicTrustModelInstanceSpawner
+	tsqs          []core.TrustSourceQuantifier
 }
 
 func NewInstance(id, client string, tmt core.TrustModelTemplate) Session {
 	return &Instance{
 		id:            id,
-		tMIs:          make(map[string]bool),
+		tMIs:          make(map[string]string),
 		subscriptions: make(map[string]bool),
 		client:        client,
 		tmt:           tmt,
 		state:         INITIALIZING,
+		spawner:       nil,
 	}
 }
 
@@ -51,7 +58,7 @@ func (s *Instance) ID() string {
 	return s.id
 }
 
-func (s *Instance) TrustModelInstances() map[string]bool {
+func (s *Instance) TrustModelInstances() map[string]string {
 	return s.tMIs
 }
 
@@ -61,6 +68,13 @@ func (s *Instance) TrustModelTemplate() core.TrustModelTemplate {
 
 func (s *Instance) Client() string {
 	return s.client
+}
+
+func (s *Instance) SetDynamicSpawner(spawner core.DynamicTrustModelInstanceSpawner) {
+	s.spawner = spawner
+}
+func (s *Instance) DynamicSpawner() core.DynamicTrustModelInstanceSpawner {
+	return s.spawner
 }
 
 func (s *Instance) State() State {
@@ -80,11 +94,8 @@ func (s *Instance) TornDown() {
 }
 
 func (s *Instance) HasTMI(tmiID string) bool {
-	val, exists := s.tMIs[tmiID]
-	if !exists {
-		return false
-	}
-	return val
+	_, exists := s.tMIs[tmiID]
+	return exists
 }
 
 func (s *Instance) AddSubscription(identifier string) {
@@ -106,4 +117,12 @@ func (s *Instance) ListSubscriptions() []string {
 		i++
 	}
 	return subs
+}
+
+func (s *Instance) SetTrustSourceQuantifiers(tsqs []core.TrustSourceQuantifier) {
+	s.tsqs = tsqs
+}
+
+func (s *Instance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
+	return s.tsqs
 }

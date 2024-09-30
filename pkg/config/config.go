@@ -80,7 +80,7 @@ var (
 	// In case the user-specified configuration file
 	// misses values, this struct defines the corresponding
 	// default values.
-	DefaultConfig Configuration = Configuration{
+	DefaultConfig = Configuration{
 		Identifier:  "taf",
 		Logging:     Log{LogLevel: pterm.LogLevelDebug, LogStyle: "PRETTY"},
 		ChanBufSize: 1_000,

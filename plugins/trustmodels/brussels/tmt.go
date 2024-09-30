@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 )
@@ -249,7 +250,7 @@ func checkSetParameters(params map[string]string) map[string]bool {
 	return setParams
 }
 
-func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext, channels core.TafChannels) (core.TrustModelInstance, error) {
+func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafContext) ([]core.TrustSourceQuantifier, core.TrustModelInstance, core.DynamicTrustModelInstanceSpawner, error) {
 	setParams := checkSetParameters(params)
 
 	omega1, _ := subjectivelogic.NewOpinion(0.0, 0.0, 1.0, 0.5)
@@ -263,7 +264,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
 				value, err := getExistenceWeightsFromInit(params, "VC1_EXISTENCE_"+typeEvidence.String())
 				if err != nil {
-					return nil, err
+					return nil, nil, nil, err
 				}
 				vc1ExistenceWeights[typeEvidence] = value
 
@@ -271,7 +272,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			}
 
 			if sum > 1 {
-				return nil, errors.New("Values for existence weights of VC1 sum up to more than 1")
+				return nil, nil, nil, errors.New("Values for existence weights of VC1 sum up to more than 1")
 			}
 
 		}
@@ -283,7 +284,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
 				value, err := getExistenceWeightsFromInit(params, "VC2_EXISTENCE_"+typeEvidence.String())
 				if err != nil {
-					return nil, err
+					return nil, nil, nil, err
 				}
 				vc2ExistenceWeights[typeEvidence] = value
 
@@ -291,7 +292,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			}
 
 			if sum > 1 {
-				return nil, errors.New("Values for existence weights of VC2 sum up to more than 1")
+				return nil, nil, nil, errors.New("Values for existence weights of VC2 sum up to more than 1")
 			}
 		}
 
@@ -300,12 +301,12 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[0].Evidence {
 				value, err := getOutputWeightsFromInit(params, "VC1_OUTPUT_"+typeEvidence.String())
 				if err != nil {
-					return nil, err
+					return nil, nil, nil, err
 				}
 				vc1OutputWeights[typeEvidence] = value
 
 				if value < 0 || value > 2 {
-					return nil, errors.New("Invalid value for VC1_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+					return nil, nil, nil, errors.New("Invalid value for VC1_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
 				}
 			}
 		}
@@ -315,12 +316,12 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			for _, typeEvidence := range tmt.trustSourceQuantifiers[1].Evidence {
 				value, err := getOutputWeightsFromInit(params, "VC2_OUTPUT_"+typeEvidence.String())
 				if err != nil {
-					return nil, err
+					return nil, nil, nil, err
 				}
 				vc2OutputWeights[typeEvidence] = value
 
 				if value < 0 || value > 2 {
-					return nil, errors.New("Invalid value for VC2_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
+					return nil, nil, nil, errors.New("Invalid value for VC2_OUTPUT_" + typeEvidence.String() + "- value has to be between 0 and 2")
 				}
 			}
 		}
@@ -330,7 +331,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			err := errors.New("")
 			vc1DTI, err = getOpinionFromInit(params, "VC1_DTI")
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
 		}
 
@@ -339,7 +340,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			err := errors.New("")
 			vc2DTI, err = getOpinionFromInit(params, "VC2_DTI")
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
 		}
 
@@ -348,7 +349,7 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			err := errors.New("")
 			tmt.rTL1, err = getOpinionFromInit(params, "VC1_RTL")
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
 		}
 
@@ -357,23 +358,30 @@ func (tmt TrustModelTemplate) Spawn(params map[string]string, context core.TafCo
 			err := errors.New("")
 			tmt.rTL2, err = getOpinionFromInit(params, "VC2_RTL")
 			if err != nil {
-				return nil, err
+				return nil, nil, nil, err
 			}
 		}
 
 	}
 
-	return &TrustModelInstance{
-		//		id:          tmt.TemplateName() + "@" + tmt.Version() + "-" + fmt.Sprintf("%000000d", rand.IntN(999999)),
-		id:          tmt.TemplateName() + "@" + tmt.Version() + "-001",
+	return tmt.trustSourceQuantifiers, &TrustModelInstance{
+		id:          fmt.Sprintf("%000000d", rand.IntN(999999)),
 		version:     0,
 		template:    tmt,
 		omega1:      omega1,
 		omega2:      omega2,
 		fingerprint: 0,
-	}, nil
+	}, nil, nil
 }
 
 func (tmt TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
 	return tmt.trustSourceQuantifiers
+}
+
+func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
+	return core.STATIC_TRUST_MODEL
+}
+
+func (tmt TrustModelTemplate) Identifier() string {
+	return fmt.Sprintf("%s@%s", tmt.TemplateName(), tmt.Version())
 }

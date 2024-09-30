@@ -54,7 +54,7 @@ func (e *TrustModelInstance) Template() core.TrustModelTemplate {
 	return e.template
 }
 
-func (e *TrustModelInstance) Update(update core.Update) {
+func (e *TrustModelInstance) Update(update core.Update) bool {
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		if update.Trustee() == "VC1" {
@@ -67,6 +67,7 @@ func (e *TrustModelInstance) Update(update core.Update) {
 	default:
 		//ignore
 	}
+	return true
 }
 
 func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
@@ -82,4 +83,8 @@ func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
 
 func (e *TrustModelInstance) Cleanup() {
 	return
+}
+
+func (e *TrustModelInstance) String() string {
+	return core.TMIAsString(e)
 }

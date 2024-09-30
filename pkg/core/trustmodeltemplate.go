@@ -3,8 +3,32 @@ package core
 type TrustModelTemplate interface {
 	TemplateName() string
 	Version() string
-	Spawn(params map[string]string, context TafContext, channels TafChannels) (TrustModelInstance, error) //TODO: check which parameters are really needed
+	Spawn(params map[string]string, context TafContext) ([]TrustSourceQuantifier, TrustModelInstance, DynamicTrustModelInstanceSpawner, error)
 	EvidenceTypes() []EvidenceType
-	TrustSourceQuantifiers() []TrustSourceQuantifier
 	Description() string
+	Type() TrustModelTemplateType
+	//GenerateTrustModelInstanceID(identifiers ...string) string
+	Identifier() string
+}
+
+type DynamicTrustModelInstanceSpawner interface {
+	OnNewVehicle(identifier string, params map[string]string) (TrustModelInstance, error)
+}
+
+type TrustModelTemplateType uint16
+
+const (
+	STATIC_TRUST_MODEL TrustModelTemplateType = iota
+	VEHICLE_TRIGGERED_TRUST_MODEL
+)
+
+func (t TrustModelTemplateType) String() string {
+	switch t {
+	case STATIC_TRUST_MODEL:
+		return "STATIC_TRUST_MODEL"
+	case VEHICLE_TRIGGERED_TRUST_MODEL:
+		return "VEHICLE_TRIGGERED_TRUST_MODEL"
+	default:
+		return "UNKNOWN TYPE"
+	}
 }
