@@ -1,4 +1,4 @@
-package mbd
+package trustsource
 
 import "strings"
 

@@ -1,0 +1,119 @@
+package handlers
+
+import (
+	"fmt"
+	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
+	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
+	"log/slog"
+)
+
+type MbdHandler struct {
+	sessionTsqs                map[string][]core.TrustSourceQuantifier
+	latestSubscriptionEvidence map[string]map[core.EvidenceType]int
+	tam                        TAMAccess
+	tsm                        TSMAccess
+	logger                     *slog.Logger
+	mbdSubscriptionID          string
+	subscriptionState          SubscriptionState
+}
+
+func CreateMbdHandler(tam TAMAccess, tsm TSMAccess, logger *slog.Logger) *MbdHandler {
+	return &MbdHandler{
+		sessionTsqs:                make(map[string][]core.TrustSourceQuantifier),
+		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]int),
+		logger:                     logger,
+		tsm:                        tsm,
+		tam:                        tam,
+		subscriptionState:          NA,
+	}
+}
+
+func (h *MbdHandler) Initialize() {
+	return
+}
+
+func (h *MbdHandler) AddSession(sess session.Session, handler *completionhandler.CompletionHandler) {
+	h.sessionTsqs[sess.ID()] = sess.TrustSourceQuantifiers()
+	//TODO: better handling of single subscription: check state
+	if len(h.sessionTsqs) == 1 {
+		h.tsm.SubscribeMBD(handler)
+	}
+}
+
+func (h *MbdHandler) RemoveSession(sess session.Session, handler *completionhandler.CompletionHandler) {
+	delete(h.sessionTsqs, sess.ID())
+	//TODO: better handling of single subscription: check state
+	if len(h.sessionTsqs) == 0 {
+		h.tsm.UnsubscribeMBD(h.mbdSubscriptionID, handler)
+	}
+}
+
+func (h *MbdHandler) SetSubscriptionId(id string) {
+	h.mbdSubscriptionID = id
+	h.subscriptionState = SUBSCRIBED
+
+}
+
+func (h *MbdHandler) SetSubscriptionState(state SubscriptionState) {
+	h.subscriptionState = state
+
+}
+
+func (h *MbdHandler) TrustSourceType() core.TrustSource {
+	return core.MBD
+}
+
+func (h *MbdHandler) RegisteredSessions() []string {
+	sessions := make([]string, len(h.sessionTsqs))
+	i := 0
+	for k := range h.sessionTsqs {
+		sessions[i] = k
+		i++
+	}
+	return sessions
+}
+
+func (h *MbdHandler) HandleNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
+	//Check whether subscription is known, otherwise return
+	if cmd.Notify.SubscriptionID != h.mbdSubscriptionID {
+		h.logger.Warn("Unknown subscription for MBD_NOTIFY, discarding message", "Subscription ID", cmd.Notify.SubscriptionID)
+		return
+	}
+
+	updatedTrustees := make(map[string]bool)
+	sourceID := cmd.Notify.CpmReport.Content.V2XPduEvidence.SourceID
+	for _, observation := range cmd.Notify.CpmReport.Content.ObservationSet {
+		id := fmt.Sprintf("C_%d_%d", int(sourceID), int(observation.TargetID))
+		//Discard old evidence and always create a new map
+
+		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]int)
+		h.latestSubscriptionEvidence[id][core.MBD_MISBEHAVIOR_REPORT] = int(observation.Check)
+		updatedTrustees[id] = true
+	}
+
+	//Iterate over all sessions register for MBD, call quantifiers and relay updates
+	for sessionId, tsqs := range h.sessionTsqs {
+		sess := h.tam.Sessions()[sessionId]
+		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+		updates := make([]core.Update, 0)
+		for trustee := range updatedTrustees {
+			for _, tsq := range tsqs {
+				if tsq.Trustor == "V_ego" && tsq.Trustee == "C_*_*" {
+					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
+					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.MBD))
+				}
+			}
+		}
+		if len(updates) > 0 {
+			for tmiID, fullTmiID := range sess.TrustModelInstances() {
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				h.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
+			}
+		}
+	}
+}

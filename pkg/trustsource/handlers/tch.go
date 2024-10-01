@@ -1,11 +1,10 @@
-package tch
+package handlers
 
 import (
 	"fmt"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/manager"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
@@ -15,20 +14,16 @@ import (
 type TchHandler struct {
 	sessionTsqs                map[string][]core.TrustSourceQuantifier
 	latestSubscriptionEvidence map[string]map[core.EvidenceType]int
-	tam                        manager.TrustAssessmentManager
-	tmm                        manager.TrustModelManager
-	tsm                        manager.TrustSourceManager
+	tam                        TAMAccess
 	logger                     *slog.Logger
 }
 
-func CreateTchHandler(tam manager.TrustAssessmentManager, tmm manager.TrustModelManager, tsm manager.TrustSourceManager, logger *slog.Logger) *TchHandler {
+func CreateTchHandler(tam TAMAccess, logger *slog.Logger) *TchHandler {
 	return &TchHandler{
 		sessionTsqs:                make(map[string][]core.TrustSourceQuantifier),
 		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]int),
 		logger:                     logger,
 		tam:                        tam,
-		tmm:                        tmm,
-		tsm:                        tsm,
 	}
 }
 
