@@ -1,5 +1,14 @@
 # Standalone TAF Prototype
 
+## Release v0.2.1 (2024-10-01)
+
+* reworked support for handling different trust sources
+	* AIV: one separate subscription for each session
+	* MBD: single subscription for all sessions
+	* TCH: subscription-less
+* upgraded internal TLEE to support IMA_STANDALONE trust models for debugging
+
+
 ## Release v0.2.0 (2024-09-30)
 
 * added support for dynamic trust models
@@ -26,6 +35,7 @@
 ## Release v0.1.1 (2024-09-10)
  
  * fixed integration of the `VCM@0.0.1` tust model
+
 
 ## Release v0.1.0 (2024-08-09)
  
