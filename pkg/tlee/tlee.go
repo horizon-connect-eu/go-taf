@@ -1,12 +1,9 @@
 package tlee
 
 import (
-	"fmt"
-	"log/slog"
-	"os"
-
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+	"log/slog"
 )
 
 type TLEE struct {
@@ -122,7 +119,6 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 							prev = v
 						} else {
 							fused, err := ff(&prev, &v)
-							fmt.Fprintln(os.Stderr, "oi mate fusing", scope, prev, v)
 							if err != nil {
 								t.Logger.Error("TLEE", "cannot fuse opinions", err.Error(), "opinion1", prev, "opinion2", v)
 								return results
