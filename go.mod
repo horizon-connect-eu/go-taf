@@ -8,7 +8,7 @@ require (
 	github.com/IBM/sarama v1.43.2
 	github.com/google/uuid v1.6.0
 	github.com/pterm/pterm v0.12.79
-	github.com/vs-uulm/go-subjectivelogic v0.2.0
+	github.com/vs-uulm/go-subjectivelogic v0.2.1
 	github.com/vs-uulm/taf-tlee-interface v0.1.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 )
