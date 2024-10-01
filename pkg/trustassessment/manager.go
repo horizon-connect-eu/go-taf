@@ -748,37 +748,37 @@ func (tam *Manager) AddNewTrustModelInstance(instance core.TrustModelInstance, s
 
 	//Add TMI to session
 	sessions := tam.Sessions()
-	session, exists := sessions[sessionID]
+	sess, exists := sessions[sessionID]
 	if !exists {
 		tam.logger.Error("Non-existing session used for adding a new TMI", "Session", sessionID, "TMI", instance.ID())
 		return
 
 	} else {
-		sessionTMIs := session.TrustModelInstances()
-		sessionTMIs[tmiID] = core.MergeFullTMIIdentifier(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
-		tam.tmiTable.RegisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
+		sessionTMIs := sess.TrustModelInstances()
+		sessionTMIs[tmiID] = core.MergeFullTMIIdentifier(sess.Client(), sess.ID(), sess.TrustModelTemplate().Identifier(), tmiID)
+		tam.tmiTable.RegisterTMI(sess.Client(), sess.ID(), sess.TrustModelTemplate().Identifier(), tmiID)
 	}
 
 	//init TMI
-	fullTmiID := core.MergeFullTMIIdentifier(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), instance.ID())
+	fullTmiID := core.MergeFullTMIIdentifier(sess.Client(), sess.ID(), sess.TrustModelTemplate().Identifier(), instance.ID())
 
 	tmiInitCmd := command.CreateHandleTMIInit(fullTmiID, instance)
-	tam.DispatchToWorker(session, tmiID, tmiInitCmd)
+	tam.DispatchToWorker(sess, tmiID, tmiInitCmd)
 }
 
 func (tam *Manager) RemoveTrustModelInstance(fullTMIid string, sessionID string) {
 	sessions := tam.Sessions()
-	session, exists := sessions[sessionID]
+	sess, exists := sessions[sessionID]
 	if !exists {
 		tam.logger.Error("Non-existing session used for removing a TMI", "Session", sessionID, "TMI", fullTMIid)
 		return
 	} else {
 		_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTMIid)
 		tam.logger.Debug("Removing TMI from Session", "Session", sessionID, "TMI", fullTMIid)
-		tam.DispatchToWorker(session, fullTMIid, command.CreateHandleTMIDestroy(fullTMIid))
-		tam.tmiTable.UnregisterTMI(session.Client(), session.ID(), session.TrustModelTemplate().Identifier(), tmiID)
+		tam.DispatchToWorker(sess, fullTMIid, command.CreateHandleTMIDestroy(fullTMIid))
+		tam.tmiTable.UnregisterTMI(sess.Client(), sess.ID(), sess.TrustModelTemplate().Identifier(), tmiID)
 		delete(tam.atlResults, fullTMIid)
-		delete(session.TrustModelInstances(), tmiID)
+		delete(sess.TrustModelInstances(), tmiID)
 	}
 }
 

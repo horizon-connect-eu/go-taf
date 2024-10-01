@@ -1,0 +1,117 @@
+package handlers
+
+import (
+	"fmt"
+	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
+	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/core"
+	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
+	"log/slog"
+)
+
+type AivHandler struct {
+	sessionTsqs                  map[string][]core.TrustSourceQuantifier
+	latestSubscriptionEvidence   map[string]map[string]map[core.EvidenceType]int
+	tam                          TAMAccess
+	tsm                          TSMAccess
+	logger                       *slog.Logger
+	aivSubscriptionIDtoSession   map[string]session.Session
+	sessionIDtoAivSubscriptionID map[string]string
+}
+
+func CreateAivHandler(tam TAMAccess, tsm TSMAccess, logger *slog.Logger) *AivHandler {
+	return &AivHandler{
+		sessionTsqs:                  make(map[string][]core.TrustSourceQuantifier),
+		latestSubscriptionEvidence:   make(map[string]map[string]map[core.EvidenceType]int),
+		logger:                       logger,
+		tsm:                          tsm,
+		tam:                          tam,
+		aivSubscriptionIDtoSession:   make(map[string]session.Session),
+		sessionIDtoAivSubscriptionID: make(map[string]string),
+	}
+}
+
+func (h *AivHandler) Initialize() {
+	return
+}
+
+func (h *AivHandler) AddSession(sess session.Session, handler *completionhandler.CompletionHandler) {
+	h.tsm.SubscribeAIV(handler, sess)
+}
+
+func (h *AivHandler) RegisterSubscription(sess session.Session, subscriptionID string) {
+	h.latestSubscriptionEvidence[subscriptionID] = make(map[string]map[core.EvidenceType]int)
+	h.aivSubscriptionIDtoSession[subscriptionID] = sess
+	h.sessionIDtoAivSubscriptionID[sess.ID()] = subscriptionID
+}
+
+func (h *AivHandler) RemoveSession(sess session.Session, handler *completionhandler.CompletionHandler) {
+	subId, exists := h.sessionIDtoAivSubscriptionID[sess.ID()]
+	if !exists {
+		//TODO: error handling
+		return
+	} else {
+		h.tsm.UnsubscribeAIV(subId, handler)
+		delete(h.sessionIDtoAivSubscriptionID, sess.ID())
+		delete(h.aivSubscriptionIDtoSession, subId)
+		delete(h.latestSubscriptionEvidence, subId)
+	}
+}
+
+func (h *AivHandler) TrustSourceType() core.TrustSource {
+	return core.AIV
+}
+
+func (h *AivHandler) RegisteredSessions() []string {
+	sessions := make([]string, len(h.sessionTsqs))
+	i := 0
+	for k := range h.sessionTsqs {
+		sessions[i] = k
+		i++
+	}
+	return sessions
+}
+
+func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
+	//Check whether subscription is known, otherwise return
+	subID := cmd.Notify.SubscriptionID
+	sess, exists := h.aivSubscriptionIDtoSession[subID]
+	if !exists {
+		h.logger.Warn("Unknown subscription for AIV_NOTIFY, discarding message", "Subscription ID", cmd.Notify.SubscriptionID)
+		return
+	}
+
+	//Extract raw evidence from the message and store it into latestEvidence
+	updatedTrustees := make(map[string]bool)
+	for _, trusteeReport := range cmd.Notify.TrusteeReports {
+		trusteeID := *trusteeReport.TrusteeID
+		//Discard old evidence and always create a new map
+		h.latestSubscriptionEvidence[subID][trusteeID] = make(map[core.EvidenceType]int)
+		for _, attestationReport := range trusteeReport.AttestationReport {
+			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
+			value := int(attestationReport.Appraisal)
+			h.latestSubscriptionEvidence[subID][trusteeID][evidenceType] = value
+			updatedTrustees[trusteeID] = true
+		}
+	}
+
+	//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+	updates := make([]core.Update, 0)
+	for trustee := range updatedTrustees {
+		for _, tsq := range sess.TrustSourceQuantifiers() {
+			if tsq.Trustee == trustee { //TODO
+				ato := tsq.Quantifier(h.latestSubscriptionEvidence[subID][trustee])
+				h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[subID][trustee]))
+				updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.AIV))
+			}
+		}
+	}
+	if len(updates) > 0 {
+		for tmiID, fullTmiID := range sess.TrustModelInstances() {
+			tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+			h.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
+		}
+	}
+}

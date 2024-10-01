@@ -1,8 +1,6 @@
 package trustsource
 
-import (
-	"strings"
-)
+import "strings"
 
 type MisbehaviorDetector uint16
 
