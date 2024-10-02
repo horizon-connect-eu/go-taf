@@ -96,8 +96,6 @@ type TLEE struct {
 V2X-Observer settings.
 */
 type V2X struct {
-	NodeTTLsec       int
-	CheckIntervalSec int
 	NodeTTLsec       int //This period (in sec) defines the timeout for nodes considered present by the V2XObserver.
 	CheckIntervalSec int //This value (in sec) specifies in which frequency timeouts should be checked.
 }
