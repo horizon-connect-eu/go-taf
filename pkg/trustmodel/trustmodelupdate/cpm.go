@@ -2,6 +2,9 @@ package trustmodelupdate
 
 import "github.com/vs-uulm/go-taf/pkg/core"
 
+/*
+RefreshCPM is an TMI update operation that updates the structure of a trust model according to the observations of a CPM message.
+*/
 type RefreshCPM struct {
 	sourceID string
 	objects  []string

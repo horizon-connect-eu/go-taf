@@ -12,6 +12,11 @@ import (
 	"log/slog"
 )
 
+/*
+A Worker is an instance inside the TAM that handles a subset (shard) of TMIs.
+Each worker is backed by a single go-routine, hence multiple workers run in parallel, but a TMI inside a worker shard
+will always be handled (e.g., applying updates) sequentially
+*/
 type Worker struct {
 	tafContext  core.TafContext
 	id          int
@@ -25,6 +30,10 @@ type Worker struct {
 	tlee         tleeinterface.TLEE
 }
 
+/*
+SpawnNewWorker creates a new worker. The worker receives a channel for commands from the TAM and a channel to send back
+results to the TAM. The worker also receives a reference to the TLEE instance to be used for calculations.
+*/
 func (tam *Manager) SpawnNewWorker(id int, workerQueue <-chan core.Command, workersToTam chan<- core.Command, tafContext core.TafContext, tlee tleeinterface.TLEE) Worker {
 	return Worker{
 		tafContext:   tafContext,

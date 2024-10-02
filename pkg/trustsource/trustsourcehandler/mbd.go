@@ -1,4 +1,4 @@
-package handlers
+package trustsourcehandler
 
 import (
 	"fmt"
@@ -10,6 +10,12 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 )
+
+/*
+The MbdHandler is a trust source handler for MBD-based evidence. This Handler creates a single subscription at the
+misbehavior detection system, if there is at least a single session that requires the MBD as trust source.
+There is hence a 1:N mapping the MBD subscription and sessions at runtime.
+*/
 
 type MbdHandler struct {
 	sessionTsqs                map[string][]core.TrustSourceQuantifier

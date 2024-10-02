@@ -13,6 +13,9 @@ const (
 	TRUST_DECISION               Trigger = "TRUST_DECISION"
 )
 
+/*
+A Subscription represents a TAS subscription initiated by a client as part of its session to receive updates from the TAF.
+*/
 type Subscription interface {
 	Trigger() Trigger
 	SubscriptionID() string

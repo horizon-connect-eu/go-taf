@@ -5,6 +5,9 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
+/*
+UpdateAtomicTrustOpinion is an TMI update operation that updates the opinion of a trust relationship in a trust model.
+*/
 type UpdateAtomicTrustOpinion struct {
 	opinion     subjectivelogic.QueryableOpinion
 	trustSource core.TrustSource

@@ -18,7 +18,7 @@ import (
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
-	"github.com/vs-uulm/go-taf/pkg/trustsource/handlers"
+	"github.com/vs-uulm/go-taf/pkg/trustsource/trustsourcehandler"
 	"log/slog"
 	"strings"
 )
@@ -34,9 +34,9 @@ type Manager struct {
 	//Schema:ResponseID->Callback
 	pendingMessageCallbacks map[messages.MessageSchema]map[string]func(cmd core.Command)
 
-	aivHandler *handlers.AivHandler
-	tchHandler *handlers.TchHandler
-	mbdHandler *handlers.MbdHandler
+	aivHandler *trustsourcehandler.AivHandler
+	tchHandler *trustsourcehandler.TchHandler
+	mbdHandler *trustsourcehandler.MbdHandler
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
@@ -75,15 +75,15 @@ func (tsm *Manager) SetManagers(managers manager.TafManagers) {
 	//For each type of trust source, initialize some data structures
 	for trustSourceType := range potentialTrustSources {
 		if trustSourceType == core.AIV {
-			tsm.aivHandler = handlers.CreateAivHandler(tsm.tam, tsm, tsm.logger)
+			tsm.aivHandler = trustsourcehandler.CreateAivHandler(tsm.tam, tsm, tsm.logger)
 		}
 
 		if trustSourceType == core.MBD {
-			tsm.mbdHandler = handlers.CreateMbdHandler(tsm.tam, tsm, tsm.logger)
+			tsm.mbdHandler = trustsourcehandler.CreateMbdHandler(tsm.tam, tsm, tsm.logger)
 		}
 
 		if trustSourceType == core.TCH {
-			tsm.tchHandler = handlers.CreateTchHandler(tsm.tam, tsm.logger)
+			tsm.tchHandler = trustsourcehandler.CreateTchHandler(tsm.tam, tsm.logger)
 		}
 
 		listOfTrustSources = append(listOfTrustSources, trustSourceType.String())
@@ -424,12 +424,12 @@ func (tsm *Manager) SubscribeMBD(handler *completionhandler.CompletionHandler) {
 		switch cmd := recvCmd.(type) {
 		case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
 			if cmd.Response.Error != nil {
-				tsm.mbdHandler.SetSubscriptionState(handlers.NA)
+				tsm.mbdHandler.SetSubscriptionState(trustsourcehandler.NA)
 				reject(errors.New(*cmd.Response.Error))
 				return
 			} else {
 				tsm.mbdHandler.SetSubscriptionId(*cmd.Response.SubscriptionID)
-				tsm.mbdHandler.SetSubscriptionState(handlers.SUBSCRIBED)
+				tsm.mbdHandler.SetSubscriptionState(trustsourcehandler.SUBSCRIBED)
 				resolve()
 			}
 		default:
@@ -438,7 +438,7 @@ func (tsm *Manager) SubscribeMBD(handler *completionhandler.CompletionHandler) {
 	})
 
 	//Send subscription request
-	tsm.mbdHandler.SetSubscriptionState(handlers.SUBSCRIBING)
+	tsm.mbdHandler.SetSubscriptionState(trustsourcehandler.SUBSCRIBING)
 	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
 }
 
@@ -490,7 +490,7 @@ func (tsm *Manager) UnsubscribeMBD(subID string, handler *completionhandler.Comp
 				reject(errors.New(*cmd.Response.Error))
 				return
 			}
-			tsm.mbdHandler.SetSubscriptionState(handlers.NA)
+			tsm.mbdHandler.SetSubscriptionState(trustsourcehandler.NA)
 			tsm.logger.Debug("Unregistering MBD Subscription " + subID)
 
 			resolve()
@@ -498,7 +498,7 @@ func (tsm *Manager) UnsubscribeMBD(subID string, handler *completionhandler.Comp
 			reject(errors.New("Unknown response type: " + cmd.Type().String()))
 		}
 	})
-	tsm.mbdHandler.SetSubscriptionState(handlers.UNSUBSCRIBING)
+	tsm.mbdHandler.SetSubscriptionState(trustsourcehandler.UNSUBSCRIBING)
 	tsm.outbox <- core.NewMessage(bytes, "", tsm.config.Communication.MbdEndpoint)
 }
 

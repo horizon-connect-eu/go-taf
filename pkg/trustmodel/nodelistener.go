@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+/*
+V2xObserver implements the observer pattern and provides an interface to register listeners to be called when new
+entities have been added or removed.
+*/
 type V2xObserver struct {
 	nodes     map[string]int64
 	observers map[observer]bool

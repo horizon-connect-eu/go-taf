@@ -1,4 +1,4 @@
-package handlers
+package trustsourcehandler
 
 import (
 	"fmt"
@@ -11,6 +11,11 @@ import (
 	"log/slog"
 )
 
+/*
+The AivHandler is a trust source handler for AIV-based evidence. This Handler creates an individual subscription at the
+AIV for each session, as each session might require different claims in that subscriptions. There is hence a 1:1 mapping
+of sessions and AIV subscriptions at runtime.
+*/
 type AivHandler struct {
 	sessionTsqs                  map[string][]core.TrustSourceQuantifier
 	latestSubscriptionEvidence   map[string]map[string]map[core.EvidenceType]int
