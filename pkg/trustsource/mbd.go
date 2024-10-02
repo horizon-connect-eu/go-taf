@@ -2,6 +2,9 @@ package trustsource
 
 import "strings"
 
+/*
+MisbehaviorDetector specifies the type of Misbehavior Detector.
+*/
 type MisbehaviorDetector uint16
 
 func MisbehaviorDetectorByName(name string) MisbehaviorDetector {

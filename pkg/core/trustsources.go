@@ -2,7 +2,34 @@ package core
 
 import "strings"
 
+/*
+TrustSource specifies the type of trust source.
+*/
+type TrustSource uint16
+
+/*
+EvidenceType specifies the type of evidence. Each evidence is prefixed by the trust source type it belongs to.
+*/
 type EvidenceType uint16
+
+const (
+	/*
+		Unknown trust source, should not be used.
+	*/
+	NONE TrustSource = iota
+	/*
+		AIV
+	*/
+	AIV
+	/*
+		MBD
+	*/
+	MBD
+	/*
+		TCH
+	*/
+	TCH
+)
 
 const (
 	UNKNOWN EvidenceType = iota
@@ -19,15 +46,6 @@ const (
 	TCH_APPLICATION_ISOLATION
 	TCH_CONTROL_FLOW_INTEGRITY
 	TCH_CONFIGURATION_INTEGRITY_VERIFICATION
-)
-
-type TrustSource uint16
-
-const (
-	NONE TrustSource = iota
-	AIV
-	MBD
-	TCH
 )
 
 func (e EvidenceType) String() string {

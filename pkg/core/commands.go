@@ -1,5 +1,8 @@
 package core
 
+/*
+A CommandType indicates the type of internal command to be by the TAM/TSM/TMM.
+*/
 type CommandType uint16
 
 const (

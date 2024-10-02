@@ -34,7 +34,7 @@ The main TAF application that starts all the components of the application and w
 */
 func main() {
 	tafConfig := config.DefaultConfig
-	// First, see whether a config file path has been specified
+	// check for config file in environment and load, otherwise use default config
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
 		var err error
 		tafConfig, err = config.LoadJSON(filepath)
@@ -76,6 +76,8 @@ func main() {
 	communicationInterface, err := communication.NewInterface(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating communication interface", "Error", err)
+		os.Exit(-1)
+		return
 	}
 
 	var tlee tleeinterface.TLEE
@@ -90,14 +92,20 @@ func main() {
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels, tlee)
 	if err != nil {
 		logger.Error("Error creating TAM", "Error", err)
+		os.Exit(-1)
+		return
 	}
 	trustSourceManager, err := trustsource.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TMM", "Error", err)
+		os.Exit(-1)
+		return
 	}
 	trustModelManager, err := trustmodel.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TMM", "Error", err)
+		os.Exit(-1)
+		return
 	}
 
 	managers := manager.TafManagers{
@@ -114,7 +122,6 @@ func main() {
 	go trustAssessmentManager.Run()
 
 	WaitForCtrlC()
-
 }
 
 /*

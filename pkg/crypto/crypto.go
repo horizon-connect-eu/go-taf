@@ -40,10 +40,16 @@ func NewCrypto(logger *slog.Logger, keyPath string, cryptoEnabled bool) (*Crypto
 	}
 }
 
+/*
+AttestationCertificate returne the attestation certificate to be used for outbound messages sent by the TAF.
+*/
 func (cr *Crypto) AttestationCertificate() string {
 	return cr.attestationCertificate
 }
 
+/*
+SignAivRequest signs an AIV_REQUEST from the TAF to the AIV by setting message fields accordingly.
+*/
 func (cr *Crypto) SignAivRequest(request *aivmsg.AivRequest) error {
 	if cr.cryptoEnabled {
 		cryptoEvidence, err := crypto.GenerateEvidence()
@@ -62,6 +68,9 @@ func (cr *Crypto) SignAivRequest(request *aivmsg.AivRequest) error {
 	}
 }
 
+/*
+SignAivSubscribeRequest signs an AIV_SUBSCRIBE_REQUEST from the TAF to the AIV by setting message fields accordingly.
+*/
 func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) error {
 	if cr.cryptoEnabled {
 		cryptoEvidence, err := crypto.GenerateEvidence()
@@ -80,6 +89,9 @@ func (cr *Crypto) SignAivSubscribeRequest(request *aivmsg.AivSubscribeRequest) e
 	}
 }
 
+/*
+VerifyAivResponse verifies an incoming AIV_RESPONSE and returns true, false, or an error.
+*/
 func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) {
 	if cr.cryptoEnabled {
 		nonceByteArray, err := crypto.FromHexToByteArray(response.AivEvidence.Nonce)
@@ -103,6 +115,9 @@ func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) 
 	}
 }
 
+/*
+VerifyAivResponse verifies an incoming AIV_NOTIFY and returns true, false, or an error.
+*/
 func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	if cr.cryptoEnabled {
 		nonceByteArray, err := crypto.FromHexToByteArray(notify.AivEvidence.Nonce)
@@ -126,14 +141,11 @@ func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	}
 }
 
+/*
+VerifyTchNotify verifies an incoming TCH_NOTIFY and returns true, false, or an error.
+*/
 func (cr *Crypto) VerifyTchNotify(notify *tchmsg.TchNotify) (bool, error) {
 	if cr.cryptoEnabled {
-		/*
-			nonceByteArray, err := crypto.FromHexToByteArray(notify.?)
-			if err != nil {
-				return false, errors.New("failed to decode nonce from AIV_RESPONSE")
-			}
-		*/
 		trusteeReportByteStream, err := json.Marshal(notify.TchReport)
 		if err != nil {
 			return false, errors.New("failed to decode trustee report from AIV_RESPONSE")

@@ -6,6 +6,10 @@ import (
 	"log/slog"
 )
 
+/*
+TLEE represents an internal TLEE as part of the TAF that can be used for debugging purposes, independent of the actual
+TLEE implementation.
+*/
 type TLEE struct {
 	Logger *slog.Logger
 }

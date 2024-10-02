@@ -1,5 +1,8 @@
 package core
 
+/*
+A TrustDecision represents the output of a trust decision engine execution.
+*/
 type TrustDecision uint8
 
 const (

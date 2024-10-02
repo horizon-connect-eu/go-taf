@@ -20,7 +20,8 @@ type TafManagers struct {
 }
 
 /*
-The CooperativeManager is a manager type that knows about other managers (via SetManagers) and can thus call their functions .
+The CooperativeManager is a manager type that knows about other managers (via SetManagers) and can thus call their
+functions .
 */
 type CooperativeManager interface {
 	SetManagers(managers TafManagers)
@@ -33,6 +34,11 @@ type RunnableManager interface {
 	Run()
 }
 
+/*
+The TrustAssessmentManager is an internal component responsible for handling communication with client applications and
+dispatching operations to the TSM and TMM. It is running in a dedicated go-routine with an exclusive channel that
+contains incoming messages and updates operations either to be handled by the TAM directly, or by calling the TSM/TMM.
+*/
 type TrustAssessmentManager interface {
 	SetManagers(managers TafManagers)
 	HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasInitRequest])
@@ -50,6 +56,10 @@ type TrustAssessmentManager interface {
 	Run()
 }
 
+/*
+The TrustSourceManager is an internal component responsible for handling trust sources, their subscriptions and incoming
+evidence messages.
+*/
 type TrustSourceManager interface {
 	SetManagers(managers TafManagers)
 	HandleAivResponse(cmd command.HandleResponse[aivmsg.AivResponse])
@@ -66,6 +76,9 @@ type TrustSourceManager interface {
 	DispatchAivRequest(session session.Session)
 }
 
+/*
+The TrustMdodelManager is an internal component responsible for handling trust model templates and V2X communication monitoring.
+*/
 type TrustModelManager interface {
 	SetManagers(managers TafManagers)
 	HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])

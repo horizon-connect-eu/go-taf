@@ -1,7 +1,7 @@
 package core
 
 /*
-The UpdateOp identifies the type of Update Operation than can be applied to an existing TrustModelInstance
+The UpdateOp identifies the type of Update Operation than can be applied to an existing TrustModelInstance.
 */
 type UpdateOp uint16
 

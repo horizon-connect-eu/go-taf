@@ -91,9 +91,8 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	if !exists {
 		return
 	}
-	//sessionID, _ := worker.tmiSessions[cmd.TmiID]
 
-	//Execute TMI Updates
+	//(Batch-)Execute TMI Updates
 	for _, update := range cmd.Updates {
 		tmi.Update(update)
 	}

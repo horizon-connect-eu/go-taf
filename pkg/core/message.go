@@ -1,5 +1,8 @@
 package core
 
+/*
+Message represents a wrapper around inbound/outbound messages.
+*/
 type Message interface {
 	Source() string
 	Destination() string
