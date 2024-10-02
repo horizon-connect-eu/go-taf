@@ -41,7 +41,7 @@ type Evidence struct {
 AIV-related configuration.
 */
 type AIV struct {
-	CheckInterval int
+	CheckInterval int //check interval (in msec) passed to the AIV for new AIV subscriptions
 }
 
 /*
@@ -68,8 +68,8 @@ type Communication struct {
 Kafka-related configuration.
 */
 type Kafka struct {
-	Broker   string
-	TafTopic string
+	Broker   string //broker endpoint
+	TafTopic string //Kafka topic from which the TAF consumes messages from.
 }
 
 /*
