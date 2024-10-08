@@ -103,9 +103,11 @@ func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 			objects = append(objects, fmt.Sprintf("%g", object.ObjectID))
 		}
 
-		for _, fullTMIID := range targetTMIIDs {
-			updateCmd := command.CreateHandleTMIUpdate(fullTMIID, trustmodelupdate.CreateRefreshCPM(sender, objects))
-			tmm.tam.DispatchToWorkerByFullTMIID(fullTMIID, updateCmd)
+		if len(objects) > 0 {
+			for _, fullTMIID := range targetTMIIDs {
+				updateCmd := command.CreateHandleTMIUpdate(fullTMIID, trustmodelupdate.CreateRefreshCPM(sender, objects))
+				tmm.tam.DispatchToWorkerByFullTMIID(fullTMIID, updateCmd)
+			}
 		}
 	}
 }
