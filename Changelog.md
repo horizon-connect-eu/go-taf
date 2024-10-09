@@ -1,5 +1,11 @@
 # Standalone TAF Prototype
 
+## Release v0.2.2 (2024-10-09)
+
+* fixed behavior of TAS_NOTIFY according to the TAS subscription specification
+  * Notifications now always include the full set of propositions (instead of only the changed propositions) in case the subscription trigger fires for a trust model instance after it has been modified. 
+
+
 ## Release v0.2.1 (2024-10-01)
 
 * reworked support for handling different trust sources
