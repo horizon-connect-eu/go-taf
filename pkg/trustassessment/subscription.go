@@ -65,7 +65,7 @@ func (s *SubscriptionInstance) SubscriberTopic() string {
 
 func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs core.AtlResultSet) []ResultEntry {
 	result := make([]ResultEntry, 0)
-	propositions := make([]Proposition, 0)
+	//propositions := make([]Proposition, 0)//OLD CODE THAT ONLY INCLUDED CHANGES
 
 	if oldATLs.TmiID() != newATLs.TmiID() {
 		return result
@@ -76,18 +76,22 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 			return result
 		}
 	}
-
+	changes := 0
 	switch s.trigger {
 	case ACTUAL_TRUSTWORTHINESS_LEVEL:
 		for propositionID, newOpinion := range newATLs.ATLs() {
 			oldOpinion, exists := oldATLs.ATLs()[propositionID]
 			if !exists {
 				//Proposition has not yet existed, so add as changed!
-				propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+				//propositions = append(propositions, NewPropositionEntry(newATLs, propositionID)) //OLD CODE THAT ONLY INCLUDED CHANGES
+				changes++
+				break
 			} else {
 				if !areIdenticalSubjectiveLogicOpinions(oldOpinion, newOpinion) {
 					//There is a change in the ATL, so add as changed.
-					propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+					//propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))//OLD CODE THAT ONLY INCLUDED CHANGES
+					changes++
+					break
 				}
 			}
 		}
@@ -96,18 +100,38 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 			oldTD, exists := oldATLs.TrustDecisions()[propositionID]
 			if !exists {
 				//Proposition has not yet existed, so add as changed!
-				propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+				//propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))//OLD CODE THAT ONLY INCLUDED CHANGES
+				changes++
+				break
 			}
 			if oldTD != newTD {
 				//There is a change in the Trust Decision, so add as changed.
-				propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+				//propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))//OLD CODE THAT ONLY INCLUDED CHANGES
+				changes++
+				break
 			}
 		}
 	default:
 		//Nothing to do
 	}
 
-	if len(propositions) > 0 {
+	//OLD CODE THAT ONLY INCLUDED CHANGES
+	/*
+		if len(propositions) > 0 {
+			result = append(result, ResultEntry{
+				TmiID:        newATLs.TmiID(),
+				Propositions: propositions,
+			})
+		}
+
+	*/
+
+	//Provide the full list of propositions whenever there is a change
+	if changes > 0 {
+		propositions := make([]Proposition, 0)
+		for propositionID := range newATLs.ATLs() {
+			propositions = append(propositions, NewPropositionEntry(newATLs, propositionID))
+		}
 		result = append(result, ResultEntry{
 			TmiID:        newATLs.TmiID(),
 			Propositions: propositions,
