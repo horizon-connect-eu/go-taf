@@ -63,13 +63,15 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 			if err == nil && id == e.sourceID {
 				e.sourceOpinion = update.Opinion()
 				e.updateValues()
+				e.incrementVersion()
 			}
 		} else if strings.HasPrefix(trustee, "C_") {
-			sourceID, objID, err := parseObjectIdentifier(trustee)
-			if err == nil && sourceID == e.sourceID {
+			_, objID, err := parseObjectIdentifier(trustee)
+			if err == nil {
 				if _, ok := e.objects[objID]; ok {
 					e.objects[objID] = update.Opinion()
 					e.updateValues()
+					e.incrementVersion()
 				}
 			}
 		}
