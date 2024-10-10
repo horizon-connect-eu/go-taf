@@ -1,5 +1,11 @@
 # Standalone TAF Prototype
 
+## Release v0.2.3 (2024-10-10)
+
+* fixed handling of atomic trust opinion updates
+* improved support for concurrent trust models with identical evidence types coming from different trust sources
+
+
 ## Release v0.2.2 (2024-10-09)
 
 * fixed behavior of TAS_NOTIFY according to the TAS subscription specification
