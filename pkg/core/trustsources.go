@@ -67,17 +67,17 @@ func (e EvidenceType) String() string {
 	case MBD_MISBEHAVIOR_REPORT:
 		return "MISBEHAVIOR_REPORT"
 	case TCH_SECURE_BOOT:
-		return "TCH_SECURE_BOOT"
+		return "SECURE_BOOT"
 	case TCH_SECURE_OTA:
-		return "TCH_SECURE_OTA"
+		return "SECURE_OTA"
 	case TCH_ACCESS_CONTROL:
-		return "TCH_ACCESS_CONTROL"
+		return "ACCESS_CONTROL"
 	case TCH_APPLICATION_ISOLATION:
-		return "TCH_APPLICATION_ISOLATION"
+		return "APPLICATION_ISOLATION"
 	case TCH_CONTROL_FLOW_INTEGRITY:
-		return "TCH_CONTROL_FLOW_INTEGRITY"
+		return "CONTROL_FLOW_INTEGRITY"
 	case TCH_CONFIGURATION_INTEGRITY_VERIFICATION:
-		return "TCH_CONFIGURATION_INTEGRITY_VERIFICATION"
+		return "CONFIGURATION_INTEGRITY_VERIFICATION"
 	default:
 		return "UNKNOWN_EVIDENCE"
 	}
@@ -133,34 +133,49 @@ func (e EvidenceType) Source() TrustSource {
 	}
 }
 
-func EvidenceTypeByName(name string) EvidenceType {
-	switch {
-	case strings.ToUpper(name) == AIV_SECURE_BOOT.String():
-		return AIV_SECURE_BOOT
-	case strings.ToUpper(name) == AIV_SECURE_OTA.String():
-		return AIV_SECURE_OTA
-	case strings.ToUpper(name) == AIV_ACCESS_CONTROL.String():
-		return AIV_ACCESS_CONTROL
-	case strings.ToUpper(name) == AIV_APPLICATION_ISOLATION.String():
-		return AIV_APPLICATION_ISOLATION
-	case strings.ToUpper(name) == AIV_CONTROL_FLOW_INTEGRITY.String():
-		return AIV_CONTROL_FLOW_INTEGRITY
-	case strings.ToUpper(name) == AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String():
-		return AIV_CONFIGURATION_INTEGRITY_VERIFICATION
-	case strings.ToUpper(name) == MBD_MISBEHAVIOR_REPORT.String():
-		return MBD_MISBEHAVIOR_REPORT
-	case strings.ToUpper(name) == TCH_SECURE_BOOT.String():
-		return TCH_SECURE_BOOT
-	case strings.ToUpper(name) == TCH_SECURE_OTA.String():
-		return TCH_SECURE_OTA
-	case strings.ToUpper(name) == TCH_ACCESS_CONTROL.String():
-		return TCH_ACCESS_CONTROL
-	case strings.ToUpper(name) == TCH_APPLICATION_ISOLATION.String():
-		return TCH_APPLICATION_ISOLATION
-	case strings.ToUpper(name) == TCH_CONTROL_FLOW_INTEGRITY.String():
-		return TCH_CONTROL_FLOW_INTEGRITY
-	case strings.ToUpper(name) == TCH_CONFIGURATION_INTEGRITY_VERIFICATION.String():
-		return TCH_CONFIGURATION_INTEGRITY_VERIFICATION
+func EvidenceTypeBySourceAndName(ts TrustSource, name string) EvidenceType {
+	switch ts {
+	case AIV:
+		switch {
+		case strings.ToUpper(name) == AIV_SECURE_BOOT.String():
+			return AIV_SECURE_BOOT
+		case strings.ToUpper(name) == AIV_SECURE_OTA.String():
+			return AIV_SECURE_OTA
+		case strings.ToUpper(name) == AIV_ACCESS_CONTROL.String():
+			return AIV_ACCESS_CONTROL
+		case strings.ToUpper(name) == AIV_APPLICATION_ISOLATION.String():
+			return AIV_APPLICATION_ISOLATION
+		case strings.ToUpper(name) == AIV_CONTROL_FLOW_INTEGRITY.String():
+			return AIV_CONTROL_FLOW_INTEGRITY
+		case strings.ToUpper(name) == AIV_CONFIGURATION_INTEGRITY_VERIFICATION.String():
+			return AIV_CONFIGURATION_INTEGRITY_VERIFICATION
+		default:
+			return UNKNOWN
+		}
+	case MBD:
+		switch {
+		case strings.ToUpper(name) == MBD_MISBEHAVIOR_REPORT.String():
+			return MBD_MISBEHAVIOR_REPORT
+		default:
+			return UNKNOWN
+		}
+	case TCH:
+		switch {
+		case strings.ToUpper(name) == TCH_SECURE_BOOT.String():
+			return TCH_SECURE_BOOT
+		case strings.ToUpper(name) == TCH_SECURE_OTA.String():
+			return TCH_SECURE_OTA
+		case strings.ToUpper(name) == TCH_ACCESS_CONTROL.String():
+			return TCH_ACCESS_CONTROL
+		case strings.ToUpper(name) == TCH_APPLICATION_ISOLATION.String():
+			return TCH_APPLICATION_ISOLATION
+		case strings.ToUpper(name) == TCH_CONTROL_FLOW_INTEGRITY.String():
+			return TCH_CONTROL_FLOW_INTEGRITY
+		case strings.ToUpper(name) == TCH_CONFIGURATION_INTEGRITY_VERIFICATION.String():
+			return TCH_CONFIGURATION_INTEGRITY_VERIFICATION
+		default:
+			return UNKNOWN
+		}
 	default:
 		return UNKNOWN
 	}

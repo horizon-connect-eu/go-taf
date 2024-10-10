@@ -95,7 +95,7 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 		//Discard old evidence and always create a new map
 		h.latestSubscriptionEvidence[subID][trusteeID] = make(map[core.EvidenceType]int)
 		for _, attestationReport := range trusteeReport.AttestationReport {
-			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
+			evidenceType := core.EvidenceTypeBySourceAndName(core.AIV, attestationReport.Claim)
 			value := int(attestationReport.Appraisal)
 			h.latestSubscriptionEvidence[subID][trusteeID][evidenceType] = value
 			updatedTrustees[trusteeID] = true

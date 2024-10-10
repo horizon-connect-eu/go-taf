@@ -325,8 +325,8 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 					evidenceCollection := make(map[core.EvidenceType]int)
 					for _, report := range trusteeReport.AttestationReport {
 						evidence := report.Claim
-						tsm.logger.Debug("Received evidence response from AIV", "Evidence Type", core.EvidenceTypeByName(evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
-						evidenceCollection[core.EvidenceTypeByName(evidence)] = int(report.Appraisal)
+						tsm.logger.Debug("Received evidence response from AIV", "Evidence Type", core.EvidenceTypeBySourceAndName(core.AIV, evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)
+						evidenceCollection[core.EvidenceTypeBySourceAndName(core.AIV, evidence)] = int(report.Appraisal)
 					}
 					//call quantifier
 					ato := quantifiers[core.AIV](evidenceCollection)

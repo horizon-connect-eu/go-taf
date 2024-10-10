@@ -107,7 +107,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			} else if strings.Contains(key, "TCH_EXISTENCE") {
 				control := strings.SplitAfterN(key, "_", 3)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					controlType := core.EvidenceTypeByName("TCH_" + control)
+					controlType := core.EvidenceTypeBySourceAndName(core.TCH, control)
 					if controlType == core.UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
@@ -119,7 +119,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			} else if strings.Contains(key, "TCH_OUTPUT") {
 				control := strings.SplitAfterN(key, "_", 3)[2]
 				if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-					controlType := core.EvidenceTypeByName("TCH_" + control)
+					controlType := core.EvidenceTypeBySourceAndName(core.TCH, control)
 					if controlType == core.UNKNOWN {
 						return nil, errors.New("Key" + key + "is not valid")
 					} else {
@@ -197,8 +197,6 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 					}
 				}
 			}
-
-			sl.Modify(belief, disbelief, 1-belief-disbelief, sl.BaseRate())
 
 			return &sl
 		},

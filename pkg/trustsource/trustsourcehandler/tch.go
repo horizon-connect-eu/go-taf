@@ -66,7 +66,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		//Discard old evidence and always create a new map
 		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]int)
 		for _, attestationReport := range trusteeReport.AttestationReport {
-			evidenceType := core.EvidenceTypeByName(attestationReport.Claim)
+			evidenceType := core.EvidenceTypeBySourceAndName(core.TCH, attestationReport.Claim)
 			value := int(attestationReport.Appraisal)
 			h.latestSubscriptionEvidence[id][evidenceType] = value
 			updatedTrustees[id] = true
