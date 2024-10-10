@@ -36,7 +36,7 @@ func CreateAtomicTrustOpinionUpdate(opinion subjectivelogic.QueryableOpinion, tr
 		opinion:     opinion,
 		trustSource: source,
 		trustee:     trustee,
-		trustor:     trustee,
+		trustor:     trustor,
 	}
 }
 
