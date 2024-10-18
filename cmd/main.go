@@ -7,6 +7,7 @@ import (
 	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"context"
 	"fmt"
+	"github.com/vs-uulm/go-taf/cmd/flags"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/internal/version"
 	"github.com/vs-uulm/go-taf/pkg/communication"
@@ -16,6 +17,7 @@ import (
 	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
+	"github.com/vs-uulm/go-taf/pkg/web"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log"
 	"log/slog"
@@ -50,7 +52,7 @@ func main() {
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
-	logger.Info("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build)
+	logger.Info("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build, "WEB-UI Flag", flags.WEB_UI)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
@@ -127,6 +129,16 @@ func main() {
 	//Let's go
 	go communicationInterface.Run()
 	go trustAssessmentManager.Run()
+
+	if flags.WEB_UI {
+		server, err := web.New(tafContext, tafChannels)
+		if err != nil {
+			logger.Error("Error creating webserver", "Error", err)
+			os.Exit(-1)
+			return
+		}
+		go server.Run()
+	}
 
 	WaitForCtrlC()
 }
