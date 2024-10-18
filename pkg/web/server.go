@@ -26,7 +26,7 @@ func (s *Webserver) Run() {
 	s.router = gin.New()         //Create a non-default router without request logging
 	s.router.Use(gin.Recovery())
 	s.router.GET("/trustsources", getTrustSources)
-	s.router.Run("localhost:7778")
+	s.router.Run(fmt.Sprintf(":%d", s.tafContext.Configuration.WebUI.Port))
 }
 
 func getTrustSources(ctx *gin.Context) {
