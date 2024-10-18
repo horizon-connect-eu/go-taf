@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
+	"github.com/vs-uulm/go-taf/internal/version"
 	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
@@ -29,6 +30,11 @@ import (
 
 //go:generate go run ../plugins/plugins.go
 
+var (
+	Version = version.Version
+	Build   = version.Build
+)
+
 /*
 The main TAF application that starts all the components of the application and waits for a signal to stop the application.
 */
@@ -44,6 +50,7 @@ func main() {
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
+	logger.Info("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
