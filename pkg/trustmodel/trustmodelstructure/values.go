@@ -1,6 +1,7 @@
 package trustmodelstructure
 
 import (
+	"encoding/json"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"strings"
@@ -40,4 +41,16 @@ func DumpValues(values map[string][]trustmodelstructure.TrustRelationship) strin
 		}
 	}
 	return strings.Join(result, "\n")
+}
+
+func (r *TrustRelationshipDTO) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Source      string                           `json:"source"`
+		Destination string                           `json:"destination"`
+		Opinion     subjectivelogic.QueryableOpinion `json:"opinion"`
+	}{
+		Source:      r.Source(),
+		Destination: r.Destination(),
+		Opinion:     r.Opinion(),
+	})
 }
