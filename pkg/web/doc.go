@@ -15,6 +15,9 @@ REST API
 /tmis
 /tmis/:clientid/:sessionid/:tmt-id/:tmi-id
 
+/tmis/:clientid/:sessionid/:tmt-id/:tmi-id/latest
+/tmis/:clientid/:sessionid/:tmt-id/:tmi-id/:version
+
 
 /trustmodels
 /trustmodels/:identifier

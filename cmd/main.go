@@ -138,6 +138,10 @@ func main() {
 			return
 		}
 		go server.Run()
+		//
+		trustAssessmentManager.AddSessionListener(server)
+		trustAssessmentManager.AddATLListener(server)
+		trustAssessmentManager.AddTMIListener(server)
 	}
 
 	WaitForCtrlC()
