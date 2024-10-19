@@ -177,6 +177,8 @@ github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65E
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/vs-uulm/go-subjectivelogic v0.2.1 h1:davq4zOx+R4tqPZsuUTj7sCzp01qque4qZBLhfO8PrE=
 github.com/vs-uulm/go-subjectivelogic v0.2.1/go.mod h1:D4KWmhKwnIhOxa/C+QwUAdLfhxvAl//g4oc424LaX9o=
+github.com/vs-uulm/go-subjectivelogic v0.2.2 h1:8noT+9ey35gd6U0gZ3j067+/UOjcGWr4dcanYcvuTHI=
+github.com/vs-uulm/go-subjectivelogic v0.2.2/go.mod h1:D4KWmhKwnIhOxa/C+QwUAdLfhxvAl//g4oc424LaX9o=
 github.com/vs-uulm/taf-tlee-interface v0.1.0 h1:sPYQ6aB06YO4gc56vZoh/KSYbySi49+WZz03ATaPz7k=
 github.com/vs-uulm/taf-tlee-interface v0.1.0/go.mod h1:IOEK9xaxdwP5xLiqdRFwb7lVoA1s2k46RHG0Xxptp08=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f h1:J9EGpcZtP0E/raorCMxlFGSTBrsSlaDGf3jU/qvAE2c=
