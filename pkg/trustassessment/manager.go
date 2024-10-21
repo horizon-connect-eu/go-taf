@@ -810,12 +810,7 @@ func (tam *Manager) RemoveSessionListener(listener listener.SessionListener) {
 
 func (tam *Manager) notifySessionCreated(session session.Session) {
 	if len(tam.sessionListeners) > 0 {
-		event := listener.SessionCreatedEvent{
-			Timestamp:          time.Now(),
-			SessionID:          session.ID(),
-			TrustModelTemplate: session.TrustModelTemplate(),
-			ClientID:           session.Client(),
-		}
+		event := listener.NewSessionCreatedEvent(session.ID(), session.TrustModelTemplate(), session.Client())
 		for listener, _ := range tam.sessionListeners {
 			listener.OnSessionCreated(event)
 		}
@@ -824,12 +819,7 @@ func (tam *Manager) notifySessionCreated(session session.Session) {
 
 func (tam *Manager) notifySessionTorndown(session session.Session) {
 	if len(tam.sessionListeners) > 0 {
-		event := listener.SessionDeletedEvent{
-			Timestamp:          time.Now(),
-			SessionID:          session.ID(),
-			TrustModelTemplate: session.TrustModelTemplate(),
-			ClientID:           session.Client(),
-		}
+		event := listener.NewSessionTorndownEvent(session.ID(), session.TrustModelTemplate(), session.Client())
 		for listener, _ := range tam.sessionListeners {
 			listener.OnSessionTorndown(event)
 		}
@@ -846,12 +836,7 @@ func (tam *Manager) RemoveATLListener(listener listener.ActualTrustLevelListener
 
 func (tam *Manager) notifyATLUpdated(fullTMI string, oldATLs core.AtlResultSet, newATLs core.AtlResultSet) {
 	if len(tam.sessionListeners) > 0 {
-		event := listener.ATLUpdatedEvent{
-			Timestamp: time.Now(),
-			FullTMI:   fullTMI,
-			OldATLs:   oldATLs,
-			NewATLs:   newATLs,
-		}
+		event := listener.NewATLUpdatedEvent(fullTMI, oldATLs, newATLs)
 		for listener, _ := range tam.atlListeners {
 			listener.OnATLUpdated(event)
 		}
@@ -860,10 +845,7 @@ func (tam *Manager) notifyATLUpdated(fullTMI string, oldATLs core.AtlResultSet, 
 
 func (tam *Manager) notifyATLRemoved(fullTMI string) {
 	if len(tam.sessionListeners) > 0 {
-		event := listener.ATLRemovedEvent{
-			Timestamp: time.Now(),
-			FullTMI:   fullTMI,
-		}
+		event := listener.NewATLRemovedEvent(fullTMI)
 		for listener, _ := range tam.atlListeners {
 			listener.OnATLRemoved(event)
 		}

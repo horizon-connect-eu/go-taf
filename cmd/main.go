@@ -131,14 +131,14 @@ func main() {
 	go trustAssessmentManager.Run()
 
 	if flags.WEB_UI {
-		server, err := web.New(tafContext, tafChannels)
+		server, err := web.New(tafContext)
 		if err != nil {
 			logger.Error("Error creating webserver", "Error", err)
 			os.Exit(-1)
 			return
 		}
+		server.SetManagers(managers)
 		go server.Run()
-		//
 		trustAssessmentManager.AddSessionListener(server)
 		trustAssessmentManager.AddATLListener(server)
 		trustAssessmentManager.AddTMIListener(server)

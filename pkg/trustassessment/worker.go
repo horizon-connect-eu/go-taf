@@ -11,7 +11,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
-	"time"
 )
 
 /*
@@ -172,18 +171,15 @@ func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]su
 
 func (worker *Worker) notifyTMISpawned(FullTmiID string, tmi core.TrustModelInstance) {
 	if len(worker.tmiListeners) > 0 {
-		event := listener.TrustModelInstanceSpawnedEvent{
-			Timestamp:   time.Now(),
-			ID:          tmi.ID(),
-			FullTMI:     FullTmiID,
-			Template:    tmi.Template(),
-			Version:     tmi.Version(),
-			Fingerprint: tmi.Fingerprint(),
-			Structure:   tmi.Structure(),
-			Values:      tmi.Values(),
-			RTLs:        tmi.RTLs(),
-		}
-
+		event := listener.NewTrustModelInstanceSpawnedEvent(tmi.ID(),
+			FullTmiID,
+			tmi.Template(),
+			tmi.Version(),
+			tmi.Fingerprint(),
+			tmi.Structure(),
+			tmi.Values(),
+			tmi.RTLs(),
+		)
 		for listener, _ := range worker.tmiListeners {
 			listener.OnTrustModelInstanceSpawned(event)
 		}
@@ -192,18 +188,15 @@ func (worker *Worker) notifyTMISpawned(FullTmiID string, tmi core.TrustModelInst
 
 func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInstance) {
 	if len(worker.tmiListeners) > 0 {
-		event := listener.TrustModelInstanceUpdatedEvent{
-			Timestamp:   time.Now(),
-			ID:          tmi.ID(),
-			FullTMI:     FullTmiID,
-			Template:    tmi.Template(),
-			Version:     tmi.Version(),
-			Fingerprint: tmi.Fingerprint(),
-			Structure:   tmi.Structure(),
-			Values:      tmi.Values(),
-			RTLs:        tmi.RTLs(),
-		}
-
+		event := listener.NewTrustModelInstanceUpdatedEvent(tmi.ID(),
+			FullTmiID,
+			tmi.Template(),
+			tmi.Version(),
+			tmi.Fingerprint(),
+			tmi.Structure(),
+			tmi.Values(),
+			tmi.RTLs(),
+		)
 		for listener, _ := range worker.tmiListeners {
 			listener.OnTrustModelInstanceUpdated(event)
 		}
@@ -212,10 +205,7 @@ func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInst
 
 func (worker *Worker) notifyTMIDeleted(FullTMI string) {
 	if len(worker.tmiListeners) > 0 {
-		event := listener.TrustModelInstanceDeletedEvent{
-			Timestamp: time.Now(),
-			FullTMI:   FullTMI,
-		}
+		event := listener.NewTrustModelInstanceDeletedEvent(FullTMI)
 		for listener, _ := range worker.tmiListeners {
 			listener.OnTrustModelInstanceDeleted(event)
 		}
