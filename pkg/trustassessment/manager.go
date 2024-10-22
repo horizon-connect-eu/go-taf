@@ -836,7 +836,7 @@ func (tam *Manager) RemoveATLListener(listener listener.ActualTrustLevelListener
 
 func (tam *Manager) notifyATLUpdated(fullTMI string, oldATLs core.AtlResultSet, newATLs core.AtlResultSet) {
 	if len(tam.sessionListeners) > 0 {
-		event := listener.NewATLUpdatedEvent(fullTMI, oldATLs, newATLs)
+		event := listener.NewATLUpdatedEvent(fullTMI, newATLs.Version(), oldATLs, newATLs)
 		for listener, _ := range tam.atlListeners {
 			listener.OnATLUpdated(event)
 		}

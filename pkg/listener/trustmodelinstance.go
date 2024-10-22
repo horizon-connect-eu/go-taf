@@ -41,19 +41,19 @@ type TrustModelInstanceUpdatedEvent struct {
 	Timestamp   time.Time
 	ID          string
 	FullTMI     string
-	Template    core.TrustModelTemplate
 	Version     int
 	Fingerprint uint32
 	Structure   trustmodelstructure.TrustGraphStructure
 	Values      map[string][]trustmodelstructure.TrustRelationship
 	RTLs        map[string]subjectivelogic.QueryableOpinion
+	Update      core.Update
 }
 
-func NewTrustModelInstanceUpdatedEvent(ID string, fullTMI string, template core.TrustModelTemplate, version int, fingerprint uint32, structure trustmodelstructure.TrustGraphStructure, values map[string][]trustmodelstructure.TrustRelationship, RTLs map[string]subjectivelogic.QueryableOpinion) TrustModelInstanceUpdatedEvent {
+func NewTrustModelInstanceUpdatedEvent(ID string, fullTMI string, version int, fingerprint uint32, structure trustmodelstructure.TrustGraphStructure, values map[string][]trustmodelstructure.TrustRelationship, RTLs map[string]subjectivelogic.QueryableOpinion, Update core.Update) TrustModelInstanceUpdatedEvent {
 	return TrustModelInstanceUpdatedEvent{
 		Timestamp: time.Now(),
 		EventType: TRUST_MODEL_INSTANCE_UPDATED,
-		ID:        ID, FullTMI: fullTMI, Template: template, Version: version, Fingerprint: fingerprint, Structure: structure, Values: values, RTLs: RTLs}
+		ID:        ID, FullTMI: fullTMI, Version: version, Fingerprint: fingerprint, Structure: structure, Values: values, RTLs: RTLs, Update: Update}
 }
 func (e TrustModelInstanceUpdatedEvent) Event() EventType {
 	return e.EventType

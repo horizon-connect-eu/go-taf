@@ -16,12 +16,14 @@ type ATLUpdatedEvent struct {
 	FullTMI   string
 	OldATLs   core.AtlResultSet
 	NewATLs   core.AtlResultSet
+	Version   int
 }
 
-func NewATLUpdatedEvent(fullTMI string, oldATLs core.AtlResultSet, newATLs core.AtlResultSet) ATLUpdatedEvent {
+func NewATLUpdatedEvent(fullTMI string, version int, oldATLs core.AtlResultSet, newATLs core.AtlResultSet) ATLUpdatedEvent {
 	return ATLUpdatedEvent{
 		Timestamp: time.Now(),
 		EventType: ATL_UPDATED,
+		Version:   version,
 		FullTMI:   fullTMI,
 		OldATLs:   oldATLs,
 		NewATLs:   newATLs,

@@ -110,9 +110,8 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	//(Batch-)Execute TMI Updates
 	for _, update := range cmd.Updates {
 		tmi.Update(update)
+		worker.notifyTMIUpdated(cmd.FullTmiID, tmi, update)
 	}
-
-	worker.notifyTMIUpdated(cmd.FullTmiID, tmi)
 
 	//Run TLEE
 	atls := worker.executeTLEE(tmi)
@@ -186,16 +185,16 @@ func (worker *Worker) notifyTMISpawned(FullTmiID string, tmi core.TrustModelInst
 	}
 }
 
-func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInstance) {
+func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInstance, update core.Update) {
 	if len(worker.tmiListeners) > 0 {
 		event := listener.NewTrustModelInstanceUpdatedEvent(tmi.ID(),
 			FullTmiID,
-			tmi.Template(),
 			tmi.Version(),
 			tmi.Fingerprint(),
 			tmi.Structure(),
 			tmi.Values(),
 			tmi.RTLs(),
+			update,
 		)
 		for listener, _ := range worker.tmiListeners {
 			listener.OnTrustModelInstanceUpdated(event)

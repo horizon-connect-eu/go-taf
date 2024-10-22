@@ -4,25 +4,31 @@ package web
 /*
 REST API
 
-/info
-
 /clients
 /clients/:client-id
 
 /sessions
 /sessions/:session-id
 
+
+
+
+*/
+
+/*
+Implemented Routes:
+
+/events
+
 /tmis
-/tmis/:clientid/:sessionid/:tmt-id/:tmi-id
-
-/tmis/:clientid/:sessionid/:tmt-id/:tmi-id/latest
 /tmis/:clientid/:sessionid/:tmt-id/:tmi-id/:version
+/tmis/:clientid/:sessionid/:tmt-id/:tmi-id/ => /tmis/:clientid/:sessionid/:tmt-id/:tmi-id/latest
 
+/info
+
+/trustsources
 
 /trustmodels
 /trustmodels/:identifier
 
-/trustsources
-/trustsources/:name
-/trustsources/:name/evidences
 */
