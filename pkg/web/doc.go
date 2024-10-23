@@ -2,23 +2,14 @@
 package web
 
 /*
-REST API
-
-/clients
-/clients/:client-id
+REST API: Implemented Routes:
 
 /sessions
-/sessions/:session-id
-
-
-
-
-*/
-
-/*
-Implemented Routes:
 
 /events
+/events?cursor=cursor-id
+/events/latest
+/events/all
 
 /tmis
 /tmis/:clientid/:sessionid/:tmt-id/:tmi-id/:version

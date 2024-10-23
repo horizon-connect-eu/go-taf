@@ -43,15 +43,18 @@ func (s *Webserver) Run() {
 	s.router = gin.New()         //Create a non-default router without request logging
 	s.router.Use(gin.Recovery())
 	//	s.router.LoadHTMLGlob("res/templates/*")
-	s.router.GET("/trustsources", s.getTrustSources)
-	s.router.GET("/trustmodels", s.getTrustModels)
-	s.router.GET("/trustmodels/:tmt-identifier", s.getTrustModel)
-	s.router.GET("/events", s.state.getEventLog)
+	s.router.GET("/events", s.state.getEventLogPage)
+	s.router.GET("/events/latest", s.state.getLatestEventLogPage)
+	s.router.GET("/events/all", s.state.getFullEventLog)
 	s.router.GET("/info", s.getInfo)
+	s.router.GET("/sessions", s.state.getSessions)
 	s.router.GET("/tmis/", s.state.getAllTMIs)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID", s.state.getTMI)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/latest", s.state.getTMILatest)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/:version", s.state.getVersionTMI)
+	s.router.GET("/trustmodels/:tmt-identifier", s.getTrustModel)
+	s.router.GET("/trustsources", s.getTrustSources)
+	s.router.GET("/trustmodels", s.getTrustModels)
 	s.router.Run(fmt.Sprintf(":%d", s.tafContext.Configuration.WebUI.Port))
 }
 
