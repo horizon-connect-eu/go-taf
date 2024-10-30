@@ -1,5 +1,10 @@
 # Standalone TAF Prototype
 
+## Release v0.2.4 (2024-10-29)
+
+* fixed a bug when handling atomic trust opinion updates in the IMA use case when the TCH NOTIFY message also includes component information
+
+
 ## Release v0.2.3 (2024-10-10)
 
 * fixed handling of atomic trust opinion updates
