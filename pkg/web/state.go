@@ -168,7 +168,8 @@ func (s *State) handleTMIUpdated(event listener.TrustModelInstanceUpdatedEvent) 
 }
 
 func (s *State) handleTMIDeleted(event listener.TrustModelInstanceDeletedEvent) {
-
+	fullTMI := event.FullTMI
+	s.tmis[fullTMI].IsActive = false
 }
 
 func (s *State) getSessions(ctx *gin.Context) {
