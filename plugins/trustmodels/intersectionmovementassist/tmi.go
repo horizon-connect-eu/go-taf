@@ -61,6 +61,7 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 		if strings.HasPrefix(trustee, "V_") {
 			id, err := parseVehicleIdentifier(trustee)
 			if err == nil && id == e.sourceID {
+
 				e.sourceOpinion = update.Opinion()
 				e.updateValues()
 				e.incrementVersion()
@@ -166,7 +167,7 @@ func (e *TrustModelInstance) updateStructure() {
 	}
 	egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
 
-	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO("CumulativeFusion", []trustmodelstructure.AdjacencyListEntry{
+	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier("ego"), egoTargets),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier(e.sourceID), objects),
 	})
