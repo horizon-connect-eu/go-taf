@@ -1,5 +1,16 @@
 # Standalone TAF Prototype
 
+## Release v0.2.5 (2024-10-30)
+
+* included a new version of the TLEE (`887019e9050e9a50f8746526452d5089fd9a2da1`)
+  * configurable debugging behavior and debugging output
+  * increased robustness and improved error handling 
+  * unified logging with TAF
+* fixed bug in which no TAS_NOTIFY is sent after spawning a new trust model instance
+* changed behavior of parsing TCH_NOTIFY messages to allow for different formats allowed in the message specification
+* fixed bug in `IMA_STANDALONE@0.0.1` trust model that caused incorrect trust source quantifications for TCH 
+
+
 ## Release v0.2.4 (2024-10-29)
 
 * fixed a bug when handling atomic trust opinion updates in the IMA use case when the TCH NOTIFY message also includes component information
