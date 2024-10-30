@@ -151,7 +151,6 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 		TrustSource: core.TCH,
 		Evidence:    []core.EvidenceType{core.TCH_SECURE_BOOT, core.TCH_SECURE_OTA, core.TCH_ACCESS_CONTROL, core.TCH_APPLICATION_ISOLATION, core.TCH_CONTROL_FLOW_INTEGRITY, core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION},
 		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-			sl, _ := subjectivelogic.NewOpinion(.0, .0, 1.0, 0.5)
 
 			var sum = 0.0
 			for _, val := range tchExistenceWeights {
@@ -197,6 +196,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 					}
 				}
 			}
+			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-belief-disbelief, 0.5)
 
 			return &sl
 		},
