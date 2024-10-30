@@ -99,7 +99,6 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 			}
 		}
 
-	L:
 		for {
 			// Initializing result matrix and filling it up with same values as given graph
 			reverseNodes := make([]string, numVertices)
@@ -200,11 +199,9 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 			switch len(opinions) {
 			case 0:
 				return nil, errors.New("an out of opinions without result")
-				break L
 
 			case 1:
 				results[scope] = &opinions[0]
-				break L
 
 			case 2:
 				tmp, err := subjectivelogic.TrustDiscounting(&opinions[0], &opinions[1])
