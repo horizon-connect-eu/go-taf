@@ -272,7 +272,7 @@ func parseObjectIdentifier(str string) (string, string, error) {
 parseVehicleIdentifier is a helper function to extract plain identifiers from a vehicle identifier string.
 */
 func parseVehicleIdentifier(str string) (string, error) {
-	pattern := regexp.MustCompile(`^V_(\d+|ego)$`)
+	pattern := regexp.MustCompile(`^V_(\d+|ego).*$`)
 	res := pattern.FindStringSubmatch(str)
 	if res != nil && len(res) == 2 {
 		return res[1], nil
