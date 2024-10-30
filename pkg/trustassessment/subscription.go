@@ -67,7 +67,7 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 	result := make([]ResultEntry, 0)
 	//propositions := make([]Proposition, 0)//OLD CODE THAT ONLY INCLUDED CHANGES
 
-	if oldATLs.TmiID() != newATLs.TmiID() {
+	if oldATLs.TmiID() != newATLs.TmiID() && oldATLs.ATLs() != nil {
 		return result
 	}
 	if len(s.filter) > 0 {
