@@ -56,21 +56,30 @@ func (h *TchHandler) RegisteredSessions() []string {
 func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 	//Extract raw evidence from the message and store it into latestEvidence
 	trusteeID := cmd.Notify.TchReport.TrusteeID
-	updatedTrustees := make(map[string]bool)
+	updatedTrustees := make(map[string]bool)                      //flag trustees with changes
+	updatedEvidence := make(map[string]map[core.EvidenceType]int) //collect changes
+
 	for _, trusteeReport := range cmd.Notify.TchReport.TrusteeReports {
 		componentID := trusteeReport.ComponentID
 		id := trusteeID
 		if componentID != nil {
 			id = fmt.Sprintf("%s~%s", trusteeID, *componentID)
 		}
-		//Discard old evidence and always create a new map
-		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]int)
+		_, idExists := updatedEvidence[id]
+
+		if !idExists {
+			updatedEvidence[id] = make(map[core.EvidenceType]int)
+		}
+
 		for _, attestationReport := range trusteeReport.AttestationReport {
 			evidenceType := core.EvidenceTypeBySourceAndName(core.TCH, attestationReport.Claim)
 			value := int(attestationReport.Appraisal)
-			h.latestSubscriptionEvidence[id][evidenceType] = value
 			updatedTrustees[id] = true
+			updatedEvidence[id][evidenceType] = value
 		}
+	}
+	for id, evidence := range updatedEvidence {
+		h.latestSubscriptionEvidence[id] = evidence
 	}
 
 	//Iterate over all sessions register for TCH, call quantifiers and relay updates
