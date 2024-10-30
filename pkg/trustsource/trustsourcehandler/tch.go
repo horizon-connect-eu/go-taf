@@ -61,7 +61,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		componentID := trusteeReport.ComponentID
 		id := trusteeID
 		if componentID != nil {
-			id = fmt.Sprintf("%s_%s", trusteeID, *componentID)
+			id = fmt.Sprintf("%s~%s", trusteeID, *componentID)
 		}
 		//Discard old evidence and always create a new map
 		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]int)
