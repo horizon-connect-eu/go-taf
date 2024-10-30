@@ -32,7 +32,7 @@ func (e *TrustModelInstance) Fingerprint() uint32 {
 }
 
 func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
-	return internaltrustmodelstructure.NewTrustGraphDTO("NONE", []trustmodelstructure.AdjacencyListEntry{
+	return internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.NoFusion, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("TAF", []string{"VC1", "VC2"}),
 	})
 }

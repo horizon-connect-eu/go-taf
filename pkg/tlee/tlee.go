@@ -1,6 +1,7 @@
 package tlee
 
 import (
+	"errors"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"log/slog"
@@ -11,7 +12,8 @@ TLEE represents an internal TLEE as part of the TAF that can be used for debuggi
 TLEE implementation.
 */
 type TLEE struct {
-	Logger *slog.Logger
+	logger        *slog.Logger
+	debuggingMode bool
 }
 
 type CurrentEntry struct {
@@ -20,31 +22,37 @@ type CurrentEntry struct {
 	opinions    []subjectivelogic.Opinion
 }
 
-func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, structure trustmodelstructure.TrustGraphStructure, values map[string][]trustmodelstructure.TrustRelationship) map[string]subjectivelogic.QueryableOpinion {
+func SpawnNewTLEE(logger *slog.Logger, filePath string, debuggingMode bool) *TLEE {
+	return &TLEE{
+		logger:        logger,
+		debuggingMode: debuggingMode,
+	}
+
+}
+
+func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, structure trustmodelstructure.TrustGraphStructure, values map[string][]trustmodelstructure.TrustRelationship) (map[string]subjectivelogic.QueryableOpinion, error) {
 	results := make(map[string]subjectivelogic.QueryableOpinion)
 
 	var ff func(opinion1 *subjectivelogic.Opinion, opinion2 *subjectivelogic.Opinion) (subjectivelogic.Opinion, error)
 
 	switch structure.Operator() {
-	case "AveragingFusion":
+	case trustmodelstructure.AveragingFusion:
 		ff = subjectivelogic.AveragingFusion
-	case "ConstraintFusion":
+	case trustmodelstructure.ConstraintFusion:
 		ff = subjectivelogic.ConstraintFusion
-	case "CumulativeFusion":
+	case trustmodelstructure.CumulativeFusion:
 		ff = subjectivelogic.CumulativeFusion
-	case "WeightedFusion":
+	case trustmodelstructure.WeightedFusion:
 		ff = subjectivelogic.WeightedFusion
-	case "NONE":
+	case trustmodelstructure.NoFusion:
 		for scope, relationships := range values {
 			if len(relationships) != 1 {
-				t.Logger.Error("TLEE", "No Fusion Operator Provided, although required", values)
-				return results
+				return nil, errors.New("No Fusion Operator Provided, although required")
 			}
 			results[scope] = relationships[0].Opinion()
 		}
 	default:
-		t.Logger.Error("TLEE", "Unsupported Fusion Operator", structure.Operator())
-		return results
+		return nil, errors.New("Unsupported Fusion Operator") // + structure.Operator())
 	}
 
 	for scope, relationships := range values {
@@ -66,8 +74,7 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 				relationship.Opinion().BaseRate(),
 			)
 			if err != nil {
-				t.Logger.Error("TLEE", "subjective logic error", err.Error())
-				return results
+				return nil, errors.New("subjective logic error" + err.Error())
 			}
 
 			entry, exists := current[key]
@@ -124,8 +131,7 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 						} else {
 							fused, err := ff(&prev, &v)
 							if err != nil {
-								t.Logger.Error("TLEE", "cannot fuse opinions", err.Error(), "opinion1", prev, "opinion2", v)
-								return results
+								return nil, errors.New("cannot fuse opinions" + err.Error())
 							}
 
 							prev = fused
@@ -168,8 +174,7 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 			}
 
 			if prev[lowestSource][lowestDestination] == -1 {
-				t.Logger.Error("TLEE", "no longest path found", dist)
-				return results
+				return nil, errors.New("no longest path found")
 			}
 
 			path := []string{}
@@ -183,7 +188,7 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 				lowestDestination = prev[lowestSource][lowestDestination]
 				key := reverseNodes[lowestDestination] + ":" + target
 				if len(current[key].opinions) != 1 {
-					t.Logger.Error("TLEE", "too many opinions for discounting", key)
+					return nil, errors.New("too many opinions for discounting")
 				}
 				path = append([]string{key}, path...)
 				opinions = append([]subjectivelogic.Opinion{current[key].opinions[0]}, opinions...)
@@ -194,7 +199,7 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 
 			switch len(opinions) {
 			case 0:
-				t.Logger.Error("TLEE", "ran out of opinions without result", targetSource, targetDestination, opinions)
+				return nil, errors.New("an out of opinions without result")
 				break L
 
 			case 1:
@@ -204,16 +209,14 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 			case 2:
 				tmp, err := subjectivelogic.TrustDiscounting(&opinions[0], &opinions[1])
 				if err != nil {
-					t.Logger.Error("TLEE", "subjective logic error", err.Error())
-					return results
+					return nil, errors.New("subjective logic error")
 				}
 				discounted = tmp
 
 			default:
 				tmp, err := subjectivelogic.MultiEdgeTrustDisc(opinions)
 				if err != nil {
-					t.Logger.Error("TLEE", "subjective logic error", err.Error())
-					return results
+					return nil, errors.New("subjective logic error")
 				}
 				discounted = tmp
 			}
@@ -232,5 +235,5 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 		}
 	}
 
-	return results
+	return results, nil
 }
