@@ -267,6 +267,30 @@ func (s *State) getTMI(ctx *gin.Context) {
 	}
 }
 
+func (s *State) getTMIFull(ctx *gin.Context) {
+	fullTMI := core.MergeFullTMIIdentifier(ctx.Param("client"), ctx.Param("session"), ctx.Param("tmt"), ctx.Param("tmiID"))
+	tmi, exists := s.tmis[fullTMI]
+	if !exists {
+		ctx.JSON(http.StatusNotFound, gin.H{"code": "NOT_FOUND"})
+		return
+	} else {
+		ctx.JSON(http.StatusOK, tmi)
+	}
+
+}
+
+func (s *State) getTMIUpdates(ctx *gin.Context) {
+	fullTMI := core.MergeFullTMIIdentifier(ctx.Param("client"), ctx.Param("session"), ctx.Param("tmt"), ctx.Param("tmiID"))
+	tmi, exists := s.tmis[fullTMI]
+	if !exists {
+		ctx.JSON(http.StatusNotFound, gin.H{"code": "NOT_FOUND"})
+		return
+	} else {
+		ctx.JSON(http.StatusOK, tmi.Update)
+	}
+
+}
+
 func (s *State) getVersionTMI(ctx *gin.Context) {
 	fullTMI := core.MergeFullTMIIdentifier(ctx.Param("client"), ctx.Param("session"), ctx.Param("tmt"), ctx.Param("tmiID"))
 	tmi, exists := s.tmis[fullTMI]

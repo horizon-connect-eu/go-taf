@@ -51,6 +51,8 @@ func (s *Webserver) Run() {
 	s.router.GET("/tmis/", s.state.getAllTMIs)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID", s.state.getTMI)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/latest", s.state.getTMILatest)
+	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/updates", s.state.getTMIUpdates)
+	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/all", s.state.getTMIFull)
 	s.router.GET("/tmis/:client/:session/:tmt/:tmiID/:version", s.state.getVersionTMI)
 	s.router.GET("/trustmodels/:tmt-identifier", s.getTrustModel)
 	s.router.GET("/trustsources", s.getTrustSources)
