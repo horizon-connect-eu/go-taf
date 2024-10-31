@@ -1,12 +1,14 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_NOTIFY/",
 	"$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_NOTIFY/",
 	"title": "AIV_NOTIFY",
 	"type": "object",
 	"properties": {
 		"subscriptionId": {
 			"description":"The unique identifier used for linking notifications with a specific subscription.",
-			"type": "string"
+			"type": "string",
+			"$origin": "@subscribe#subscriptionId"
 		},
 		"trusteeReports": {
 			"description": "",
@@ -87,5 +89,8 @@
 		"subscriptionId",
 		"trusteeReports",
 		"aivEvidence"
-	]
+	],
+    "$priorMessages": {
+      "subscribe": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/AIV_SUBSCRIBE_RESPONSE/"
+    }
 }

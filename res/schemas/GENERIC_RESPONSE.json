@@ -1,7 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_RESPONSE/",
-    "title": "GENERIC_RESPONSE ",
+    "$request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_REQUEST/",
+    "title": "GENERIC_RESPONSE",
     "type": "object",
     "properties": {
       "sender": {
@@ -18,7 +19,8 @@
       },
       "responseId": {
         "type": "string",
-        "description": "The unique identifier copied from the request for linking request and response."
+        "description": "The unique identifier copied from the request for linking request and response.",
+        "$origin": "@request#requestId"
       },
       "message": {
         "type": "object",
@@ -31,5 +33,8 @@
       "messageType",
       "responseId",
       "message"
-    ]
+    ],
+    "$priorMessages": {
+      "request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/GENERIC_REQUEST/GENERIC_REQUEST.json"
+    }
   }

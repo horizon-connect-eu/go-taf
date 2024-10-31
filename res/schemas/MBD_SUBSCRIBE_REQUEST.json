@@ -1,5 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/",
+    "$response": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/MBD_SUBSCRIBE_RESPONSE/",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/MBD_SUBSCRIBE_REQUEST/",
     "title": "MBD_SUBSCRIBE_REQUEST",
     "type": "object",
