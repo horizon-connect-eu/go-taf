@@ -2,11 +2,12 @@ package command
 
 import (
 	"github.com/vs-uulm/go-taf/pkg/core"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
 type request interface {
-	tasmsg.TasInitRequest | tasmsg.TasTeardownRequest | tasmsg.TasTaRequest
+	tasmsg.TasInitRequest | tasmsg.TasTeardownRequest | tasmsg.TasTaRequest | taqimsg.TaqiQuery
 }
 
 type subscriptionRequest interface {
@@ -86,5 +87,15 @@ func CreateTasUnsubscribeRequest(msg tasmsg.TasUnsubscribeRequest, sender string
 		ResponseTopic:   responseTopic,
 		SubscriberTopic: subscriberTopic,
 		commandType:     core.HANDLE_TAS_UNSUBSCRIBE_REQUEST,
+	}
+}
+
+func CreateTaqiQuery(msg taqimsg.TaqiQuery, sender string, requestID string, responseTopic string) HandleRequest[taqimsg.TaqiQuery] {
+	return HandleRequest[taqimsg.TaqiQuery]{
+		Request:       msg,
+		Sender:        sender,
+		RequestID:     requestID,
+		ResponseTopic: responseTopic,
+		commandType:   core.HANDLE_TAQI_QUERY,
 	}
 }
