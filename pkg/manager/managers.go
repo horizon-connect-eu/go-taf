@@ -7,6 +7,7 @@ import (
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
@@ -46,6 +47,7 @@ type TrustAssessmentManager interface {
 	HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaRequest])
 	HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest])
 	HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest])
+	HandleTaqiQuery(cmd command.HandleRequest[taqimsg.TaqiQuery])
 	DispatchToWorker(session session.Session, tmiID string, cmd core.Command)
 	DispatchToWorkerByFullTMIID(fullTMI string, cmd core.Command)
 	HandleATLUpdate(cmd command.HandleATLUpdate)
