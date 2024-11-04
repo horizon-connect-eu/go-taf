@@ -2,7 +2,7 @@
 
 ## Release v0.2.6 (2024-11-04)
 
-* added support for queries based on the  Trust Assessment Query Interfac (TAQI) which allows to query for instantiated trust models and their ATLs
+* added support for queries based on the  Trust Assessment Query Interface (TAQI) which allows to query for instantiated trust models and their ATLs
 * added support for the following message types
 	* `TAQI_QUERY`
 	* `TAQI_RESULT`
