@@ -1,11 +1,14 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TA_REQUEST /",
-    "title": "TAS_TA_REQUEST ",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_REQUEST/",
+    "$response": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TA_RESPONSE/",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TA_REQUEST/",
+    "title": "TAS_TA_REQUEST",
     "type": "object",
     "properties": {
       "sessionId": {
-        "type": "string"
+        "type": "string",
+        "$origin": "@init#sessionId"
       },
       "query" : {
         "type": "object",
@@ -31,5 +34,8 @@
     },
     "required": [
       "sessionId", "query"
-    ]
+    ],
+    "$priorMessages": {
+      "init": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/TAS_INIT_RESPONSE/"
+    }
   }

@@ -1,11 +1,14 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_RESPONSE/",
+    "$request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_REQUEST/",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_RESPONSE/",
     "title": "TAS_UNSUBSCRIBE_RESPONSE",
     "type": "object",
     "properties": {
       "sessionId": {
-        "type": "string"
+        "type": "string",
+        "$origin": "@request#sessionId"
       },
       "success": {
         "type": "string"
@@ -33,5 +36,8 @@
           "attestationCertificate"
         ]
       }
-    ]
+    ],
+    "$priorMessages": {
+      "request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_REQUEST/"
+    }
   }

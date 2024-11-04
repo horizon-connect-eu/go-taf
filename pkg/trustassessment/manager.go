@@ -16,6 +16,7 @@ import (
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
@@ -132,6 +133,8 @@ func (tam *Manager) Run() {
 				tam.HandleTasSubscribeRequest(cmd)
 			case command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]:
 				tam.HandleTasUnsubscribeRequest(cmd)
+			case command.HandleRequest[taqimsg.TaqiQuery]:
+				tam.HandleTaqiQuery(cmd)
 			// TSM Message Handling
 			case command.HandleResponse[aivmsg.AivResponse]:
 				tsm.HandleAivResponse(cmd)
@@ -434,7 +437,7 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 					TmiID:        tmiID,
 					Propositions: propositions,
 				}
-				taResponseResults = append(taResponseResults, result.toResultMsgStruct())
+				taResponseResults = append(taResponseResults, result.toTarResultMsgStruct())
 			}
 		}
 
@@ -674,6 +677,80 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 	}
 	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 	tam.logger.Debug("TAS Subscription terminated", "Session ID", sessionID, "Subscription ID", subscriptionID)
+}
+
+func (tam *Manager) HandleTaqiQuery(cmd command.HandleRequest[taqimsg.TaqiQuery]) {
+	tam.logger.Debug("Received TAQI_QUERY command", "Target Template", cmd.Request.Query.Template, "Target Identifier", cmd.Request.Query.Identifier, "Target Propositions", cmd.Request.Query.Propositions)
+	targetTemplate := cmd.Request.Query.Template
+	targetIdentifier := cmd.Request.Query.Identifier
+	targetPropositions := cmd.Request.Query.Propositions
+
+	sendErrorResponse := func(errorMsg string) {
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAQI_RESULT, cmd.RequestID, taqimsg.TaqiResult{
+			Error: &errorMsg,
+		})
+		if err != nil {
+			tam.logger.Error("Error marshalling response", "error", err)
+			return
+		}
+		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	}
+
+	//Directly abort with error result in case the TMT is unknown.
+	if nil == tam.tmm.ResolveTMT(targetTemplate) {
+		sendErrorResponse("Unknown Trust Model Template used as target: '" + targetTemplate + "'")
+		return
+	}
+
+	if targetIdentifier == "" {
+		sendErrorResponse("Target Identifier must not be empty.")
+		return
+	}
+
+	tmiQuery := fmt.Sprintf("//*/*/%s/%s", targetTemplate, targetIdentifier)
+
+	matches, err := tam.QueryTMIs(tmiQuery)
+	if err != nil {
+		sendErrorResponse("Internal error while processing TAQI query.")
+		tam.logger.Warn("Internal error while processing TAQI query.", "Error", err.Error())
+		return
+	}
+
+	//create a map of all propositions to be included in the result set
+	targetPropositionMap := make(map[string]struct{})
+	for _, proposition := range targetPropositions {
+		targetPropositionMap[proposition] = struct{}{}
+	}
+
+	taqiResults := make([]taqimsg.Result, 0)
+	for _, fullTmiID := range matches {
+		atlResultSet, exists := tam.atlResults[fullTmiID] //get cached ATL entry from TMI using the full ID
+		if exists {
+			propositions := make([]Proposition, 0)
+			for propositionID := range atlResultSet.ATLs() {
+				//To include the proposition, the list of targetted props must either be empty, or the proposition at hand must be included.
+				if _, propExistAsTarget := targetPropositionMap[propositionID]; propExistAsTarget || len(targetPropositions) == 0 {
+					propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
+				}
+			}
+			_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTmiID)
+			result := ResultEntry{
+				TmiID:        tmiID,
+				Propositions: propositions,
+			}
+			taqiResults = append(taqiResults, result.toTaqiResultMsgStruct())
+		}
+	}
+	response := taqimsg.TaqiResult{
+		Results: taqiResults,
+	}
+
+	bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAQI_RESULT, cmd.RequestID, response)
+	if err != nil {
+		tam.logger.Error("Error marshalling response", "error", err)
+		return
+	}
+	tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 }
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {

@@ -34,7 +34,11 @@ generate-tch-structs:
 	mkdir -p pkg/message/tch
 	quicktype res/schemas/TCH_*.json --src-lang schema -l golang --package tchmsg -o pkg/message/tch/message.go
 
-generate-structs: generate-aiv-structs generate-generic-structs generate-mbd-structs generate-tas-structs generate-v2x-structs generate-tch-structs
+generate-taqi-structs:
+	mkdir -p pkg/message/taqi
+	quicktype res/schemas/TAQI_*.json --src-lang schema -l golang --package taqimsg -o pkg/message/taqi/message.go
+
+generate-structs: generate-aiv-structs generate-generic-structs generate-mbd-structs generate-tas-structs generate-v2x-structs generate-tch-structs generate-taqi-structs
 .PHONY:generate-structs
 
 remove-generic-structs:

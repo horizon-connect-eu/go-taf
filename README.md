@@ -91,6 +91,9 @@ The TAF uses an internal configuration with hardcoded defaults. To change the co
   "TLEE": {
     "UseInternalTLEE": false            // false: use HUAWEI TLEE implementation
                                         // true: use internal mockup TLEE instead
+    "DebuggingMode": false,             // false: disable TLEE debugging features
+                                        // true: enable TLEE debugging features
+    "FilePath": "debug/"                // path to be used for TLEE debugging file output 
   }
 }
 ```

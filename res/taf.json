@@ -30,6 +30,8 @@
     "LogStyle": "PRETTY"
   },
   "TLEE": {
-    "UseInternalTLEE": false
+    "UseInternalTLEE": false,
+    "DebuggingMode":   false,
+    "FilePath":        "debug/"
   }
 }

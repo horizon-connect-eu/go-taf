@@ -91,6 +91,8 @@ TLEE-related configuration.
 */
 type TLEE struct {
 	UseInternalTLEE bool //If set to true, the TAF will use an internal debugging TLEE instead of the real TLEE for debugging purposes.
+	DebuggingMode   bool
+	FilePath        string
 }
 
 /*
@@ -151,6 +153,8 @@ var (
 		},
 		TLEE: TLEE{
 			UseInternalTLEE: false,
+			DebuggingMode:   false,
+			FilePath:        "debug/",
 		},
 		V2X: V2X{
 			NodeTTLsec:       5,

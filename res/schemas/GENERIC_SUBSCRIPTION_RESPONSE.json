@@ -1,7 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_RESPONSE/",
-    "title": "GENERIC_SUBSCRIPTION_RESPONSE ",
+    "$request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/",
+    "title": "GENERIC_SUBSCRIPTION_RESPONSE",
     "type": "object",
     "properties": {
       "sender": {
@@ -16,9 +17,10 @@
         "type": "string",
         "description": "The message type to be used by the receiver to process this message."
       },
-      "requestId": {
+      "responseId": {
         "type": "string",
-        "description": "The unique identifier to be repeated in the response for linking request and response."
+        "description": "The unique identifier to be repeated in the response for linking request and response.",
+        "$origin": "@request#requestId"
       },
       "message": {
         "type": "object",
@@ -31,5 +33,8 @@
       "messageType",
       "requestId",
       "message"
-    ]
+    ],
+    "$priorMessages": {
+      "request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/GENERIC_SUBSCRIPTION_REQUEST.json"
+    }
   }

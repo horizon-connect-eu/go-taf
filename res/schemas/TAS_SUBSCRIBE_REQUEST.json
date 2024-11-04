@@ -1,11 +1,14 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/",
+    "$response": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_SUBSCRIBE_RESPONSE/",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_SUBSCRIBE_REQUEST/",
     "title": "TAS_SUBSCRIBE_REQUEST",
     "type": "object",
     "properties": {
       "sessionId": {
-        "type": "string"
+        "type": "string",
+        "$origin": "@initResponse#sessionId"
       },
       "subscribe" : {
         "type": "object",
@@ -34,5 +37,8 @@
       "sessionId",
       "subscribe",
       "trigger"
-    ]
+    ],
+    "$priorMessages": {
+      "initResponse": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/TAS_INIT_RESPONSE/"
+    }
   }

@@ -1,27 +1,32 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_SUBSCRIBE_RESPONSE/",
-    "title": "AIV_SUBSCRIBE_RESPONSE",
-    "type": "object",
-    "properties": {
-        "success": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "subscriptionId": {
-          "type": "string"
-        }
-      },
-      "oneOf": [{
-          "required" : [
-            "subscriptionId", "success"
-          ]},
-          {
-          "required" : [
-            "error"
-          ]
-        }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_RESPONSE/",
+  "$request": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_SUBSCRIBE_REQUEST/",
+  "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/AIV_SUBSCRIBE_RESPONSE/",
+  "title": "AIV_SUBSCRIBE_RESPONSE",
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    },
+    "subscriptionId": {
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "subscriptionId",
+        "success"
       ]
-  }
+    },
+    {
+      "required": [
+        "error"
+      ]
+    }
+  ]
+}

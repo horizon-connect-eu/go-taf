@@ -3,6 +3,7 @@ package trustassessment
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
@@ -38,7 +39,7 @@ func NewPropositionEntry(set core.AtlResultSet, propositionID string) Propositio
 toMsgStruct takes an internal representation of a TMI/proposition result and converts into message struct auto-generated from JSON Schema.
 Result variant.
 */
-func (r ResultEntry) toResultMsgStruct() tasmsg.Result {
+func (r ResultEntry) toTarResultMsgStruct() tasmsg.Result {
 
 	propositions := make([]tasmsg.ResultProposition, 0)
 
@@ -146,4 +147,60 @@ func (r ResultEntry) toUpdateMsgStruct() tasmsg.Update {
 		Propositions: propositions,
 	}
 
+}
+
+/*
+toTaqiResultMsgStruct takes an internal representation of a TMI/proposition result and converts into message struct auto-generated from JSON Schema.
+Taqi Result variant.
+*/
+func (r ResultEntry) toTaqiResultMsgStruct() taqimsg.Result {
+
+	propositions := make([]taqimsg.Proposition, 0)
+
+	for _, proposition := range r.Propositions {
+
+		var tdValue *bool = nil
+		if proposition.TrustDecision == core.TRUSTWORTHY {
+			value := true
+			tdValue = &value
+		} else if proposition.TrustDecision == core.NOT_TRUSTWORTHY {
+			value := false
+			tdValue = &value
+		}
+
+		atl := make([]taqimsg.ActualTrustworthinessLevel, 0)
+		baseRate := proposition.ATL.BaseRate()
+		belief := proposition.ATL.Belief()
+		disbelief := proposition.ATL.Disbelief()
+		uncertainty := proposition.ATL.Uncertainty()
+
+		atl = append(atl, taqimsg.ActualTrustworthinessLevel{
+			Output: taqimsg.Output{
+				BaseRate:    &baseRate,
+				Belief:      &belief,
+				Disbelief:   &disbelief,
+				Uncertainty: &uncertainty,
+			},
+			Type: taqimsg.SubjectiveLogicOpinion,
+		})
+
+		projectedProbability := proposition.PP
+		atl = append(atl, taqimsg.ActualTrustworthinessLevel{
+			Output: taqimsg.Output{
+				Value: &projectedProbability,
+			},
+			Type: taqimsg.ProjectedProbability,
+		})
+
+		propositions = append(propositions, taqimsg.Proposition{
+			ActualTrustworthinessLevel: atl,
+			PropositionID:              proposition.PropositionID,
+			TrustDecision:              tdValue,
+		})
+	}
+
+	return taqimsg.Result{
+		ID:           r.TmiID,
+		Propositions: propositions,
+	}
 }

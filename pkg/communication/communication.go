@@ -9,6 +9,7 @@ import (
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
@@ -174,6 +175,26 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 					ch.tafContext.Logger.Error("Incomplete message header for TAS_UNSUBSCRIBE_REQUEST message: " + errs.Error())
 				} else {
 					cmd := command.CreateTasUnsubscribeRequest(tasUnsubscribeRequest, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic, rawMsg.SubscriberTopic)
+					ch.channels.TAMChannel <- cmd
+				}
+			case messages.TAQI_QUERY:
+				taqiQuery, err := taqimsg.UnmarshalTaqiQuery(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAQI_QUERY: " + err.Error())
+				} else if ok, errs := checkRequestFields(rawMsg); !ok {
+					ch.tafContext.Logger.Error("Incomplete message header for TAQI_QUERY message: " + errs.Error())
+				} else {
+					cmd := command.CreateTaqiQuery(taqiQuery, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+					ch.channels.TAMChannel <- cmd
+				}
+			case messages.TAQI_RESULT:
+				taqiResult, err := taqimsg.UnmarshalTaqiResult(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAQI_RESULT: " + err.Error())
+				} else if ok, errs := checkRequestFields(rawMsg); !ok {
+					ch.tafContext.Logger.Error("Incomplete message header for TAQI_RESULT message: " + errs.Error())
+				} else {
+					cmd := command.CreateTaqiResult(taqiResult, rawMsg.Sender, rawMsg.RequestId)
 					ch.channels.TAMChannel <- cmd
 				}
 			case messages.AIV_RESPONSE:
@@ -394,6 +415,10 @@ func UnmarshallMessage(schema messages.MessageSchema, msg []byte) (interface{}, 
 		extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
 	case messages.MBD_UNSUBSCRIBE_RESPONSE:
 		extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
+	case messages.TAQI_QUERY:
+		extractedStruct, err = taqimsg.UnmarshalTaqiQuery(msg)
+	case messages.TAQI_RESULT:
+		extractedStruct, err = taqimsg.UnmarshalTaqiResult(msg)
 	case messages.TAS_INIT_REQUEST:
 		extractedStruct, err = tasmsg.UnmarshalTasInitRequest(msg)
 	case messages.TAS_INIT_RESPONSE:

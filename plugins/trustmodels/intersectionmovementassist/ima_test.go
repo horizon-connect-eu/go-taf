@@ -79,7 +79,7 @@ func TestGraph(t *testing.T) {
 	version := 11
 	fingerprint := uint32(4711)
 
-	structure := internaltrustmodelstructure.NewTrustGraphDTO("CumulativeFusion", []trustmodelstructure.AdjacencyListEntry{
+	structure := internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("V_ego", []string{"V_19", "C_19_123", "C_19_456", "C_19_19"}),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("V_ego", []string{"C_19_123", "C_19_456", "C_19_19"}),
 	})
@@ -103,7 +103,7 @@ func TestGraph(t *testing.T) {
 	}
 
 	tlee := &tlee2.TLEE{}
-	results := tlee.RunTLEE(id, version, fingerprint, structure, values)
+	results, _ := tlee.RunTLEE(id, version, fingerprint, structure, values)
 
 	print(fmt.Sprintf("%v", results))
 

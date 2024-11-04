@@ -91,11 +91,9 @@ func main() {
 
 	var tlee tleeinterface.TLEE
 	if tafConfig.TLEE.UseInternalTLEE {
-		tlee = &internaltlee.TLEE{
-			Logger: logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"),
-		}
+		tlee = internaltlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
 	} else {
-		tlee = &actualtlee.TLEE{}
+		tlee = actualtlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
 	}
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels, tlee)

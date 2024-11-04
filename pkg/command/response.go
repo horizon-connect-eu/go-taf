@@ -4,10 +4,11 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
 )
 
 type response interface {
-	aivmsg.AivResponse | subscriptionResponse
+	aivmsg.AivResponse | taqimsg.TaqiResult | subscriptionResponse
 }
 
 type subscriptionResponse interface {
@@ -67,5 +68,14 @@ func CreateMbdUnsubscriptionResponse(msg mbdmsg.MBDUnsubscribeResponse, sender s
 		Sender:      sender,
 		ResponseID:  responseID,
 		commandType: core.HANDLE_MBD_UNSUBSCRIBE_RESPONSE,
+	}
+}
+
+func CreateTaqiResult(msg taqimsg.TaqiResult, sender string, responseID string) HandleResponse[taqimsg.TaqiResult] {
+	return HandleResponse[taqimsg.TaqiResult]{
+		Response:    msg,
+		Sender:      sender,
+		ResponseID:  responseID,
+		commandType: core.HANDLE_TAQI_RESULT,
 	}
 }

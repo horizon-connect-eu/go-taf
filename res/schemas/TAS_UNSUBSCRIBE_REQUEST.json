@@ -1,17 +1,24 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_SUBSCRIPTION_REQUEST/",
+    "$response": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_RESPONSE/",
     "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_UNSUBSCRIBE_REQUEST/",
     "title": "TAS_UNSUBSCRIBE_REQUEST",
     "type": "object",
     "properties": {
       "sessionId": {
-        "type": "string"
+        "type": "string",
+        "$origin": "@subscribe#sessionId"
       },
       "subscriptionId": {
-        "type": "string"
+        "type": "string",
+        "$origin": "@subscribe#subscriptionId"
       }
     },
     "required": [
       "sessionId", "subscriptionId"
-    ]
+    ],
+    "$priorMessages": {
+      "subscribe": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/raw/main/TAF_External_Interfaces/Messaging/TAS_SUBSCRIBE_RESPONSE/"
+    }
   }

@@ -1,5 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
+    "$wrapper": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/GENERIC_ONE_WAY/",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/V2X_NTM/",
     "$ref": "#/definitions/Ntm",
     "definitions": {
         "Ntm": {
