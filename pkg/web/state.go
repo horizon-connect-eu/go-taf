@@ -54,7 +54,7 @@ type tmiMetaState struct {
 	FullTMI       string
 	IsActive      bool
 	LatestVersion int
-	Update        map[int]core.Update
+	Update        map[int][]core.Update
 	States        map[int]tmiState
 	Template      core.TrustModelTemplate
 	ATLs          map[int]core.AtlResultSet
@@ -137,7 +137,7 @@ func (s *State) handleTMISpawned(event listener.TrustModelInstanceSpawnedEvent) 
 	s.tmis[fullTMI] = &tmiMetaState{
 		IsActive:      true,
 		LatestVersion: 0,
-		Update:        make(map[int]core.Update),
+		Update:        make(map[int][]core.Update),
 		States:        make(map[int]tmiState),
 		Template:      event.Template,
 		ID:            event.ID,
@@ -160,6 +160,7 @@ func (s *State) handleTMIUpdated(event listener.TrustModelInstanceUpdatedEvent) 
 	// version number. This means that the second update has failed to increase the version number and can be ignored.
 	_, exists := s.tmis[fullTMI].States[event.Version]
 	if exists {
+		s.tmis[fullTMI].Update[event.Version+1] = []core.Update{event.Update}
 		return
 	}
 	s.tmis[fullTMI].States[event.Version] = tmiState{
@@ -169,7 +170,10 @@ func (s *State) handleTMIUpdated(event listener.TrustModelInstanceUpdatedEvent) 
 		Values:      event.Values,
 		RTLs:        event.RTLs,
 	}
-	s.tmis[fullTMI].Update[event.Version] = event.Update
+	if s.tmis[fullTMI].Update[event.Version] == nil {
+		s.tmis[fullTMI].Update[event.Version] = make([]core.Update, 0)
+	}
+	s.tmis[fullTMI].Update[event.Version] = append(s.tmis[fullTMI].Update[event.Version], event.Update)
 	s.tmis[fullTMI].LatestVersion = event.Version
 }
 
