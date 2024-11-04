@@ -33,5 +33,9 @@
     "UseInternalTLEE": false,
     "DebuggingMode":   false,
     "FilePath":        "debug/"
+  },
+  "V2X" : {
+    "NodeTTLsec" : 5,
+    "CheckIntervalSec" : 1
   }
 }

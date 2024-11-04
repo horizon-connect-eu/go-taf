@@ -94,6 +94,13 @@ The TAF uses an internal configuration with hardcoded defaults. To change the co
     "DebuggingMode": false,             // false: disable TLEE debugging features
                                         // true: enable TLEE debugging features
     "FilePath": "debug/"                // path to be used for TLEE debugging file output 
+  },
+  "V2X" : {
+    "NodeTTLsec" : 5,                   // The time to live of a node (vehicle) in seconds based on CPMs.
+                                        // If there is no message after that time span, the vehicle
+                                        // is considered to be gone. 
+    "CheckIntervalSec" : 1              // The interval in seconds how often vehicles should be checked
+                                        // for TTL expiries (see above).
   }
 }
 ```
