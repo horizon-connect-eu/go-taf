@@ -1,5 +1,13 @@
 # Standalone TAF Prototype
 
+## Release v0.2.6 (2024-11-04)
+
+* added support for queries based on the  Trust Assessment Query Interfac (TAQI) which allows to query for instantiated trust models and their ATLs
+* added support for the following message types
+	* `TAQI_QUERY`
+	* `TAQI_RESULT`
+
+
 ## Release v0.2.5 (2024-10-30)
 
 * included a new version of the TLEE (`887019e9050e9a50f8746526452d5089fd9a2da1`)
