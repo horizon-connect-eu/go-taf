@@ -156,6 +156,12 @@ func (s *State) handleTMISpawned(event listener.TrustModelInstanceSpawnedEvent) 
 
 func (s *State) handleTMIUpdated(event listener.TrustModelInstanceUpdatedEvent) {
 	fullTMI := event.FullTMI
+	// If there exists already an entry for that version, this means we have received another update that yields the same
+	// version number. This means that the second update has failed to increase the version number and can be ignored.
+	_, exists := s.tmis[fullTMI].States[event.Version]
+	if exists {
+		return
+	}
 	s.tmis[fullTMI].States[event.Version] = tmiState{
 		Version:     event.Version,
 		Fingerprint: event.Fingerprint,

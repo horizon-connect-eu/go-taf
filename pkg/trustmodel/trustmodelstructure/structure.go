@@ -61,7 +61,7 @@ func (r *TrustGraphDTO) MarshalJSON() ([]byte, error) {
 		Operator      string                                   `json:"operator"`
 		AdjacencyList []trustmodelstructure.AdjacencyListEntry `json:"adjacency_list"`
 	}{
-		Operator:      r.Operator(),
+		Operator:      "", // TODO: r.Operator(),
 		AdjacencyList: r.AdjacencyList(),
 	})
 }
