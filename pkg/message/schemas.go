@@ -21,6 +21,8 @@ const (
 	MBD_SUBSCRIBE_RESPONSE        = "MBD_SUBSCRIBE_RESPONSE"
 	MBD_UNSUBSCRIBE_REQUEST       = "MBD_UNSUBSCRIBE_REQUEST"
 	MBD_UNSUBSCRIBE_RESPONSE      = "MBD_UNSUBSCRIBE_RESPONSE"
+	TAQI_QUERY                    = "TAQI_QUERY"
+	TAQI_RESULT                   = "TAQI_RESULT"
 	TAS_INIT_REQUEST              = "TAS_INIT_REQUEST"
 	TAS_INIT_RESPONSE             = "TAS_INIT_RESPONSE"
 	TAS_NOTIFY                    = "TAS_NOTIFY"
@@ -61,6 +63,8 @@ var SchemaMap = map[string]MessageSchema{
 	MBD_SUBSCRIBE_RESPONSE:        MBD_SUBSCRIBE_RESPONSE,
 	MBD_UNSUBSCRIBE_REQUEST:       MBD_UNSUBSCRIBE_REQUEST,
 	MBD_UNSUBSCRIBE_RESPONSE:      MBD_UNSUBSCRIBE_RESPONSE,
+	TAQI_QUERY:                    TAQI_QUERY,
+	TAQI_RESULT:                   TAQI_RESULT,
 	TAS_INIT_REQUEST:              TAS_INIT_REQUEST,
 	TAS_INIT_RESPONSE:             TAS_INIT_RESPONSE,
 	TAS_NOTIFY:                    TAS_NOTIFY,
@@ -100,6 +104,8 @@ var ServiceMap = map[MessageSchema]string{
 	MBD_SUBSCRIBE_RESPONSE:        "ECI",
 	MBD_UNSUBSCRIBE_REQUEST:       "ECI",
 	MBD_UNSUBSCRIBE_RESPONSE:      "ECI",
+	TAQI_QUERY:                    "TAQI",
+	TAQI_RESULT:                   "TAQI",
 	TAS_INIT_REQUEST:              "TAS",
 	TAS_INIT_RESPONSE:             "TAS",
 	TAS_NOTIFY:                    "TAS",

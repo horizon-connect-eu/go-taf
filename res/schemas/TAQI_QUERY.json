@@ -1,0 +1,39 @@
+{
+   "$schema":"http://json-schema.org/draft-07/schema#",
+   "$id":"https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAQI_QUERY/",
+   "title":"TAQI_QUERY",
+   "type":"object",
+   "properties":{
+      "query":{
+         "type":"object",
+         "description":"The query parameters",
+         "properties":{
+            "template":{
+               "type":"string",
+               "pattern":"[^@]+@[^@]+",
+               "description":"The trust model template to be used at the target turst model instance."
+            },
+            "identifier":{
+               "type":"string",
+               "description":"Identifier of the trust model instance."
+            },
+            "propositions":{
+               "type":"array",
+               "description":"A potentially empty list of propositions.",
+               "items":{
+                  "type":"string"
+               },
+               "minItems":0
+            }
+         },
+         "required":[
+            "template",
+            "identifier",
+            "propositions"
+         ]
+      }
+   },
+   "required":[
+      "query"
+   ]
+}
