@@ -1,4 +1,4 @@
-package vehiclecomputermigration
+package vcm_v0_0_1
 
 import (
 	"fmt"

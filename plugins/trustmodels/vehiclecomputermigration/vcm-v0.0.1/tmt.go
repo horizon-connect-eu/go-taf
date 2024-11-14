@@ -1,4 +1,4 @@
-package vehiclecomputermigration
+package vcm_v0_0_1
 
 import (
 	"errors"
@@ -273,4 +273,8 @@ func (tmt TrustModelTemplate) TrustSourceQuantifiers() []core.TrustSourceQuantif
 
 func (tmt TrustModelTemplate) Identifier() string {
 	return fmt.Sprintf("%s@%s", tmt.TemplateName(), tmt.Version())
+}
+
+func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
+	return core.STATIC_TRUST_MODEL
 }

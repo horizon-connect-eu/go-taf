@@ -1,4 +1,4 @@
-package intersectionmovementassist
+package ima_standalone_v0_0_1
 
 import (
 	"fmt"
@@ -235,6 +235,33 @@ func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure
 }
 
 func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
+
+	/*
+		//This code is a quick-n-dirty fix to set V-ego => V_X to full belief and V_X to C_X_? to the value of V-ego => V_X
+			modifiedValues := make(map[string][]trustmodelstructure.TrustRelationship)
+			for k, v := range e.currentValues {
+				rels := make([]trustmodelstructure.TrustRelationship, 0)
+
+				var egoToVehicle subjectivelogic.QueryableOpinion
+				for _, rel := range v {
+					if rel.Source() == "V_ego" && strings.HasPrefix(rel.Destination(), "V_") {
+						egoToVehicle = rel.Opinion()
+					}
+				}
+
+				for _, rel := range v {
+					if rel.Source() == "V_ego" && strings.HasPrefix(rel.Destination(), "V_") {
+						rels = append(rels, internaltrustmodelstructure.NewTrustRelationshipDTO(rel.Source(), rel.Destination(), &FullBelief))
+					} else if strings.HasPrefix(rel.Source(), "V_") && strings.HasPrefix(rel.Destination(), "C_") {
+						rels = append(rels, internaltrustmodelstructure.NewTrustRelationshipDTO(rel.Source(), rel.Destination(), egoToVehicle))
+					} else {
+						rels = append(rels, rel)
+					}
+				}
+				modifiedValues[k] = rels
+			}
+			return modifiedValues
+	*/
 	return e.currentValues
 }
 

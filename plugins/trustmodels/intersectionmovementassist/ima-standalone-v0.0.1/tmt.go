@@ -1,4 +1,4 @@
-package intersectionmovementassist
+package ima_standalone_v0_0_1
 
 import (
 	"fmt"
