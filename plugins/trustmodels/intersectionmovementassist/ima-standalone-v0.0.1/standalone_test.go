@@ -1,19 +1,57 @@
-package intersectionmovementassist
+package ima_standalone_v0_0_1
 
 import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/util"
+	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	tlee2 "github.com/vs-uulm/go-taf/pkg/tlee"
 	internaltrustmodelstructure "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+	"log/slog"
 
 	"testing"
 )
 
 func TestResolve(t *testing.T) {
 	t.Log(core.EvidenceTypeBySourceAndName(core.TCH, "SECURE_BOOT"))
+}
+
+func TestTMI(t *testing.T) {
+	tmt := CreateTrustModelTemplate("IMA_STANDALONE", "0.0.1")
+	_, _, spawner, err := tmt.Spawn(nil, core.TafContext{
+		Configuration: config.Configuration{},
+		Logger:        slog.Default(),
+		Context:       nil,
+		Identifier:    "taf",
+		Crypto:        nil,
+	})
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	tmi, err := spawner.OnNewVehicle("15", nil)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	tmi.Initialize(nil)
+
+	updates := []core.Update{
+		trustmodelupdate.CreateRefreshCPM("15", []string{"11"}),
+		trustmodelupdate.CreateRefreshCPM("15", []string{"17"}),
+	}
+
+	t.Log(tmi.String())
+
+	for _, update := range updates {
+		tmi.Update(update)
+		t.Log(tmi.String())
+
+	}
+
 }
 
 func TestTchTsq(t *testing.T) {
