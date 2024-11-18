@@ -47,6 +47,12 @@ To run the TAF, you can also use make:
 make run
 ```
 
+To build and run the TAF with an enabled debugging webinterface, you can use the following make command:
+
+```shell
+GOFLAGS=-tags=webui make run
+```
+
 ## Configuration
 
 The TAF uses an internal configuration with hardcoded defaults. To change the configuration, you can use a JSON file (template located in `res/taf.json`) and specify the actual file location in the environment variable `TAF_CONFIG`. The following options can be configured. Missing options are implicitly using their defined default values.
