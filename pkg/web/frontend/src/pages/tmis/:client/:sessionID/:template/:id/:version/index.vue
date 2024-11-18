@@ -15,7 +15,7 @@
   </v-slider>
 
   <div style="height: calc(100vh - 114px)" v-if="state">
-    <trust-graph :state="state" />
+    <trust-graph :state="state" always-show-opinions />
   </div>
 </template>
 

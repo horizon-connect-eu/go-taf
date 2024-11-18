@@ -15,7 +15,7 @@
           </v-btn>
 
           <v-btn to="/sessions" title="Sessions">
-            <v-icon start>mdi-cast-connected</v-icon>
+            <v-icon start>mdi-folder-account-outline</v-icon>
             <span class="hidden-sm-and-down">Sessions</span>
           </v-btn>
       </v-btn-toggle>

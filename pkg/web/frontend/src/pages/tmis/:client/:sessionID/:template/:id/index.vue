@@ -82,7 +82,7 @@
     </template>
     <template #[`item.graph`]="{ item }">
       <div style="min-height: 500px; min-width: 500px; height: 100%;">
-        <trust-graph :state="item.state" :zoom-enabled="false" :pan-enabled="false" />
+        <trust-graph :state="item.state" :zoom-enabled="false" :pan-enabled="false" :zoom-level="2.5" />
       </div>
     </template>
   </v-data-table-virtual>
