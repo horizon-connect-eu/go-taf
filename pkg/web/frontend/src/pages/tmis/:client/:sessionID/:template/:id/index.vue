@@ -9,7 +9,7 @@
 
   <v-data-table-virtual :headers="headers" :items="filteredItems" :height="height" v-resize="onResize" v-model:sort-by="sortBy" ref="table">
     <template #[`item.version`]="{ item }">
-      <v-chip class="pr-0 mt-1" :to="`/tmis/${route.params.application as string}/${route.params.sessionId as string}/${route.params.template as string}/${route.params.id as string}/${item.version}`">
+      <v-chip class="pr-0 mt-1" :to="`/tmis/${route.params.client as string}/${route.params.sessionID as string}/${route.params.template as string}/${route.params.id as string}/${item.version}`">
         Version
         <v-chip class="ml-1 font-weight-bold">{{ item.version }}</v-chip>
       </v-chip>
@@ -136,7 +136,7 @@ const headers: Column[] = [{
   key: 'atls'
 }];
 
-const trustModelInstance = computed(() => store.trustModelInstances[`//${route.params.application}/${route.params.sessionId}/${route.params.template}/${route.params.id}`]);
+const trustModelInstance = computed(() => store.trustModelInstances[`//${route.params.client}/${route.params.sessionID}/${route.params.template}/${route.params.id}`]);
 // const items = computed(() => Object.values(trustModelInstance.value.states || {}));
 const items = computed(() => Object.entries(trustModelInstance.value.states || {}).map(([k, v]) => ({
   version: k,
@@ -154,8 +154,8 @@ function onResize() {
 async function refresh() {
   try {
     await store.fetchTrustModelInstance(
-      route.params.application as string,
-      route.params.sessionId as string,
+      route.params.client as string,
+      route.params.sessionID as string,
       route.params.template as string,
       route.params.id as string,
     );

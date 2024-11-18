@@ -8,6 +8,22 @@
         </router-link>
       </span>
 
+      <v-btn-toggle class="ml-4">
+          <v-btn to="/tmis" title="TMIs">
+            <v-icon start>mdi-rhombus-outline</v-icon>
+            <span class="hidden-sm-and-down">TMIs</span>
+          </v-btn>
+
+          <v-btn to="/sessions" title="Sessions">
+            <v-icon start>mdi-cast-connected</v-icon>
+            <span class="hidden-sm-and-down">Sessions</span>
+          </v-btn>
+      </v-btn-toggle>
+
+      <v-chip :prepend-icon="connectionState === 'connected' ? 'mdi-ethernet-cable' : 'mdi-ethernet-cable-off'" class="ml-2" size="small" label title="WebSocket State" :color="connectionState === 'connected' ? 'success' : 'warning'">
+        {{ connectionState }}
+      </v-chip>
+
       <v-spacer />
       <div id="toolbar" class="d-flex flex-grow-1 justify-end">
       </div>
@@ -34,6 +50,8 @@ import { useAppStore } from '@/stores/app';
 import AlertDialog from './components/AlertDialog.vue';
 
 const dialog = ref<InstanceType<typeof AlertDialog> | null>(null);
+
+let connectionState = ref('');
 
 function dialogCallHelper(fn: 'alert' | 'confirm' | 'prompt' | 'select', title: string, message: string = '', options: AlertOptions = {}): Promise<any> {
   if (!dialog.value) {
@@ -63,17 +81,22 @@ const store = useAppStore();
 function connect() {
   const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/ws`);
 
+  connectionState.value = 'connecting';
+
   ws.addEventListener('open', () => {
     console.log('[ws] connected');
+    connectionState.value = 'connected';
     store.setSocket(ws);
   });
   ws.addEventListener('close', () => {
     console.log('[ws] closed, reconnect in 1 sec');
+    connectionState.value = 'reconnecting';
     setTimeout(() => connect(), 1000);
     store.setSocket(null);
   });
   ws.addEventListener('error', (error) => {
     console.log('[ws] error', error);
+    connectionState.value = 'error';
     ws.close();
   });
   ws.addEventListener('message', (evt) => {

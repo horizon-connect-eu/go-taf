@@ -4,8 +4,8 @@ import { defineStore } from 'pinia';
 export type TrustModelInstance = {
   id: string,
   fullTMI: string,
-  application: string,
-  sessionId: string,
+  client: string,
+  sessionID: string,
   template: string,
   active: boolean,
   latestVersion: number,
@@ -52,10 +52,11 @@ export type TrustModelInstanceState = {
 };
 
 export type Session = {
-  Client:   string,
+  SessionID: string,
+  Client: string,
   IsActive: boolean,
-  TMIs:     string[],
   Template: string,
+  TMIs: string[],
 };
 
 export const useAppStore = defineStore('app', {
@@ -89,6 +90,7 @@ export const useAppStore = defineStore('app', {
           */
           if (msg.SessionID) {
             this.sessions[msg.SessionID] = {
+              SessionID: msg.SessionID,
               Template: msg.TrustModelTemplate,
               Client: msg.ClientID,
               IsActive: true,
@@ -119,7 +121,7 @@ export const useAppStore = defineStore('app', {
             func (s *State) handleTMISpawned(event listener.TrustModelInstanceSpawnedEvent) {
               fullTMI := event.FullTMI
 
-              _, sessionID, _, _ := core.SplitFullTMIIdentifier(fullTMI)
+              _, sessionID, _, _ := core.SplitFullTMIIDentifier(fullTMI)
               if _, exists := s.sessions[sessionID]; exists {
                 s.sessions[sessionID].TMIs = append(s.sessions[sessionID].TMIs, fullTMI)
               }
@@ -147,14 +149,14 @@ export const useAppStore = defineStore('app', {
           const parts = msg.FullTMI.split('/');
 
           if (this.sessions[parts[3]]) {
-            this.sessions[parts[3]].TMIs.push(msg.FullTMI);
+            this.sessions[parts[3]].TMIs.push(parts[5]);
           }
 
           this.trustModelInstances[msg.FullTMI] = {
             id: msg.ID,
             fullTMI: msg.FullTMI,
-            application: parts[2],
-            sessionId: parts[3],
+            client: parts[2],
+            sessionID: parts[3],
             template: parts[4],
             active: true,
             latestVersion: msg.Version,
@@ -280,8 +282,8 @@ export const useAppStore = defineStore('app', {
       }
     },
 
-    async fetchTrustModelInstance(application: string, sessionId: string, template: string, id: string, version: string='all') {
-      const res = await axios.get(`/api/tmis/${application}/${sessionId}/${template}/${id}/${version}`);
+    async fetchTrustModelInstance(client: string, sessionID: string, template: string, id: string, version: string='all') {
+      const res = await axios.get(`/api/tmis/${client}/${sessionID}/${template}/${id}/${version}`);
       const key = res.data.fullTMI as string;
 
       if (!this.trustModelInstances[key]) {
@@ -290,8 +292,8 @@ export const useAppStore = defineStore('app', {
         this.trustModelInstances[key] = {
           id: res.data.id,
           fullTMI: res.data.fullTMI,
-          application: parts[2],
-          sessionId: parts[3],
+          client: parts[2],
+          sessionID: parts[3],
           template: res.data.template,
           active: res.data.active,
           latestVersion: res.data.latestVersion,
@@ -331,8 +333,8 @@ export const useAppStore = defineStore('app', {
           return [entry.fullTMI, {
             id: entry.id,
             fullTMI: entry.fullTMI,
-            application: parts[2],
-            sessionId: parts[3],
+            client: parts[2],
+            sessionID: parts[3],
             template: entry.template,
             active: entry.active,
             latestVersion: entry.latestVersion,
@@ -344,8 +346,24 @@ export const useAppStore = defineStore('app', {
       );
     },
 
+    async fetchSessions() {
+      const req = await axios.get('/api/sessions');
+      this.sessions = Object.fromEntries(
+        Object.entries(req.data).map(([key, entry]: [string, any]) => {
+          return [key, {
+            SessionID: key,
+            Client: entry.Client,
+            IsActive: entry.IsActive,
+            TMIs: (Array.isArray(entry.TMIs) ? entry.TMIs : []).map((e: string) => e.split('/').pop()),
+            Template: entry.Template,
+          }];
+        })
+      );
+    },
+
     async init() {
       await this.fetchTrustModelInstances();
+      await this.fetchSessions();
     }
   }
 })

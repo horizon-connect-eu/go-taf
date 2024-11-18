@@ -34,7 +34,7 @@ const version = computed({
   },
 
   set(newVersion) {
-    router.replace(`/tmis/${route.params.application}/${route.params.sessionId}/${route.params.template}/${route.params.id}/${newVersion}`);
+    router.replace(`/tmis/${route.params.client}/${route.params.sessionID}/${route.params.template}/${route.params.id}/${newVersion}`);
   }
 });
 
@@ -44,15 +44,15 @@ const state = computed(() => trustModelInstance.value.states?.[version.value]);
 
 async function refresh() {
   await store.fetchTrustModelInstance(
-    route.params.application as string,
-    route.params.sessionId as string,
+    route.params.client as string,
+    route.params.sessionID as string,
     route.params.template as string,
     route.params.id as string,
     route.params.version as string
   );
 }
 
-const trustModelInstance = computed(() => store.trustModelInstances[`//${route.params.application}/${route.params.sessionId}/${route.params.template}/${route.params.id}`]);
+const trustModelInstance = computed(() => store.trustModelInstances[`//${route.params.client}/${route.params.sessionID}/${route.params.template}/${route.params.id}`]);
 
 refresh();
 </script>

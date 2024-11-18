@@ -8,11 +8,14 @@
   </Teleport>
 
   <v-data-table-virtual :headers="headers" :items="filteredItems" :height="height" v-resize="onResize" multi-sort v-model:sort-by="sortBy" ref="table" @click:row="openTMI">
-    <template #[`item.sessionId`]="{ item }">
-      <code>{{ item.sessionId }}</code>
+    <template #[`item.client`]="{ item }">
+      <code class="mt-1">{{ item.client }}</code>
+    </template>
+    <template #[`item.sessionID`]="{ item }">
+      <code class="mt-1">{{ item.sessionID }}</code>
     </template>
     <template #[`item.template`]="{ item }">
-      <code>{{ item.template }}</code>
+      <code class="mt-1">{{ item.template }}</code>
     </template>
     <template #[`item.active`]="{ item }">
       <v-checkbox-btn v-model="item.active" readonly />
@@ -42,12 +45,12 @@ const headers: Column[] = [{
 }, {
   maxWidth: '125px',
   filterable: true,
-  title: 'Application',
-  key: 'application'
+  title: 'Client',
+  key: 'client'
 }, {
   filterable: true,
   title: 'Session ID',
-  key: 'sessionId'
+  key: 'sessionID'
 }, {
   filterable: true,
   title: 'Template',
