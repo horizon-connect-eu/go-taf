@@ -1,16 +1,19 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/listener"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
-	"log/slog"
-	"net/http"
-	"strconv"
 )
 
 /*
@@ -67,7 +70,20 @@ type sessionState struct {
 	Template string
 }
 
-func (s *State) Handle(incomingEvents chan listener.ListenerEvent) {
+type WebSocketEventType int
+
+const (
+	CONNECTED    WebSocketEventType = 0
+	DISCONNECTED WebSocketEventType = 1
+)
+
+type WebSocketEvent struct {
+	Socket *websocket.Conn
+	Type   WebSocketEventType
+}
+
+func (s *State) Handle(incomingEvents chan listener.ListenerEvent, websocketEvents chan WebSocketEvent) {
+	sockets := make([]*websocket.Conn, 0)
 	for {
 		select {
 		case evt := <-incomingEvents:
@@ -95,6 +111,30 @@ func (s *State) Handle(incomingEvents chan listener.ListenerEvent) {
 				s.handleSessionTorndownEvent(event)
 			default:
 				util.UNUSED(event)
+			}
+
+			msg, err := json.Marshal(evt)
+			if err != nil {
+				continue
+			}
+
+			for _, ws := range sockets {
+				if err := ws.WriteMessage(websocket.TextMessage, msg); err != nil {
+					websocketEvents <- WebSocketEvent{Type: UNREGISTER, Socket: ws}
+				}
+			}
+
+		case evt := <-websocketEvents:
+			switch evt.Type {
+			case CONNECTED:
+				sockets = append(sockets, evt.Socket)
+			case DISCONNECTED:
+				for i, ws := range sockets {
+					if ws == evt.Socket {
+						sockets = append(sockets[:i], sockets[i+1:]...)
+						break
+					}
+				}
 			}
 		}
 	}
@@ -284,7 +324,17 @@ func (s *State) getTMIFull(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"code": "NOT_FOUND"})
 		return
 	} else {
-		ctx.JSON(http.StatusOK, tmi)
+		res := gin.H{
+			"id":       tmi.ID,
+			"fullTMI":  tmi.FullTMI,
+			"active":   tmi.IsActive,
+			"template": tmi.Template.Identifier(),
+			"states":   tmi.States,
+			"updates":  tmi.Update,
+			"atls":     tmi.ATLs,
+		}
+
+		ctx.JSON(http.StatusOK, res)
 	}
 
 }
