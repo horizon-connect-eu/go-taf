@@ -1,4 +1,4 @@
-package brussels
+package brussels_0_0_1
 
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"

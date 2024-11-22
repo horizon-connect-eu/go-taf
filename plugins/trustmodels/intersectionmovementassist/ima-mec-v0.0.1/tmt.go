@@ -43,3 +43,7 @@ func (t TrustModelTemplate) Identifier() string {
 func (t TrustModelTemplate) EvidenceTypes() []core.EvidenceType {
 	return t.evidenceTypes
 }
+
+func (tmt TrustModelTemplate) SigningHash() string {
+	return SigningHash
+}

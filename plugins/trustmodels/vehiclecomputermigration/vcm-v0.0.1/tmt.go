@@ -278,3 +278,7 @@ func (tmt TrustModelTemplate) Identifier() string {
 func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
 	return core.STATIC_TRUST_MODEL
 }
+
+func (tmt TrustModelTemplate) SigningHash() string {
+	return SigningHash
+}

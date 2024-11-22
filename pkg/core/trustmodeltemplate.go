@@ -46,6 +46,11 @@ type TrustModelTemplate interface {
 		Identifier returns an identifying string that includes the name and the version of the template.
 	*/
 	Identifier() string
+
+	/*
+		SigningHash returns a textual representation of a hash that states the authenticity and integrity of the trust model
+	*/
+	SigningHash() string
 }
 
 /*

@@ -1,4 +1,4 @@
-package brussels
+package brussels_0_0_1
 
 import (
 	"errors"
@@ -384,4 +384,8 @@ func (tmt TrustModelTemplate) Type() core.TrustModelTemplateType {
 
 func (tmt TrustModelTemplate) Identifier() string {
 	return fmt.Sprintf("%s@%s", tmt.TemplateName(), tmt.Version())
+}
+
+func (tmt TrustModelTemplate) SigningHash() string {
+	return ""
 }
