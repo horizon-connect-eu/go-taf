@@ -28,6 +28,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustsource"
 )
 
+//go:generate go run ../plugins/trustmodels/updatetrustmodelhashes.go
 //go:generate go run ../plugins/plugins.go
 
 var (
