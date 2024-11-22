@@ -84,9 +84,6 @@ func checkForPluginImportStatements() error {
 		if strings.HasSuffix(path, "playback.go") {
 			return nil
 		}
-		if strings.HasSuffix(path, "updatetrustmodelhashes.go") {
-			return nil
-		}
 		if !d.IsDir() && strings.HasSuffix(path, ".go") {
 			err = checkFile(fileSystem, path)
 			if err != nil {
@@ -139,7 +136,7 @@ func main() {
 		pluginImportList = append(pluginImportList, importStr)
 	}
 
-	f, err := os.Create("cmd/plugin_loader.go")
+	f, err := os.Create(projectpath.Root + "/cmd/plugin_loader.go")
 	if err != nil {
 		log.Fatalln(err)
 	}
