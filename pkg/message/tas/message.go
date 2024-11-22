@@ -28,6 +28,12 @@
 //    tasTeardownResponse, err := UnmarshalTasTeardownResponse(bytes)
 //    bytes, err = tasTeardownResponse.Marshal()
 //
+//    tasTmtDiscover, err := UnmarshalTasTmtDiscover(bytes)
+//    bytes, err = tasTmtDiscover.Marshal()
+//
+//    tasTmtOffer, err := UnmarshalTasTmtOffer(bytes)
+//    bytes, err = tasTmtOffer.Marshal()
+//
 //    tasUnsubscribeRequest, err := UnmarshalTasUnsubscribeRequest(bytes)
 //    bytes, err = tasUnsubscribeRequest.Marshal()
 //
@@ -125,6 +131,26 @@ func UnmarshalTasTeardownResponse(data []byte) (TasTeardownResponse, error) {
 }
 
 func (r *TasTeardownResponse) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalTasTmtDiscover(data []byte) (TasTmtDiscover, error) {
+	var r TasTmtDiscover
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TasTmtDiscover) Marshal() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+func UnmarshalTasTmtOffer(data []byte) (TasTmtOffer, error) {
+	var r TasTmtOffer
+	err := json.Unmarshal(data, &r)
+	return r, err
+}
+
+func (r *TasTmtOffer) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -284,6 +310,21 @@ type TasTeardownResponse struct {
 	AttestationCertificate string  `json:"attestationCertificate"`
 	Error                  *string `json:"error,omitempty"`
 	Success                *string `json:"success,omitempty"`
+}
+
+type TasTmtDiscover struct {
+	TrustModelTemplates bool `json:"trustModelTemplates"`
+}
+
+type TasTmtOffer struct {
+	TrustModelTemplates map[string]TrustModelTemplate `json:"trustModelTemplates"`
+}
+
+type TrustModelTemplate struct {
+	Description string `json:"description"`
+	Hash        string `json:"hash"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
 }
 
 type TasUnsubscribeRequest struct {

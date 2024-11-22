@@ -4,9 +4,12 @@ import (
 	"fmt"
 	logging "github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
+	"github.com/vs-uulm/go-taf/pkg/communication"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
+	messages "github.com/vs-uulm/go-taf/pkg/message"
+	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	session2 "github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
@@ -176,6 +179,35 @@ func (tmm *Manager) handleNodeRemoved(identifier string) {
 				tmm.tam.RemoveTrustModelInstance(fullTMIID, sessionID)
 			}
 		}
+	}
+}
+
+func (tmm *Manager) HandleTasTmtDiscover(cmd command.HandleRequest[tasmsg.TasTmtDiscover]) {
+	if cmd.Request.TrustModelTemplates {
+
+		tmts := make(map[string]tasmsg.TrustModelTemplate)
+
+		for _, tmt := range tmm.GetAllTMTs() {
+			tmts[tmt.Identifier()] = tasmsg.TrustModelTemplate{
+				Name:        tmt.TemplateName(),
+				Version:     tmt.Version(),
+				Description: tmt.Description(),
+				Hash:        tmt.SigningHash(),
+			}
+		}
+
+		response := tasmsg.TasTmtOffer{
+			TrustModelTemplates: tmts,
+		}
+
+		bytes, err := communication.BuildResponse(tmm.tafContext.Configuration.Communication.TafEndpoint, messages.TAS_TMT_OFFER, cmd.RequestID, response)
+		if err != nil {
+			tmm.logger.Error("Error marshalling response", "error", err)
+			return
+		}
+		tmm.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
+	} else {
+		tmm.logger.Error("Invalid TAS_TMT_DISCOVER received.")
 	}
 }
 

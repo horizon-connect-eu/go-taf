@@ -21,6 +21,8 @@ main traverses all trust model directories and creates a hash.go file for each s
 represent a signing hash of the contents of the trust model implementation. Changes in the trust model result in
 changes of this hash.
 
+This helper is called before the TAF is built, (go:generate), and also before the plugin handler is called.
+
 The function expects the following structure:
 
 	trustmodels/

@@ -148,6 +148,8 @@ func (tam *Manager) Run() {
 			// TMM Message Handling
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
 				tmm.HandleV2xCpmMessage(cmd)
+			case command.HandleRequest[tasmsg.TasTmtDiscover]:
+				tmm.HandleTasTmtDiscover(cmd)
 			default:
 				tam.logger.Warn("Command with no associated handling logic received by TAM from Communication Handler", "Command Type", cmd.Type())
 			}

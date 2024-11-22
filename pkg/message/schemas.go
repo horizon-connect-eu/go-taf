@@ -23,6 +23,8 @@ const (
 	MBD_UNSUBSCRIBE_RESPONSE      = "MBD_UNSUBSCRIBE_RESPONSE"
 	TAQI_QUERY                    = "TAQI_QUERY"
 	TAQI_RESULT                   = "TAQI_RESULT"
+	TAS_TMT_DISCOVER              = "TAS_TMT_DISCOVER"
+	TAS_TMT_OFFER                 = "TAS_TMT_OFFER"
 	TAS_INIT_REQUEST              = "TAS_INIT_REQUEST"
 	TAS_INIT_RESPONSE             = "TAS_INIT_RESPONSE"
 	TAS_NOTIFY                    = "TAS_NOTIFY"
@@ -65,6 +67,8 @@ var SchemaMap = map[string]MessageSchema{
 	MBD_UNSUBSCRIBE_RESPONSE:      MBD_UNSUBSCRIBE_RESPONSE,
 	TAQI_QUERY:                    TAQI_QUERY,
 	TAQI_RESULT:                   TAQI_RESULT,
+	TAS_TMT_DISCOVER:              TAS_TMT_DISCOVER,
+	TAS_TMT_OFFER:                 TAS_TMT_OFFER,
 	TAS_INIT_REQUEST:              TAS_INIT_REQUEST,
 	TAS_INIT_RESPONSE:             TAS_INIT_RESPONSE,
 	TAS_NOTIFY:                    TAS_NOTIFY,
@@ -83,7 +87,8 @@ var SchemaMap = map[string]MessageSchema{
 	TCH_TC_RESPONSE:               TCH_TC_RESPONSE,
 	TEST_MESSAGE:                  TEST_MESSAGE,
 	V2X_CPM:                       V2X_CPM,
-	V2X_NTM:                       V2X_NTM}
+	V2X_NTM:                       V2X_NTM,
+}
 
 var ServiceMap = map[MessageSchema]string{
 	AIV_NOTIFY:                    "ECI",
@@ -106,6 +111,8 @@ var ServiceMap = map[MessageSchema]string{
 	MBD_UNSUBSCRIBE_RESPONSE:      "ECI",
 	TAQI_QUERY:                    "TAQI",
 	TAQI_RESULT:                   "TAQI",
+	TAS_TMT_DISCOVER:              "TAS",
+	TAS_TMT_OFFER:                 "TAS",
 	TAS_INIT_REQUEST:              "TAS",
 	TAS_INIT_RESPONSE:             "TAS",
 	TAS_NOTIFY:                    "TAS",
@@ -124,4 +131,5 @@ var ServiceMap = map[MessageSchema]string{
 	TCH_TC_RESPONSE:               "UNKNOWN",
 	TEST_MESSAGE:                  "INVALID",
 	V2X_CPM:                       "V2X",
-	V2X_NTM:                       "V2X"}
+	V2X_NTM:                       "V2X",
+}

@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://connect.informatik.uni-ulm.de/coordination/taf-implementation/-/tree/main/TAF_External_Interfaces/Messaging/TAS_TMT_DISCOVER/",
+    "title": "TAS_TMT_DISCOVER",
+    "type": "object",
+    "properties": {
+      "trustModelTemplates": {  "type": "boolean" }
+    },
+    "required": [
+      "trustModelTemplates"
+    ]
+  }

@@ -84,6 +84,7 @@ The TrustMdodelManager is an internal component responsible for handling trust m
 type TrustModelManager interface {
 	SetManagers(managers TafManagers)
 	HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
+	HandleTasTmtDiscover(cmd command.HandleRequest[tasmsg.TasTmtDiscover])
 	ResolveTMT(identifier string) core.TrustModelTemplate
 	GetAllTMTs() []core.TrustModelTemplate
 	ListRecentV2XNodes() []string

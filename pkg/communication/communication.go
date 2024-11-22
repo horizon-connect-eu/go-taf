@@ -127,6 +127,16 @@ func (ch CommunicationInterface) handleIncomingMessages() {
 				ch.tafContext.Logger.Error("Unknown message type: " + rawMsg.MessageType)
 			}
 			switch schema {
+			case messages.TAS_TMT_DISCOVER:
+				tasTmtDiscover, err := tasmsg.UnmarshalTasTmtDiscover(msg)
+				if err != nil {
+					ch.tafContext.Logger.Error("Error unmarshalling TAS_TMT_DISCOVER: " + err.Error())
+				} else if ok, errs := checkRequestFields(rawMsg); !ok {
+					ch.tafContext.Logger.Error("Incomplete message header for TAS_TMT_DISCOVER message: " + errs.Error())
+				} else {
+					cmd := command.CreateTasTmtDiscover(tasTmtDiscover, rawMsg.Sender, rawMsg.RequestId, rawMsg.ResponseTopic)
+					ch.channels.TAMChannel <- cmd
+				}
 			case messages.TAS_INIT_REQUEST:
 				tasInitReq, err := tasmsg.UnmarshalTasInitRequest(msg)
 				if err != nil {
@@ -415,6 +425,10 @@ func UnmarshallMessage(schema messages.MessageSchema, msg []byte) (interface{}, 
 		extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeRequest(msg)
 	case messages.MBD_UNSUBSCRIBE_RESPONSE:
 		extractedStruct, err = mbdmsg.UnmarshalMBDUnsubscribeResponse(msg)
+	case messages.TAS_TMT_DISCOVER:
+		extractedStruct, err = tasmsg.UnmarshalTasTmtDiscover(msg)
+	case messages.TAS_TMT_OFFER:
+		extractedStruct, err = tasmsg.UnmarshalTasTmtOffer(msg)
 	case messages.TAQI_QUERY:
 		extractedStruct, err = taqimsg.UnmarshalTaqiQuery(msg)
 	case messages.TAQI_RESULT:

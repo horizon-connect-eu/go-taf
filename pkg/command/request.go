@@ -7,7 +7,7 @@ import (
 )
 
 type request interface {
-	tasmsg.TasInitRequest | tasmsg.TasTeardownRequest | tasmsg.TasTaRequest | taqimsg.TaqiQuery
+	tasmsg.TasInitRequest | tasmsg.TasTeardownRequest | tasmsg.TasTaRequest | taqimsg.TaqiQuery | tasmsg.TasTmtDiscover
 }
 
 type subscriptionRequest interface {
@@ -97,5 +97,15 @@ func CreateTaqiQuery(msg taqimsg.TaqiQuery, sender string, requestID string, res
 		RequestID:     requestID,
 		ResponseTopic: responseTopic,
 		commandType:   core.HANDLE_TAQI_QUERY,
+	}
+}
+
+func CreateTasTmtDiscover(msg tasmsg.TasTmtDiscover, sender string, requestID string, responseTopic string) HandleRequest[tasmsg.TasTmtDiscover] {
+	return HandleRequest[tasmsg.TasTmtDiscover]{
+		Request:       msg,
+		Sender:        sender,
+		RequestID:     requestID,
+		ResponseTopic: responseTopic,
+		commandType:   core.HANDLE_TAS_TMT_DISCOVER,
 	}
 }
