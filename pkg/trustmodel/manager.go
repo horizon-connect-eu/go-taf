@@ -73,7 +73,7 @@ func (tmm *Manager) initializeTrustModelTemplateTypes() {
 
 func (tmm *Manager) initializeTrustModelTemplates() {
 	for tmtName, tmt := range tmm.trustModelTemplateRepo {
-		tmm.logger.Debug(tmtName, "Description", tmt.Description(), "Evidence Sources", fmt.Sprintf("%+v", tmt.EvidenceTypes()), "Trust Model Type", tmt.Type())
+		tmm.logger.Debug(tmtName, "Description", tmt.Description(), "Evidence Sources", fmt.Sprintf("%+v", tmt.EvidenceTypes()), "Trust Model Type", tmt.Type(), "Signing Hash", tmt.SigningHash())
 	}
 }
 
