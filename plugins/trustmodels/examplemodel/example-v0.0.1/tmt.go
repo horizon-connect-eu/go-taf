@@ -1,4 +1,4 @@
-package examplemodel
+package example_v0_0_1
 
 import (
 	"fmt"
@@ -55,5 +55,5 @@ func (tmt TrustModelTemplate) Identifier() string {
 }
 
 func (tmt TrustModelTemplate) SigningHash() string {
-	return "null"
+	return SigningHash
 }
