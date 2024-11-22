@@ -130,7 +130,6 @@ func packageName(file string) (string, error) {
 }
 
 func writeHashFile(dir string, pkgName string, hash string) error {
-	println(dir + "\t" + hash)
 
 	f, err := os.Create(dir + "/hash.go")
 	if err != nil {
@@ -147,6 +146,8 @@ func writeHashFile(dir string, pkgName string, hash string) error {
 		PkgName:   pkgName,
 		Hash:      hash,
 	})
+
+	log.Printf("Signing Trust Model Package \"%s\" (%s): %s", pkgName, dir, hash)
 
 	return nil
 }
