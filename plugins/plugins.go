@@ -11,6 +11,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/vs-uulm/go-taf/internal/projectpath"
 	"go/parser"
 	"go/token"
 	"io/fs"
@@ -24,8 +25,8 @@ import (
 )
 
 // Read and return the module name from go.mod
-func getModuleName() string {
-	f, err := os.Open(filepath.FromSlash("../go.mod"))
+func getModuleName(fileSystem fs.FS) string {
+	f, err := fileSystem.Open("go.mod")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,9 +47,9 @@ func getModuleName() string {
 	return ""
 }
 
-func checkFile(path string) error {
+func checkFile(fileSystem fs.FS, path string) error {
 	fset := token.NewFileSet()
-	fcontents, err := os.ReadFile(path)
+	fcontents, err := fs.ReadFile(fileSystem, path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,13 +67,13 @@ func checkFile(path string) error {
 }
 
 func checkForPluginImportStatements() error {
-	fileSystem := os.DirFS("..")
+	fileSystem := os.DirFS(projectpath.Root)
 	errorList := []string{}
 	fs.WalkDir(fileSystem, filepath.FromSlash("."), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// Skip the plugin/ directory
+		// Skip the plugins/ directory
 		if strings.HasPrefix(path, "plugins") {
 			return fs.SkipDir
 		}
@@ -83,8 +84,11 @@ func checkForPluginImportStatements() error {
 		if strings.HasSuffix(path, "playback.go") {
 			return nil
 		}
+		if strings.HasSuffix(path, "updatetrustmodelhashes.go") {
+			return nil
+		}
 		if !d.IsDir() && strings.HasSuffix(path, ".go") {
-			err = checkFile(filepath.FromSlash("../" + path))
+			err = checkFile(fileSystem, path)
 			if err != nil {
 				errorList = append(errorList, err.Error())
 			}
@@ -106,13 +110,13 @@ func main() {
 	}
 
 	pluginList := []string{}
-	fileSystem := os.DirFS("..")
-	BaseURL := getModuleName()
+	fileSystem := os.DirFS(projectpath.Root)
+	BaseURL := getModuleName(fileSystem)
 
 	// get a  listing of all go files in the plugins directory and store the paths to the directories (=packages)
 	// they are in.
 	err = fs.WalkDir(fileSystem, filepath.FromSlash("plugins"), func(path string, d fs.DirEntry, err error) error {
-		if strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "plugins.go") {
+		if strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, "plugins.go") && !strings.HasSuffix(path, "updatetrustmodelhashes.go") {
 			packageName := "/" + filepath.Dir(path)
 			packageName = strings.ReplaceAll(packageName, "\\", "/")
 			pluginList = append(pluginList, packageName)
