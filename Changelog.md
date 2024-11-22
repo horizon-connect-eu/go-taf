@@ -1,5 +1,14 @@
 # Standalone TAF Prototype
 
+## Release v0.2.7 (2024-11-22)
+
+* restructured the folders for trust models to allow for multiple templates of the same group
+* added automatic signing hashes for trust model templates 
+* added support for the following message types
+	* `TAS_TMT_DISCOVER`
+	* `TAS_TMT_OFFER`
+
+
 ## Release v0.2.6 (2024-11-04)
 
 * added support for queries based on the  Trust Assessment Query Interface (TAQI) which allows to query for instantiated trust models and their ATLs
