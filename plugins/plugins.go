@@ -139,7 +139,7 @@ func main() {
 		pluginImportList = append(pluginImportList, importStr)
 	}
 
-	f, err := os.Create("plugin_loader.go")
+	f, err := os.Create("cmd/plugin_loader.go")
 	if err != nil {
 		log.Fatalln(err)
 	}
