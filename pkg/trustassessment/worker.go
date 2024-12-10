@@ -85,12 +85,18 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 	worker.tmiSessions[cmd.FullTMI] = session
 
 	//Run TLEE
-	atls := worker.executeTLEE(worker.tmis[cmd.FullTMI])
-	//Run TDE
-	resultSet := worker.executeTDE(worker.tmis[cmd.FullTMI], atls)
+	atls, err := worker.executeTLEE(worker.tmis[cmd.FullTMI])
 
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
-	worker.workersToTam <- atlUpdateCmd
+	//Only run TDE and upaate ATL cache when no TLEE errors
+	if err != nil {
+		worker.logger.Info("TLEE returned error:" + err.Error())
+	} else {
+		//Run TDE
+		resultSet := worker.executeTDE(worker.tmis[cmd.FullTMI], atls)
+
+		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
+		worker.workersToTam <- atlUpdateCmd
+	}
 }
 
 func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
@@ -106,12 +112,18 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 		tmi.Update(update)
 	}
 	//Run TLEE
-	atls := worker.executeTLEE(tmi)
-	//Run TDE
-	resultSet := worker.executeTDE(tmi, atls)
+	atls, err := worker.executeTLEE(tmi)
 
-	atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
-	worker.workersToTam <- atlUpdateCmd
+	//Only run TDE and upaate ATL cache when no TLEE errors
+	if err != nil {
+		worker.logger.Info("TLEE returned error:" + err.Error())
+	} else {
+		//Run TDE
+		resultSet := worker.executeTDE(tmi, atls)
+
+		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+		worker.workersToTam <- atlUpdateCmd
+	}
 }
 
 func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
@@ -127,20 +139,25 @@ func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
 	//TODO: potential concurrency flag: send ATL update to wipe cache entry
 }
 
-func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) map[string]subjectivelogic.QueryableOpinion {
+func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) (map[string]subjectivelogic.QueryableOpinion, error) {
 	var atls map[string]subjectivelogic.QueryableOpinion
 	//Only call TLEE when the graph structure is existing and not empty; otherwise skip and return empty ATL set
 	if tmi.Structure() != nil && len(tmi.Structure().AdjacencyList()) > 0 { //TODO: Values?
-		//worker.logger.Debug("TLEE Input", "TMI", tmi.String())
-		atls, _ = worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
-		//TODO: check for errors
+		var err error
+		atls, err = worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
 		worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		atls = make(map[string]subjectivelogic.QueryableOpinion)
 		worker.logger.Debug("TLEE call omitted due to empty TMI", "Results", fmt.Sprintf("%+v", atls))
 	}
-	return atls
+	return atls, nil
 }
+
+//  //ext_perc_app/732468327648723/IMA_STANDALONE@0.0.1/163/
+//  //ext_perc_app/712312327648723/IMA_STANDALONE@0.0.1/163/
 
 func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
