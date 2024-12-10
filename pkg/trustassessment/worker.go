@@ -79,22 +79,22 @@ func (worker *Worker) Run() {
 }
 
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
-	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
-	worker.tmis[cmd.FullTMI] = cmd.TMI
-	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTMI)
-	worker.tmiSessions[cmd.FullTMI] = session
+	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTmiID)
+	worker.tmis[cmd.FullTmiID] = cmd.TMI
+	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTmiID)
+	worker.tmiSessions[cmd.FullTmiID] = session
 
 	//Run TLEE
-	atls, err := worker.executeTLEE(worker.tmis[cmd.FullTMI])
+	atls, err := worker.executeTLEE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID])
 
 	//Only run TDE and upaate ATL cache when no TLEE errors
 	if err != nil {
 		worker.logger.Info("TLEE returned error:" + err.Error())
 	} else {
 		//Run TDE
-		resultSet := worker.executeTDE(worker.tmis[cmd.FullTMI], atls)
+		resultSet := worker.executeTDE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID], atls)
 
-		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTMI)
+		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
 		worker.workersToTam <- atlUpdateCmd
 	}
 }
@@ -112,14 +112,14 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 		tmi.Update(update)
 	}
 	//Run TLEE
-	atls, err := worker.executeTLEE(tmi)
+	atls, err := worker.executeTLEE(cmd.FullTmiID, tmi)
 
 	//Only run TDE and upaate ATL cache when no TLEE errors
 	if err != nil {
 		worker.logger.Info("TLEE returned error:" + err.Error())
 	} else {
 		//Run TDE
-		resultSet := worker.executeTDE(tmi, atls)
+		resultSet := worker.executeTDE(cmd.FullTmiID, tmi, atls)
 
 		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
 		worker.workersToTam <- atlUpdateCmd
@@ -127,24 +127,24 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 }
 
 func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
-	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTMI)
-	tmi, exists := worker.tmis[cmd.FullTMI]
+	worker.logger.Info("Deleting Trust Model Instance with ID " + cmd.FullTmiID)
+	tmi, exists := worker.tmis[cmd.FullTmiID]
 	if !exists {
-		worker.logger.Error("Unknown FULL ID: " + cmd.FullTMI)
+		worker.logger.Error("Unknown FULL ID: " + cmd.FullTmiID)
 		return
 	}
 	tmi.Cleanup()
-	delete(worker.tmis, cmd.FullTMI)
-	delete(worker.tmiSessions, cmd.FullTMI)
+	delete(worker.tmis, cmd.FullTmiID)
+	delete(worker.tmiSessions, cmd.FullTmiID)
 	//TODO: potential concurrency flag: send ATL update to wipe cache entry
 }
 
-func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) (map[string]subjectivelogic.QueryableOpinion, error) {
+func (worker *Worker) executeTLEE(fullTmiId string, tmi core.TrustModelInstance) (map[string]subjectivelogic.QueryableOpinion, error) {
 	var atls map[string]subjectivelogic.QueryableOpinion
 	//Only call TLEE when the graph structure is existing and not empty; otherwise skip and return empty ATL set
 	if tmi.Structure() != nil && len(tmi.Structure().AdjacencyList()) > 0 { //TODO: Values?
 		var err error
-		atls, err = worker.tlee.RunTLEE(tmi.ID(), tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
+		atls, err = worker.tlee.RunTLEE(fullTmiId, tmi.Version(), tmi.Fingerprint(), tmi.Structure(), tmi.Values())
 		worker.logger.Debug("TLEE called", "Results", fmt.Sprintf("%+v", atls))
 		if err != nil {
 			return nil, err
@@ -159,14 +159,14 @@ func (worker *Worker) executeTLEE(tmi core.TrustModelInstance) (map[string]subje
 //  //ext_perc_app/732468327648723/IMA_STANDALONE@0.0.1/163/
 //  //ext_perc_app/712312327648723/IMA_STANDALONE@0.0.1/163/
 
-func (worker *Worker) executeTDE(tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
+func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
 	projectedProbabilities := make(map[string]float64, len(atls))
 	trustDecisions := make(map[string]core.TrustDecision, len(atls))
 	for proposition, atlOpinion := range atls {
 		rtlOpinion, exists := rtls[proposition]
 		if !exists {
-			worker.logger.Error("Could not find RTL in trust model instance for proposition "+proposition, "TMI ID", tmi.ID())
+			worker.logger.Error("Could not find RTL in trust model instance for proposition "+proposition, "TMI ID", fullTmiId)
 			trustDecisions[proposition] = core.UNDECIDABLE //If no RTL is found, we set trust decision to UNDECIDABLE as default
 		} else {
 			trustDecisions[proposition] = trustdecision.Decide(atlOpinion, rtlOpinion)

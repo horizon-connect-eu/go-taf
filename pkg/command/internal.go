@@ -31,7 +31,7 @@ HandleTMIInit is a command that initiates the existence of a Trust Model Instanc
 */
 type HandleTMIInit struct {
 	commandType core.CommandType
-	FullTMI     string
+	FullTmiID   string
 	TMI         core.TrustModelInstance
 }
 
@@ -39,7 +39,7 @@ func CreateHandleTMIInit(fullTMIid string, TMI core.TrustModelInstance) HandleTM
 	return HandleTMIInit{
 
 		TMI:         TMI,
-		FullTMI:     fullTMIid,
+		FullTmiID:   fullTMIid,
 		commandType: core.HANDLE_TMI_INIT,
 	}
 }
@@ -53,12 +53,12 @@ HandleTMIInit is a command that signals a TAM worker to destroy a Trust Model In
 */
 type HandleTMIDestroy struct {
 	commandType core.CommandType
-	FullTMI     string
+	FullTmiID   string
 }
 
 func CreateHandleTMIDestroy(fullTMIid string) HandleTMIDestroy {
 	return HandleTMIDestroy{
-		FullTMI:     fullTMIid,
+		FullTmiID:   fullTMIid,
 		commandType: core.HANDLE_TMI_DESTROY,
 	}
 }
@@ -73,14 +73,14 @@ HandleATLUpdate is a command sent from a TAM worker to the TAM that contains new
 
 type HandleATLUpdate struct {
 	commandType core.CommandType
-	FullTMI     string
+	FullTmiID   string
 	ResultSet   core.AtlResultSet
 }
 
 func CreateHandleATLUpdate(atl core.AtlResultSet, fullTMI string) HandleATLUpdate {
 	return HandleATLUpdate{
 		ResultSet:   atl,
-		FullTMI:     fullTMI,
+		FullTmiID:   fullTMI,
 		commandType: core.HANDLE_ATL_UPDATE,
 	}
 }

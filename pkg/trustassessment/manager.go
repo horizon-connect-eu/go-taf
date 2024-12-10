@@ -748,7 +748,7 @@ func (tam *Manager) HandleTaqiQuery(cmd command.HandleRequest[taqimsg.TaqiQuery]
 
 func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	tam.logger.Debug("ATL Update", "ResultSet", fmt.Sprintf("%+v", cmd.ResultSet))
-	_, sessionID, _, _ := core.SplitFullTMIIdentifier(cmd.FullTMI)
+	_, sessionID, _, _ := core.SplitFullTMIIdentifier(cmd.FullTmiID)
 
 	_, exists := tam.sessions[sessionID]
 	if !exists {
@@ -758,7 +758,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 
 	//Check whether there are subscriptions for which the changes are relevant and send out notifications to subscribers
 	for _, subscriptionID := range tam.sessions[sessionID].ListSubscriptions() {
-		results := tam.tasSubscriptions[subscriptionID].HandleUpdate(tam.atlResults[cmd.FullTMI], cmd.ResultSet)
+		results := tam.tasSubscriptions[subscriptionID].HandleUpdate(tam.atlResults[cmd.FullTmiID], cmd.ResultSet)
 		if len(results) > 0 {
 			taResponseResults := make([]tasmsg.Update, 0)
 
@@ -783,7 +783,7 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 	}
 
 	//overwrite result cache with new values
-	tam.atlResults[cmd.FullTMI] = cmd.ResultSet
+	tam.atlResults[cmd.FullTmiID] = cmd.ResultSet
 	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
 }
 
