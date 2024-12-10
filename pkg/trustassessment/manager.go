@@ -791,13 +791,13 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 		}
 	}
 
-	oldATLResults := tam.atlResults[cmd.FullTMI]
+	oldATLResults := tam.atlResults[cmd.FullTmiID]
 
 	//overwrite result cache with new values
 	tam.atlResults[cmd.FullTmiID] = cmd.ResultSet
 	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
 
-	tam.notifyATLUpdated(cmd.FullTMI, oldATLResults, cmd.ResultSet)
+	tam.notifyATLUpdated(cmd.FullTmiID, oldATLResults, cmd.ResultSet)
 }
 
 func (tam *Manager) DispatchToWorker(session session.Session, tmiID string, cmd core.Command) {

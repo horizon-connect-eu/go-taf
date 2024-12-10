@@ -82,7 +82,7 @@ func (worker *Worker) Run() {
 }
 
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
-	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
+	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTmiID)
 	worker.tmis[cmd.FullTmiID] = cmd.TMI
 	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTmiID)
 	worker.tmiSessions[cmd.FullTmiID] = session
@@ -163,7 +163,6 @@ func (worker *Worker) executeTLEE(fullTmiId string, tmi core.TrustModelInstance)
 	}
 	return atls, nil
 }
-
 
 func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
