@@ -45,8 +45,7 @@ build:
   script:
     - |      
       make ${MAKE_TARGET}
-      filename="$(basename out/main* | sed 's/main/go-taf/')"
-      suffix="$(echo ${MAKE_TARGET} | sed 's/build//')"      
+      filename="$(basename out/main* | sed "s/main/go-taf$(echo $MAKE_TARGET | sed 's/build//')/")"
       curl --fail-with-body -H "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file out/main* "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${GOOS}-${GOARCH}/${CI_COMMIT_TAG}/${filename}${suffix}"
   parallel:
     matrix:
