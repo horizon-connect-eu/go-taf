@@ -44,18 +44,21 @@ build:
     - if: $CI_COMMIT_TAG
   script:
     - |      
-      make
+      make ${MAKE_TARGET}
       filename="$(basename out/main* | sed 's/main/go-taf/')"
-      curl --fail-with-body -H "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file out/main* "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${GOOS}-${GOARCH}/${CI_COMMIT_TAG}/${filename}"
+      suffix="$(echo ${MAKE_TARGET} | sed 's/build//')"      
+      curl --fail-with-body -H "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file out/main* "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${GOOS}-${GOARCH}/${CI_COMMIT_TAG}/${filename}${suffix}"
   parallel:
     matrix:
       - GOOS: windows
         GOARCH: [386, amd64]
+        MAKE_TARGET: [build, build-with-webui]
       - GOOS: linux
         GOARCH: [386, amd64]
+        MAKE_TARGET: [build, build-with-webui]
       - GOOS: darwin
         GOARCH: [amd64, arm64]
-
+        MAKE_TARGET: [build, build-with-webui]
 changelog:
   stage: release
   rules:
