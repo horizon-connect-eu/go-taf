@@ -1,5 +1,14 @@
 # Standalone TAF Prototype
 
+## Release v0.2.8 (2024-12-10)
+
+ * added experimental web UI for exploring TAF-internal states
+   * overview of sessions
+   * overview of trust model instances
+   * detailed view of trust model instances and their history
+ * added support for the TAF to handle errors returned by the TLEE
+
+
 ## Release v0.2.7 (2024-11-22)
 
 * restructured the folders for trust models to allow for multiple templates of the same group
