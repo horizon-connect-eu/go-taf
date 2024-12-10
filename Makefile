@@ -10,6 +10,11 @@ build: cmd/plugin_loader.go format
 	go build -o out ./cmd/main.go ./cmd/plugin_loader.go
 .PHONY:build
 
+build-with-webui: cmd/plugin_loader.go format
+	mkdir -p out
+	go build -tags webui -o out ./cmd/main.go ./cmd/plugin_loader.go
+.PHONY:build-with-webui
+
 generate-generic-structs:
 	mkdir -p pkg/message/generic
 	quicktype res/schemas/GENERIC_*.json --src-lang schema -l golang --package genericmsg -o pkg/message/generic/message.go
@@ -94,3 +99,7 @@ PHONY:docs
 run: build
 	TAF_CONFIG=res/taf.json out/main
 .PHONY:run
+
+run-with-webui: build-with-webui
+	TAF_CONFIG=res/taf.json out/main
+.PHONY:run-with-webui
