@@ -1,6 +1,7 @@
 package trustmodelstructure
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"strings"
@@ -53,4 +54,23 @@ func DumpStructure(structure trustmodelstructure.TrustGraphStructure) string {
 		result = append(result, list.SourceNode()+"==>"+fmt.Sprintf("%+v", list.TargetNodes()))
 	}
 	return strings.Join(result, "\n")
+}
+
+func (r *TrustGraphDTO) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Operator      string                                   `json:"operator"`
+		AdjacencyList []trustmodelstructure.AdjacencyListEntry `json:"adjacency_list"`
+	}{
+		Operator:      "", // TODO: r.Operator(),
+		AdjacencyList: r.AdjacencyList(),
+	})
+}
+func (r *AdjacencyEntryDTO) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		SourceNode  string   `json:"sourceNode"`
+		TargetNodes []string `json:"targetNodes"`
+	}{
+		SourceNode:  r.sourceNode,
+		TargetNodes: r.targetNodes,
+	})
 }

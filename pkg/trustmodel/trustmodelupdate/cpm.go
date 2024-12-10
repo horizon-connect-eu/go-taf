@@ -1,6 +1,9 @@
 package trustmodelupdate
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import (
+	"encoding/json"
+	"github.com/vs-uulm/go-taf/pkg/core"
+)
 
 /*
 RefreshCPM is an TMI update operation that updates the structure of a trust model according to the observations of a CPM message.
@@ -26,4 +29,16 @@ func CreateRefreshCPM(sourceID string, objects []string) RefreshCPM {
 
 func (u RefreshCPM) Type() core.UpdateOp {
 	return core.REFRESH_CPM
+}
+
+func (u RefreshCPM) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		SourceID string   `json:"sourceID"`
+		Objects  []string `json:"objects"`
+		Update   string   `json:"update"`
+	}{
+		SourceID: u.SourceID(),
+		Objects:  u.objects,
+		Update:   u.Type().String(),
+	})
 }

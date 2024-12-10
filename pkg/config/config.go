@@ -19,6 +19,7 @@ type Configuration struct {
 	TAM           TAM
 	TLEE          TLEE
 	V2X           V2X
+	WebUI         WebUI
 }
 
 /*
@@ -102,6 +103,13 @@ type V2X struct {
 	CheckIntervalSec int //This value (in sec) specifies in which frequency timeouts should be checked.
 }
 
+/*
+Web UI settings.
+*/
+type WebUI struct {
+	Port uint16 //Port
+}
+
 var (
 	/*
 	 Default configuration of the TAF.
@@ -151,6 +159,9 @@ var (
 		V2X: V2X{
 			NodeTTLsec:       5,
 			CheckIntervalSec: 1,
+		},
+		WebUI: WebUI{
+			Port: 7778,
 		},
 	}
 )

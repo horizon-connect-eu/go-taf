@@ -7,6 +7,7 @@ import (
 	"github.com/vs-uulm/go-taf/internal/logger"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/listener"
 	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
@@ -28,13 +29,14 @@ type Worker struct {
 	tmiSessions  map[string]string
 	workersToTam chan<- core.Command
 	tlee         tleeinterface.TLEE
+	tmiListeners map[listener.TrustModelInstanceListener]bool
 }
 
 /*
 SpawnNewWorker creates a new worker. The worker receives a channel for commands from the TAM and a channel to send back
 results to the TAM. The worker also receives a reference to the TLEE instance to be used for calculations.
 */
-func (tam *Manager) SpawnNewWorker(id int, workerQueue <-chan core.Command, workersToTam chan<- core.Command, tafContext core.TafContext, tlee tleeinterface.TLEE) Worker {
+func (tam *Manager) SpawnNewWorker(id int, workerQueue <-chan core.Command, workersToTam chan<- core.Command, tafContext core.TafContext, tlee tleeinterface.TLEE, tmiListeners map[listener.TrustModelInstanceListener]bool) Worker {
 	return Worker{
 		tafContext:   tafContext,
 		id:           id,
@@ -44,6 +46,7 @@ func (tam *Manager) SpawnNewWorker(id int, workerQueue <-chan core.Command, work
 		tmiSessions:  make(map[string]string),
 		workersToTam: workersToTam,
 		tlee:         tlee,
+		tmiListeners: tmiListeners,
 	}
 }
 
@@ -65,10 +68,10 @@ func (worker *Worker) Run() {
 			return
 		case incomingCmd := <-worker.workerQueue:
 			switch cmd := incomingCmd.(type) {
-			case command.HandleTMIUpdate:
-				worker.handleTMIUpdate(cmd)
 			case command.HandleTMIInit:
 				worker.handleTMIInit(cmd)
+			case command.HandleTMIUpdate:
+				worker.handleTMIUpdate(cmd)
 			case command.HandleTMIDestroy:
 				worker.handleTMIDestroy(cmd)
 			default:
@@ -79,10 +82,12 @@ func (worker *Worker) Run() {
 }
 
 func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
-	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTmiID)
+	worker.logger.Info("Registering new Trust Model Instance with ID " + cmd.FullTMI)
 	worker.tmis[cmd.FullTmiID] = cmd.TMI
 	_, session, _, _ := core.SplitFullTMIIdentifier(cmd.FullTmiID)
 	worker.tmiSessions[cmd.FullTmiID] = session
+
+	worker.notifyTMISpawned(cmd.FullTmiID, cmd.TMI)
 
 	//Run TLEE
 	atls, err := worker.executeTLEE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID])
@@ -110,7 +115,9 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	//(Batch-)Execute TMI Updates
 	for _, update := range cmd.Updates {
 		tmi.Update(update)
+		worker.notifyTMIUpdated(cmd.FullTmiID, tmi, update)
 	}
+
 	//Run TLEE
 	atls, err := worker.executeTLEE(cmd.FullTmiID, tmi)
 
@@ -136,6 +143,7 @@ func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
 	tmi.Cleanup()
 	delete(worker.tmis, cmd.FullTmiID)
 	delete(worker.tmiSessions, cmd.FullTmiID)
+	worker.notifyTMIDeleted(cmd.FullTmiID)
 	//TODO: potential concurrency flag: send ATL update to wipe cache entry
 }
 
@@ -156,8 +164,6 @@ func (worker *Worker) executeTLEE(fullTmiId string, tmi core.TrustModelInstance)
 	return atls, nil
 }
 
-//  //ext_perc_app/732468327648723/IMA_STANDALONE@0.0.1/163/
-//  //ext_perc_app/712312327648723/IMA_STANDALONE@0.0.1/163/
 
 func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
@@ -175,4 +181,47 @@ func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, 
 	}
 	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), atls, projectedProbabilities, trustDecisions)
 	return resultSet
+}
+
+func (worker *Worker) notifyTMISpawned(FullTmiID string, tmi core.TrustModelInstance) {
+	if len(worker.tmiListeners) > 0 {
+		event := listener.NewTrustModelInstanceSpawnedEvent(tmi.ID(),
+			FullTmiID,
+			tmi.Template(),
+			tmi.Version(),
+			tmi.Fingerprint(),
+			tmi.Structure(),
+			tmi.Values(),
+			tmi.RTLs(),
+		)
+		for listener, _ := range worker.tmiListeners {
+			listener.OnTrustModelInstanceSpawned(event)
+		}
+	}
+}
+
+func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInstance, update core.Update) {
+	if len(worker.tmiListeners) > 0 {
+		event := listener.NewTrustModelInstanceUpdatedEvent(tmi.ID(),
+			FullTmiID,
+			tmi.Version(),
+			tmi.Fingerprint(),
+			tmi.Structure(),
+			tmi.Values(),
+			tmi.RTLs(),
+			update,
+		)
+		for listener, _ := range worker.tmiListeners {
+			listener.OnTrustModelInstanceUpdated(event)
+		}
+	}
+}
+
+func (worker *Worker) notifyTMIDeleted(FullTMI string) {
+	if len(worker.tmiListeners) > 0 {
+		event := listener.NewTrustModelInstanceDeletedEvent(FullTMI)
+		for listener, _ := range worker.tmiListeners {
+			listener.OnTrustModelInstanceDeleted(event)
+		}
+	}
 }

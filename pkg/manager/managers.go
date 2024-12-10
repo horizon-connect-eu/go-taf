@@ -4,6 +4,7 @@ import (
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/vs-uulm/go-taf/pkg/listener"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
@@ -55,6 +56,12 @@ type TrustAssessmentManager interface {
 	AddNewTrustModelInstance(instance core.TrustModelInstance, sessionID string)
 	RemoveTrustModelInstance(tmiID string, sessionID string)
 	QueryTMIs(query string) ([]string, error)
+	AddSessionListener(listener listener.SessionListener)
+	RemoveSessionListener(listener listener.SessionListener)
+	AddATLListener(listener listener.ActualTrustLevelListener)
+	RemoveATLListener(listener listener.ActualTrustLevelListener)
+	AddTMIListener(listener listener.TrustModelInstanceListener)
+	RemoveTMIListener(listener listener.TrustModelInstanceListener)
 	Run()
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/config"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
+	"github.com/vs-uulm/go-taf/pkg/listener"
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
@@ -49,7 +50,10 @@ type Manager struct {
 	//tas sub ID->Subscription
 	tasSubscriptions map[string]Subscription
 	//Queryable table of all TMIs
-	tmiTable *TrustModelInstanceTable
+	tmiTable         *TrustModelInstanceTable
+	sessionListeners map[listener.SessionListener]bool
+	atlListeners     map[listener.ActualTrustLevelListener]bool
+	tmiListeners     map[listener.TrustModelInstanceListener]bool
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
@@ -67,6 +71,9 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tlee
 		tasSubscriptionsToSessionID: make(map[string]string),
 		tasSubscriptions:            make(map[string]Subscription),
 		tmiTable:                    CreateTrustModelInstanceTable(),
+		sessionListeners:            make(map[listener.SessionListener]bool),
+		atlListeners:                make(map[listener.ActualTrustLevelListener]bool),
+		tmiListeners:                make(map[listener.TrustModelInstanceListener]bool),
 	}
 	tam.logger.Info("Initializing Trust Assessment Manager", "Worker Count", tam.config.TAM.TrustModelInstanceShards)
 	return tam, nil
@@ -91,7 +98,7 @@ func (tam *Manager) Run() {
 	for i := range tam.config.TAM.TrustModelInstanceShards {
 		channel := make(chan core.Command, tam.config.ChanBufSize)
 		tam.tamToWorkers = append(tam.tamToWorkers, channel)
-		worker := tam.SpawnNewWorker(i, channel, tam.workersToTam, tam.tafContext, tam.tlee)
+		worker := tam.SpawnNewWorker(i, channel, tam.workersToTam, tam.tafContext, tam.tlee, tam.tmiListeners)
 		go worker.Run()
 	}
 
@@ -267,6 +274,7 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 		//Send response message
 		tam.outbox <- core.NewMessage(bytes, "", cmd.ResponseTopic)
 		tam.sessions[sessionId].Established()
+		tam.notifySessionCreated(tam.sessions[sessionId])
 	}
 	errorHandler := func(err error) {
 
@@ -345,6 +353,7 @@ func (tam *Manager) HandleTasTeardownRequest(cmd command.HandleRequest[tasmsg.Ta
 
 	//remove session data
 	currentSession.TornDown()
+	tam.notifySessionTorndown(currentSession)
 	tam.logger.Info("Removing session", "Session ID", currentSession.ID(), "Client", currentSession.Client())
 	delete(tam.sessions, currentSession.ID())
 
@@ -782,9 +791,13 @@ func (tam *Manager) HandleATLUpdate(cmd command.HandleATLUpdate) {
 		}
 	}
 
+	oldATLResults := tam.atlResults[cmd.FullTMI]
+
 	//overwrite result cache with new values
 	tam.atlResults[cmd.FullTmiID] = cmd.ResultSet
 	//TODO: make copies of both results and fill cache with new values *before* doing the subscription checks
+
+	tam.notifyATLUpdated(cmd.FullTMI, oldATLResults, cmd.ResultSet)
 }
 
 func (tam *Manager) DispatchToWorker(session session.Session, tmiID string, cmd core.Command) {
@@ -857,10 +870,70 @@ func (tam *Manager) RemoveTrustModelInstance(fullTMIid string, sessionID string)
 		tam.DispatchToWorker(sess, fullTMIid, command.CreateHandleTMIDestroy(fullTMIid))
 		tam.tmiTable.UnregisterTMI(sess.Client(), sess.ID(), sess.TrustModelTemplate().Identifier(), tmiID)
 		delete(tam.atlResults, fullTMIid)
+		tam.notifyATLRemoved(fullTMIid)
 		delete(sess.TrustModelInstances(), tmiID)
 	}
 }
 
 func (tam *Manager) QueryTMIs(query string) ([]string, error) {
 	return tam.tmiTable.QueryTMIs(query)
+}
+
+func (tam *Manager) AddSessionListener(listener listener.SessionListener) {
+	tam.sessionListeners[listener] = true
+}
+
+func (tam *Manager) RemoveSessionListener(listener listener.SessionListener) {
+	delete(tam.sessionListeners, listener)
+}
+
+func (tam *Manager) notifySessionCreated(session session.Session) {
+	if len(tam.sessionListeners) > 0 {
+		event := listener.NewSessionCreatedEvent(session.ID(), session.TrustModelTemplate(), session.Client())
+		for listener, _ := range tam.sessionListeners {
+			listener.OnSessionCreated(event)
+		}
+	}
+}
+
+func (tam *Manager) notifySessionTorndown(session session.Session) {
+	if len(tam.sessionListeners) > 0 {
+		event := listener.NewSessionTorndownEvent(session.ID(), session.TrustModelTemplate(), session.Client())
+		for listener, _ := range tam.sessionListeners {
+			listener.OnSessionTorndown(event)
+		}
+	}
+}
+
+func (tam *Manager) AddATLListener(listener listener.ActualTrustLevelListener) {
+	tam.atlListeners[listener] = true
+}
+
+func (tam *Manager) RemoveATLListener(listener listener.ActualTrustLevelListener) {
+	delete(tam.atlListeners, listener)
+}
+
+func (tam *Manager) notifyATLUpdated(fullTMI string, oldATLs core.AtlResultSet, newATLs core.AtlResultSet) {
+	if len(tam.sessionListeners) > 0 {
+		event := listener.NewATLUpdatedEvent(fullTMI, newATLs.Version(), oldATLs, newATLs)
+		for listener, _ := range tam.atlListeners {
+			listener.OnATLUpdated(event)
+		}
+	}
+}
+
+func (tam *Manager) notifyATLRemoved(fullTMI string) {
+	if len(tam.sessionListeners) > 0 {
+		event := listener.NewATLRemovedEvent(fullTMI)
+		for listener, _ := range tam.atlListeners {
+			listener.OnATLRemoved(event)
+		}
+	}
+}
+
+func (tam *Manager) AddTMIListener(listener listener.TrustModelInstanceListener) {
+	tam.tmiListeners[listener] = true
+}
+func (tam *Manager) RemoveTMIListener(listener listener.TrustModelInstanceListener) {
+	delete(tam.tmiListeners, listener)
 }

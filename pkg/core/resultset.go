@@ -1,6 +1,9 @@
 package core
 
-import "github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+import (
+	"encoding/json"
+	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
+)
 
 /*
 AtlResultSet captures the output of a TLEE computation per proposition in three different versions: SL opinions, projected probabilities, and trust decisions.
@@ -56,4 +59,20 @@ ProjectedProbabilities return a map of all propositions and their trust decision
 */
 func (r AtlResultSet) TrustDecisions() map[string]TrustDecision {
 	return r.tdResults
+}
+
+func (r AtlResultSet) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		TmiID     string
+		Version   int
+		SlResults map[string]subjectivelogic.QueryableOpinion
+		PpResults map[string]float64
+		TdResults map[string]TrustDecision
+	}{
+		TmiID:     r.tmiID,
+		Version:   r.version,
+		SlResults: r.slResults,
+		PpResults: r.ppResults,
+		TdResults: r.tdResults,
+	})
 }

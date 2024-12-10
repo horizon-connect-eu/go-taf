@@ -1,6 +1,7 @@
 package trustmodelupdate
 
 import (
+	"encoding/json"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
 )
@@ -42,4 +43,20 @@ func CreateAtomicTrustOpinionUpdate(opinion subjectivelogic.QueryableOpinion, tr
 
 func (u UpdateAtomicTrustOpinion) Type() core.UpdateOp {
 	return core.UPDATE_ATO
+}
+
+func (u UpdateAtomicTrustOpinion) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Opinion     subjectivelogic.QueryableOpinion `json:"opinion"`
+		TrustSource string                           `json:"trustSource"`
+		Trustor     string                           `json:"trustor"`
+		Trustee     string                           `json:"trustee"`
+		Update      string                           `json:"update"`
+	}{
+		Opinion:     u.Opinion(),
+		TrustSource: u.trustSource.String(),
+		Trustor:     u.trustor,
+		Trustee:     u.trustee,
+		Update:      u.Type().String(),
+	})
 }

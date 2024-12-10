@@ -1,5 +1,7 @@
 package core
 
+import "bytes"
+
 /*
 The UpdateOp identifies the type of Update Operation than can be applied to an existing TrustModelInstance.
 */
@@ -43,4 +45,11 @@ An Update operation that must be handled by a Trust Model Instance.
 */
 type Update interface {
 	Type() UpdateOp
+}
+
+func (u *UpdateOp) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString(`"`)
+	buffer.WriteString(u.String())
+	buffer.WriteString(`"`)
+	return buffer.Bytes(), nil
 }
