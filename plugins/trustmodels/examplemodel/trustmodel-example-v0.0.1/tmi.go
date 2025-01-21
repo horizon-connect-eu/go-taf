@@ -1,4 +1,4 @@
-package example_v0_0_1
+package trustmodel_example_v0_0_1
 
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"

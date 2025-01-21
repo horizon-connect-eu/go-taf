@@ -1,4 +1,4 @@
-package ima_standalone_v0_0_1
+package trustmodel_ima_standalone_v0_0_1
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package vcm_v0_0_1
+package trustmodel_vcm_v0_0_1
 
 import (
 	"fmt"

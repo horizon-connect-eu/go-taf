@@ -1,4 +1,4 @@
-package smtd_v0_0_1
+package trustmodel_smtd_v0_0_1
 
 import (
 	"fmt"

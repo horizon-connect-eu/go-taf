@@ -1,4 +1,4 @@
-package to_v0_0_1
+package trustmodel_to_v0_0_1
 
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
