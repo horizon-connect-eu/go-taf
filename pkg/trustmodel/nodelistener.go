@@ -6,10 +6,10 @@ import (
 )
 
 /*
-V2xObserver implements the observer pattern and provides an interface to register listeners to be called when new
+EntityObserver implements the observer pattern and provides an interface to register listeners to be called when new
 entities have been added or removed.
 */
-type V2xObserver struct {
+type EntityObserver struct {
 	nodes     map[string]int64
 	observers map[observer]bool
 	lock      *sync.RWMutex
@@ -21,8 +21,8 @@ type observer interface {
 	handleNodeRemoved(identifier string)
 }
 
-func CreateListener(ttlSeconds int, checkIntervalSeconds int) V2xObserver {
-	listener := V2xObserver{
+func CreateListener(ttlSeconds int, checkIntervalSeconds int) EntityObserver {
+	listener := EntityObserver{
 		nodes:     make(map[string]int64),
 		observers: make(map[observer]bool),
 		lock:      &sync.RWMutex{},
@@ -42,27 +42,27 @@ func CreateListener(ttlSeconds int, checkIntervalSeconds int) V2xObserver {
 	return listener
 }
 
-func (l *V2xObserver) registerObserver(observer observer) {
+func (l *EntityObserver) registerObserver(observer observer) {
 	l.observers[observer] = true
 }
 
-func (l *V2xObserver) removeObserver(observer observer) {
+func (l *EntityObserver) removeObserver(observer observer) {
 	delete(l.observers, observer)
 }
 
-func (l *V2xObserver) notifyObserversOnNodeAdded(identifier string) {
+func (l *EntityObserver) notifyObserversOnNodeAdded(identifier string) {
 	for observer, _ := range l.observers {
 		observer.handleNodeAdded(identifier)
 	}
 }
 
-func (l *V2xObserver) notifyObserversOnNodeRemoved(identifier string) {
+func (l *EntityObserver) notifyObserversOnNodeRemoved(identifier string) {
 	for observer, _ := range l.observers {
 		observer.handleNodeRemoved(identifier)
 	}
 }
 
-func (l *V2xObserver) AddNode(identifier string) {
+func (l *EntityObserver) AddNode(identifier string) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
@@ -73,7 +73,7 @@ func (l *V2xObserver) AddNode(identifier string) {
 	}
 }
 
-func (l *V2xObserver) RemoveNode(identifier string) {
+func (l *EntityObserver) RemoveNode(identifier string) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 
@@ -84,7 +84,7 @@ func (l *V2xObserver) RemoveNode(identifier string) {
 	}
 }
 
-func (l *V2xObserver) Nodes() []string {
+func (l *EntityObserver) Nodes() []string {
 	l.lock.RLock()
 	defer l.lock.RUnlock()
 

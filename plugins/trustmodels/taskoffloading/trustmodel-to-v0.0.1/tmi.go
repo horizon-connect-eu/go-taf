@@ -1,11 +1,13 @@
 package trustmodel_to_v0_0_1
 
 import (
+	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	internaltrustmodelstructure "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
+	"hash/fnv"
 )
 
 type TrustModelInstance struct {
@@ -13,63 +15,104 @@ type TrustModelInstance struct {
 	version int
 
 	template TrustModelTemplate
+
+	omega subjectivelogic.Opinion
+
+	currentFingerprint uint32
+	targetTrustee      string
 }
 
-func (e *TrustModelInstance) ID() string {
-	return e.id
+func (tmi *TrustModelInstance) ID() string {
+	return tmi.id
 }
 
-func (e *TrustModelInstance) Version() int {
-	//TODO implement me
-	panic("implement me")
+func (tmi *TrustModelInstance) Version() int {
+	return tmi.version
 }
 
-func (e *TrustModelInstance) Fingerprint() uint32 {
-	//TODO implement me
-	panic("implement me")
+func (tmi *TrustModelInstance) String() string {
+	return core.TMIAsString(tmi)
 }
 
-func (e *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
-	//TODO implement me
-	panic("implement me")
+func (tmi *TrustModelInstance) Fingerprint() uint32 {
+	return tmi.currentFingerprint
 }
 
-func (e *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
-	//TODO implement me
-	panic("implement me")
+func (tmi *TrustModelInstance) Cleanup() {
+	return
 }
 
-func (e *TrustModelInstance) Template() core.TrustModelTemplate {
-	return e.template
+func (tmi *TrustModelInstance) Template() core.TrustModelTemplate {
+	return tmi.template
 }
 
-func (e *TrustModelInstance) TrustSourceQuantifiers() []core.TrustSourceQuantifier {
-	return []core.TrustSourceQuantifier{}
+func (tmi *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
+	return internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.NoFusion, []trustmodelstructure.AdjacencyListEntry{
+		internaltrustmodelstructure.NewAdjacencyEntryDTO("MEC", []string{trusteeIdentifier(tmi.targetTrustee)}),
+	})
 }
 
-func (e *TrustModelInstance) Update(update core.Update) bool {
-	//TODO implement me
+func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
+	trusteeOpinion, _ := subjectivelogic.NewOpinion(tmi.omega.Belief(), tmi.omega.Disbelief(), tmi.omega.Uncertainty(), tmi.omega.BaseRate())
+	return map[string][]trustmodelstructure.TrustRelationship{
+		trusteeIdentifier(tmi.targetTrustee): []trustmodelstructure.TrustRelationship{
+			internaltrustmodelstructure.NewTrustRelationshipDTO("MEC", trusteeIdentifier(tmi.targetTrustee), &trusteeOpinion),
+		},
+	}
+}
+
+func (tmi *TrustModelInstance) Initialize(params map[string]interface{}) {
+
+	trusteeID, exists := params["trusteeID"]
+	if !exists {
+		tmi.targetTrustee = tmi.id
+	} else {
+		tmi.targetTrustee = trusteeID.(string)
+	}
+
+	tmi.version = 0
+	tmi.currentFingerprint = 0
+
+	tmi.updateFingerprint()
+	return
+}
+
+func (tmi *TrustModelInstance) updateFingerprint() {
+
+	algorithm := fnv.New32a()
+	_, err := algorithm.Write([]byte(tmi.targetTrustee))
+	if err == nil {
+		tmi.currentFingerprint = algorithm.Sum32()
+	}
+}
+
+/*
+vehicleIdentifier is a helper function to turn a plain identifier into an identifier for vehicles used in the structure.
+*/
+func trusteeIdentifier(id string) string {
+	return fmt.Sprintf("vehicle_%s", id)
+}
+
+/* -------------- */
+
+func (tmi *TrustModelInstance) Update(update core.Update) bool {
+	oldVersion := tmi.Version()
+	println(fmt.Sprintf("+%v", update))
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
-		//TODO
-		util.UNUSED(update)
+		if update.Trustee() == trusteeIdentifier(tmi.targetTrustee) {
+			tmi.omega.Modify(update.Opinion().Belief(), update.Opinion().Disbelief(), update.Opinion().Uncertainty(), update.Opinion().BaseRate())
+			tmi.version++
+		}
 	default:
 		//ignore
 	}
-	return true
+	return oldVersion != tmi.Version()
+
 }
 
-func (e *TrustModelInstance) Initialize(params map[string]interface{}) {
-	return
-}
-
-func (e *TrustModelInstance) Cleanup() {
-	return
-}
-func (e *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
-	return map[string]subjectivelogic.QueryableOpinion{}
-}
-
-func (e *TrustModelInstance) String() string {
-	return core.TMIAsString(e)
+func (tmi *TrustModelInstance) RTLs() map[string]subjectivelogic.QueryableOpinion {
+	return map[string]subjectivelogic.QueryableOpinion{
+		trusteeIdentifier(tmi.targetTrustee): &DefaultRTL,
+	}
 }

@@ -151,7 +151,8 @@ func (tam *Manager) Run() {
 			case command.HandleNotify[mbdmsg.MBDNotify]:
 				tsm.HandleMbdNotify(cmd)
 			case command.HandleNotify[tchmsg.TchNotify]:
-				tsm.HandleTchNotify(cmd)
+				tmm.HandleTchNotify(cmd) //handle potential trigger based on trustee
+				tsm.HandleTchNotify(cmd) //handle evidence from TCH
 			// TMM Message Handling
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
 				tmm.HandleV2xCpmMessage(cmd)
@@ -237,6 +238,19 @@ func (tam *Manager) HandleTasInitRequest(cmd command.HandleRequest[tasmsg.TasIni
 						})
 						tam.AddNewTrustModelInstance(tmi, sessionId)
 					}
+				}
+			} else if tmt.Type() == core.TRUSTEE_TRIGGERED_TRUST_MODEL {
+				for _, trusteeIdentifier := range tam.tmm.ListRecentTrustees() {
+					tmi, err := dynamicSpawner.OnNewTrustee(trusteeIdentifier, nil)
+					if err != nil {
+						tam.logger.Error("Error while spawning trust model instance", "TMT", newSession.TrustModelTemplate(), "Identifier used for dynamic spawning", trusteeIdentifier)
+					} else {
+						tmi.Initialize(map[string]interface{}{
+							"trusteeId": trusteeIdentifier,
+						})
+						tam.AddNewTrustModelInstance(tmi, sessionId)
+					}
+
 				}
 			}
 		}

@@ -9,6 +9,8 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
+	"strconv"
+	"strings"
 )
 
 type TchHandler struct {
@@ -89,7 +91,11 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		updates := make([]core.Update, 0)
 		for trustee := range updatedTrustees {
 			for _, tsq := range tsqs {
-				if tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" {
+				if tsq.Trustor == "MEC" && tsq.Trustee == "vehicle_*" && strings.HasPrefix(trustee, "vehicle_") {
+					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
+					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "MEC", trustee, core.TCH))
+				} else if _, err := strconv.Atoi(trustee); err == nil && tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" { //TODO: check whether this breaks IMA trust model
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
 					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", "V_"+trustee, core.TCH))

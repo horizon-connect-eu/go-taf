@@ -10,10 +10,12 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/manager"
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	session2 "github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
+	"regexp"
 	"strings"
 )
 
@@ -24,7 +26,8 @@ type Manager struct {
 	tsm        manager.TrustSourceManager
 	//trustmodeltemplate identifier->TMT
 	trustModelTemplateRepo map[string]core.TrustModelTemplate
-	v2xObserver            V2xObserver
+	v2xObserver            EntityObserver //observer based on V2X_CPM messages
+	tchObserver            EntityObserver //observer based on TCH messages
 	crypto                 *crypto.Crypto
 	outbox                 chan core.Message
 }
@@ -35,6 +38,7 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager
 		logger:                 logging.CreateChildLogger(tafContext.Logger, "TMM"),
 		trustModelTemplateRepo: TemplateRepository,
 		v2xObserver:            CreateListener(tafContext.Configuration.V2X.NodeTTLsec, tafContext.Configuration.V2X.CheckIntervalSec),
+		tchObserver:            CreateListener(tafContext.Configuration.V2X.NodeTTLsec, tafContext.Configuration.V2X.CheckIntervalSec),
 		crypto:                 tafContext.Crypto,
 		outbox:                 channels.OutgoingMessageChannel,
 	}
@@ -66,7 +70,10 @@ func (tmm *Manager) initializeTrustModelTemplateTypes() {
 			switch tmtType {
 			case core.VEHICLE_TRIGGERED_TRUST_MODEL:
 				//register TMM as handler for V2X observer
-				tmm.v2xObserver.registerObserver(tmm)
+				tmm.v2xObserver.registerObserver(newV2xObserver(tmm))
+			case core.TRUSTEE_TRIGGERED_TRUST_MODEL:
+				//register TMM as handler for TCH observer
+				tmm.tchObserver.registerObserver(newTchObserver(tmm))
 			default: //Nothing to do
 			}
 		}
@@ -83,6 +90,18 @@ func (tmm *Manager) initializeTrustModelTemplates() {
 func (tmm *Manager) SetManagers(managers manager.TafManagers) {
 	tmm.tam = managers.TAM
 	tmm.tsm = managers.TSM
+}
+
+func (tmm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
+	r := regexp.MustCompile("^vehicle\\_(\\d+)$")
+	match := r.FindStringSubmatch(cmd.Notify.TchReport.TrusteeID)
+
+	if match == nil || len(match) < 2 {
+		tmm.logger.Warn("Invalid trustee ID for TCH Notify")
+		return
+	}
+	trusteeId := match[1]
+	tmm.tchObserver.AddNode(trusteeId)
 }
 
 func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm]) {
@@ -135,7 +154,7 @@ func (tmm *Manager) GetAllTMTs() []core.TrustModelTemplate {
 	return tmts
 }
 
-func (tmm *Manager) handleNodeAdded(identifier string) {
+func (tmm *Manager) handleV2XNodeAdded(identifier string) {
 	tmm.logger.Debug("New sender vehicle added", "Identifier", identifier)
 	for sessionID, session := range tmm.tam.Sessions() {
 		if session.TrustModelTemplate().Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
@@ -156,12 +175,58 @@ func (tmm *Manager) handleNodeAdded(identifier string) {
 
 }
 
-func (tmm *Manager) handleNodeRemoved(identifier string) {
+func (tmm *Manager) handleV2XNodeRemoved(identifier string) {
 	tmm.logger.Debug("Sender vehicle removed", "Identifier", identifier)
 
 	targetTMIIDs := make([]string, 0)
 	for _, tmt := range tmm.trustModelTemplateRepo {
 		if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
+			results, err := tmm.tam.QueryTMIs("//*/*/" + tmt.Identifier() + "/" + identifier)
+			if err == nil {
+				targetTMIIDs = append(targetTMIIDs, results...)
+			}
+		}
+	}
+
+	sessions := tmm.tam.Sessions()
+
+	for _, fullTMIID := range targetTMIIDs {
+		_, sessionID, _, tmiID := core.SplitFullTMIIdentifier(fullTMIID)
+		if session, exists := sessions[sessionID]; exists && sessions[sessionID].State() == session2.ESTABLISHED {
+			sessionTMIs := session.TrustModelInstances()
+			if _, tmiExists := sessionTMIs[tmiID]; tmiExists {
+				tmm.tam.RemoveTrustModelInstance(fullTMIID, sessionID)
+			}
+		}
+	}
+}
+
+func (tmm *Manager) handleTCHNodeAdded(identifier string) {
+	tmm.logger.Debug("New trustee added", "Identifier", identifier)
+	for sessionID, session := range tmm.tam.Sessions() {
+		if session.TrustModelTemplate().Type() == core.TRUSTEE_TRIGGERED_TRUST_MODEL && session.State() == session2.ESTABLISHED {
+			spawner := session.DynamicSpawner()
+			if spawner != nil {
+				tmi, err := spawner.OnNewTrustee(identifier, nil)
+				if err != nil {
+					tmm.logger.Warn("Error while spawning trust model instance", "TMT", session.TrustModelTemplate(), "Identifier used for dynamic spawning", identifier)
+				} else {
+					tmi.Initialize(map[string]interface{}{
+						"trusteeID": identifier,
+					})
+					tmm.tam.AddNewTrustModelInstance(tmi, sessionID)
+				}
+			}
+		}
+	}
+}
+
+func (tmm *Manager) handleTCHNodeRemoved(identifier string) {
+	tmm.logger.Debug("TCH trustee removed", "Identifier", identifier)
+
+	targetTMIIDs := make([]string, 0)
+	for _, tmt := range tmm.trustModelTemplateRepo {
+		if tmt.Type() == core.TRUSTEE_TRIGGERED_TRUST_MODEL {
 			results, err := tmm.tam.QueryTMIs("//*/*/" + tmt.Identifier() + "/" + identifier)
 			if err == nil {
 				targetTMIIDs = append(targetTMIIDs, results...)
@@ -213,4 +278,43 @@ func (tmm *Manager) HandleTasTmtDiscover(cmd command.HandleRequest[tasmsg.TasTmt
 
 func (tmm *Manager) ListRecentV2XNodes() []string {
 	return tmm.v2xObserver.Nodes()
+}
+func (tmm *Manager) ListRecentTrustees() []string {
+	return tmm.tchObserver.Nodes()
+}
+
+type v2xObserver struct {
+	tmm *Manager
+}
+
+func newV2xObserver(tmm *Manager) *v2xObserver {
+	return &v2xObserver{
+		tmm: tmm,
+	}
+}
+
+func (v2xObs *v2xObserver) handleNodeAdded(identifier string) {
+	v2xObs.tmm.handleV2XNodeAdded(identifier)
+}
+func (v2xObs *v2xObserver) handleNodeRemoved(identifier string) {
+	v2xObs.tmm.handleV2XNodeRemoved(identifier)
+
+}
+
+type tchObserver struct {
+	tmm *Manager
+}
+
+func newTchObserver(tmm *Manager) *tchObserver {
+	return &tchObserver{
+		tmm: tmm,
+	}
+}
+
+func (tchObs *tchObserver) handleNodeAdded(identifier string) {
+	tchObs.tmm.handleTCHNodeAdded(identifier)
+}
+func (tchObs *tchObserver) handleNodeRemoved(identifier string) {
+	tchObs.tmm.handleTCHNodeRemoved(identifier)
+
 }

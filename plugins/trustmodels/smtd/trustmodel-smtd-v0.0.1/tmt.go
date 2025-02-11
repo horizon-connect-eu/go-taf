@@ -93,6 +93,10 @@ func (t TrustModelTemplate) OnNewVehicle(identifier string, params map[string]st
 	}, nil
 }
 
+func (t TrustModelTemplate) OnNewTrustee(identifier string, params map[string]string) (core.TrustModelInstance, error) {
+	return nil, nil
+}
+
 func (t TrustModelTemplate) Identifier() string {
 	return fmt.Sprintf("%s@%s", t.TemplateName(), t.Version())
 }

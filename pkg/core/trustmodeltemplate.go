@@ -62,6 +62,10 @@ type DynamicTrustModelInstanceSpawner interface {
 		OnNewVehicle is callback function called in case a new vehicle has become known.
 	*/
 	OnNewVehicle(identifier string, params map[string]string) (TrustModelInstance, error)
+	/*
+		OnNewVehicle is callback function called in case a new vehicle has become known.
+	*/
+	OnNewTrustee(identifier string, params map[string]string) (TrustModelInstance, error)
 }
 
 /*
@@ -75,9 +79,13 @@ const (
 	*/
 	STATIC_TRUST_MODEL TrustModelTemplateType = iota
 	/*
-		A VEHICLE_TRIGGERED_TRUST_MODEL is a trust model instance that can be spawned with the appearance of previously unknown vehicles.
+		A VEHICLE_TRIGGERED_TRUST_MODEL is a trust model instance that can be spawned with the appearance of previously unknown vehicles in a V2X CPM message.
 	*/
 	VEHICLE_TRIGGERED_TRUST_MODEL
+	/*
+		A TRUSTEE_TRIGGERED_TRUST_MODEL is a trust model instance that can be spawned with the appearance of previously unknown entity in a TCH messages.
+	*/
+	TRUSTEE_TRIGGERED_TRUST_MODEL
 )
 
 func (t TrustModelTemplateType) String() string {
@@ -86,6 +94,8 @@ func (t TrustModelTemplateType) String() string {
 		return "STATIC_TRUST_MODEL"
 	case VEHICLE_TRIGGERED_TRUST_MODEL:
 		return "VEHICLE_TRIGGERED_TRUST_MODEL"
+	case TRUSTEE_TRIGGERED_TRUST_MODEL:
+		return "TRUSTEE_TRIGGERED_TRUST_MODEL"
 	default:
 		return "UNKNOWN TYPE"
 	}
