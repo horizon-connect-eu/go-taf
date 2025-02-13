@@ -60,7 +60,7 @@ func (t TrustModelTemplate) Spawn(params map[string]string, context core.TafCont
 }
 
 func (t TrustModelTemplate) Description() string {
-	return "IMA Trust Model, standalone variant."
+	return "SMTD Trust Model."
 }
 
 func (t TrustModelTemplate) Type() core.TrustModelTemplateType {
