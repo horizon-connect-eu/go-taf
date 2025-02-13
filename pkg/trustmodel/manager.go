@@ -97,7 +97,7 @@ func (tmm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) 
 	match := r.FindStringSubmatch(cmd.Notify.TchReport.TrusteeID)
 
 	if match == nil || len(match) < 2 {
-		tmm.logger.Warn("Invalid trustee ID for TCH Notify")
+		tmm.logger.Info("Non-matching trustee ID in TCH_NOTIFY, ignore trustee ID for TCH-based spawn trigger.")
 		return
 	}
 	trusteeId := match[1]

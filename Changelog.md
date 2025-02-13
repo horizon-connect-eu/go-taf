@@ -1,12 +1,26 @@
 # Standalone TAF Prototype
 
+## Release v0.3.0 (2025-02-13)
+
+* extended support for dynamically spawned trust model instances
+	* `VEHICLE_TRIGGERED_TRUST_MODEL`
+		* trigger based on `SourceID` in a V2X_CPM messages
+		* trust model template callback: `OnNewVehicle()` 
+    * `TRUSTEE_TRIGGERED_TRUST_MODEL`
+        * trigger based on TCH_NOTIFY messages in which the trusteeID has the format `vehicle_<numerical_id>`
+        * trust model template callback: `OnNewTrustee()`
+* added trust models
+	* `SMTD@0.0.1`: Slow-Moving Traffic Detection Trust Model
+	* `TO@0.0.1`: Task Offloading Trust Model
+
+
 ## Release v0.2.8 (2024-12-10)
 
- * added experimental web UI for exploring TAF-internal states
-   * overview of sessions
-   * overview of trust model instances
-   * detailed view of trust model instances and their history
- * added support for the TAF to handle errors returned by the TLEE
+* added experimental web UI for exploring TAF-internal states
+	* overview of sessions
+	* overview of trust model instances
+	* detailed view of trust model instances and their history
+* added support for the TAF to handle errors returned by the TLEE
 
 
 ## Release v0.2.7 (2024-11-22)
