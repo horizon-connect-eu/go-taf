@@ -118,7 +118,7 @@ func (t DynamicTrustModelTemplateSpawner) OnNewVehicle(identifier string, params
 	ewmaAlpha := DEFAULT_MBD_EWMA_ALPHA
 	alpha, exists := params["MBD_EWMA_ALPHA"]
 	if exists {
-		if parsedAlpha, err := strconv.ParseFloat(alpha, 64); err == nil {
+		if parsedAlpha, err := strconv.ParseFloat(alpha, 64); err == nil && parsedAlpha <= 1 && parsedAlpha > 0 {
 			ewmaAlpha = parsedAlpha
 		}
 	}

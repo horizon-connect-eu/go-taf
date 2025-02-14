@@ -1,5 +1,11 @@
 # Standalone TAF Prototype
 
+## Release v0.3.1 (2025-02-14)
+
+* added trust models
+	* `IMA_STANDALONE@0.0.2`: a new version of the IMA standalone trust model that supports an optional `MBD_EWMA_ALPHA` parameter in `TAS_INIT_REQUEST`. If set (0<value<=1, default = 1), this is the weighting parameter to be used for exponentially weighted moving average on the MBD atomic trust opinions. 
+
+
 ## Release v0.3.0 (2025-02-13)
 
 * extended support for dynamically spawned trust model instances

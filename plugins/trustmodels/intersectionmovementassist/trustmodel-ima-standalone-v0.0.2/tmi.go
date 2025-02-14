@@ -63,14 +63,7 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 		if strings.HasPrefix(trustee, "V_") {
 			id, err := parseVehicleIdentifier(trustee)
 			if err == nil && id == e.sourceID {
-				if e.ewmaAlpha == 1 {
-					e.sourceOpinion = update.Opinion()
-				} else {
-					belief := (1-e.ewmaAlpha)*e.sourceOpinion.Belief() + e.ewmaAlpha*update.Opinion().Belief()
-					disbelief := (1-e.ewmaAlpha)*e.sourceOpinion.Disbelief() + e.ewmaAlpha*update.Opinion().Disbelief()
-					newOpinion, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-(belief+disbelief), update.Opinion().BaseRate())
-					e.sourceOpinion = &newOpinion
-				}
+				e.sourceOpinion = update.Opinion()
 				e.updateValues()
 				e.incrementVersion()
 			}
@@ -78,6 +71,15 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 			_, objID, err := parseObjectIdentifier(trustee)
 			if err == nil {
 				if _, ok := e.objects[objID]; ok {
+
+					if e.ewmaAlpha == 1 {
+						e.objects[objID] = update.Opinion()
+					} else {
+						belief := (1-e.ewmaAlpha)*e.objects[objID].Belief() + e.ewmaAlpha*update.Opinion().Belief()
+						disbelief := (1-e.ewmaAlpha)*e.objects[objID].Disbelief() + e.ewmaAlpha*update.Opinion().Disbelief()
+						newOpinion, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-(belief+disbelief), update.Opinion().BaseRate())
+						e.objects[objID] = &newOpinion
+					}
 
 					e.objects[objID] = update.Opinion()
 					e.updateValues()
