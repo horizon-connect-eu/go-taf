@@ -1,5 +1,10 @@
 # Standalone TAF Prototype
 
+## Release v0.3.2 (2025-03-17)
+
+* fixed a bug in `IMA_STANDALONE@0.0.2` causing the exponentially weighted moving average calculation to be ignored
+
+
 ## Release v0.3.1 (2025-02-14)
 
 * added trust models
