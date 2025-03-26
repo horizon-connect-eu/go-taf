@@ -117,7 +117,7 @@ func TestGraph(t *testing.T) {
 	version := 11
 	fingerprint := uint32(4711)
 
-	structure := internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, []trustmodelstructure.AdjacencyListEntry{
+	structure := internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, trustmodelstructure.OppositeBeliefDiscount, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("V_ego", []string{"V_19", "C_19_123", "C_19_456", "C_19_19"}),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("V_ego", []string{"C_19_123", "C_19_456", "C_19_19"}),
 	})
