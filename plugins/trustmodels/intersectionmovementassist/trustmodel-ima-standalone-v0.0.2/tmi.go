@@ -80,8 +80,6 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 						newOpinion, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-(belief+disbelief), update.Opinion().BaseRate())
 						e.objects[objID] = &newOpinion
 					}
-
-					e.objects[objID] = update.Opinion()
 					e.updateValues()
 					e.incrementVersion()
 				}
