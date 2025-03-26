@@ -47,7 +47,7 @@ func (tmi *TrustModelInstance) Template() core.TrustModelTemplate {
 }
 
 func (tmi *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructure {
-	return internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.NoFusion, []trustmodelstructure.AdjacencyListEntry{
+	return internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, trustmodelstructure.OppositeBeliefDiscount, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO("MEC", []string{trusteeIdentifier(tmi.targetTrustee)}),
 	})
 }

@@ -8,19 +8,25 @@ import (
 )
 
 type TrustGraphDTO struct {
-	operator      trustmodelstructure.FusionOperator
-	adjacencyList []trustmodelstructure.AdjacencyListEntry
+	operator         trustmodelstructure.FusionOperator
+	discountOperator trustmodelstructure.DiscountOperator
+	adjacencyList    []trustmodelstructure.AdjacencyListEntry
 }
 
-func NewTrustGraphDTO(operator trustmodelstructure.FusionOperator, entries []trustmodelstructure.AdjacencyListEntry) *TrustGraphDTO {
+func NewTrustGraphDTO(operator trustmodelstructure.FusionOperator, discountOperator trustmodelstructure.DiscountOperator, entries []trustmodelstructure.AdjacencyListEntry) *TrustGraphDTO {
 	return &TrustGraphDTO{
-		operator:      operator,
-		adjacencyList: entries,
+		operator:         operator,
+		discountOperator: discountOperator,
+		adjacencyList:    entries,
 	}
 }
 
 func (t *TrustGraphDTO) Operator() trustmodelstructure.FusionOperator {
 	return t.operator
+}
+
+func (t *TrustGraphDTO) DiscountOperator() trustmodelstructure.DiscountOperator {
+	return t.discountOperator
 }
 
 func (t *TrustGraphDTO) AdjacencyList() []trustmodelstructure.AdjacencyListEntry {

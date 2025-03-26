@@ -178,7 +178,7 @@ func (e *TrustModelInstance) updateStructure() {
 	}
 	egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
 
-	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, []trustmodelstructure.AdjacencyListEntry{
+	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, trustmodelstructure.OppositeBeliefDiscount, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier("ego"), egoTargets),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier(e.sourceID), objects),
 	})
