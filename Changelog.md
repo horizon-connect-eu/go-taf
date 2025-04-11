@@ -1,5 +1,10 @@
 # Standalone TAF Prototype
 
+## Release v0.3.3 (2025-04-11)
+* 
+* included a new version of the TLEE (`27c5757c3606c962be03ec7e062d824590db7262`)
+
+
 ## Release v0.3.2 (2025-03-17)
 
 * fixed a bug in `IMA_STANDALONE@0.0.2` causing the exponentially weighted moving average calculation to be ignored
