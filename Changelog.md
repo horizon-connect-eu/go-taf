@@ -1,7 +1,7 @@
 # Standalone TAF Prototype
 
 ## Release v0.3.3 (2025-04-11)
-* 
+ 
 * included a new version of the TLEE (`27c5757c3606c962be03ec7e062d824590db7262`)
 
 
