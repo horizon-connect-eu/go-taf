@@ -106,7 +106,9 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	updates := make([]core.Update, 0)
 	for trustee := range updatedTrustees {
 		for _, tsq := range sess.TrustSourceQuantifiers() {
-			if tsq.Trustee == trustee { //TODO
+			if tsq.TrustSource != core.AIV {
+				break
+			} else if tsq.Trustee == trustee { //TODO
 				ato := tsq.Quantifier(h.latestSubscriptionEvidence[subID][trustee])
 				h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[subID][trustee]))
 				updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.AIV))
