@@ -109,11 +109,15 @@ func (h *MbdHandler) HandleNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 		for trustee := range updatedTrustees {
 			for _, tsq := range tsqs {
 				if tsq.TrustSource != core.MBD {
-					break
+					continue
 				} else if tsq.Trustor == "V_ego" && tsq.Trustee == "C_*_*" {
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
 					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, tsq.Trustor, trustee, core.MBD))
+				} else if tsq.Trustor == "MEC" && tsq.Trustee == "vehicle_*" {
+					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
+					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, tsq.Trustor, fmt.Sprintf("vehicle_%d", int(sourceID)), core.MBD))
 				}
 			}
 		}
