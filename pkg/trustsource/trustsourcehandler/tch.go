@@ -15,7 +15,7 @@ import (
 
 type TchHandler struct {
 	sessionTsqs                map[string][]core.TrustSourceQuantifier
-	latestSubscriptionEvidence map[string]map[core.EvidenceType]int
+	latestSubscriptionEvidence map[string]map[core.EvidenceType]interface{}
 	tam                        TAMAccess
 	logger                     *slog.Logger
 }
@@ -23,7 +23,7 @@ type TchHandler struct {
 func CreateTchHandler(tam TAMAccess, logger *slog.Logger) *TchHandler {
 	return &TchHandler{
 		sessionTsqs:                make(map[string][]core.TrustSourceQuantifier),
-		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]int),
+		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]interface{}),
 		logger:                     logger,
 		tam:                        tam,
 	}
@@ -58,8 +58,8 @@ func (h *TchHandler) RegisteredSessions() []string {
 func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 	//Extract raw evidence from the message and store it into latestEvidence
 	trusteeID := cmd.Notify.TchReport.TrusteeID
-	updatedTrustees := make(map[string]bool)                      //flag trustees with changes
-	updatedEvidence := make(map[string]map[core.EvidenceType]int) //collect changes
+	updatedTrustees := make(map[string]bool)                              //flag trustees with changes
+	updatedEvidence := make(map[string]map[core.EvidenceType]interface{}) //collect changes
 
 	for _, trusteeReport := range cmd.Notify.TchReport.TrusteeReports {
 		componentID := trusteeReport.ComponentID
@@ -70,7 +70,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		_, idExists := updatedEvidence[id]
 
 		if !idExists {
-			updatedEvidence[id] = make(map[core.EvidenceType]int)
+			updatedEvidence[id] = make(map[core.EvidenceType]interface{})
 		}
 
 		for _, attestationReport := range trusteeReport.AttestationReport {
@@ -92,7 +92,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		for trustee := range updatedTrustees {
 			for _, tsq := range tsqs {
 				if tsq.TrustSource != core.TCH {
-					break
+					break //TODO: check
 				} else if tsq.Trustor == "MEC" && tsq.Trustee == "vehicle_*" && strings.HasPrefix(trustee, "vehicle_") {
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))

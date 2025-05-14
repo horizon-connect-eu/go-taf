@@ -6,7 +6,7 @@ import (
 )
 
 type oneway interface {
-	v2xmsg.V2XCpm | v2xmsg.V2XNtm
+	v2xmsg.V2XCpm
 }
 
 type HandleOneWay[R oneway] struct {
@@ -24,13 +24,5 @@ func CreateV2xCpm(msg v2xmsg.V2XCpm, sender string) HandleOneWay[v2xmsg.V2XCpm] 
 		OneWay:      msg,
 		Sender:      sender,
 		commandType: core.HANDLE_V2X_CPM,
-	}
-}
-
-func CreateV2xNtm(msg v2xmsg.V2XNtm, sender string) HandleOneWay[v2xmsg.V2XNtm] {
-	return HandleOneWay[v2xmsg.V2XNtm]{
-		OneWay:      msg,
-		Sender:      sender,
-		commandType: core.HANDLE_V2X_NTM,
 	}
 }

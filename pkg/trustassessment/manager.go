@@ -153,6 +153,8 @@ func (tam *Manager) Run() {
 			case command.HandleNotify[tchmsg.TchNotify]:
 				tmm.HandleTchNotify(cmd) //handle potential trigger based on trustee
 				tsm.HandleTchNotify(cmd) //handle evidence from TCH
+			case command.HandleNotify[v2xmsg.V2XNtm]:
+				tsm.HandleV2xNtm(cmd)
 			// TMM Message Handling
 			case command.HandleOneWay[v2xmsg.V2XCpm]:
 				tmm.HandleV2xCpmMessage(cmd)

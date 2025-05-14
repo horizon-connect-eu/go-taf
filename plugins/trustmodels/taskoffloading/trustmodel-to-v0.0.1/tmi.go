@@ -97,7 +97,6 @@ func trusteeIdentifier(id string) string {
 
 func (tmi *TrustModelInstance) Update(update core.Update) bool {
 	oldVersion := tmi.Version()
-	println(fmt.Sprintf("+%v", update))
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		if update.Trustee() == trusteeIdentifier(tmi.targetTrustee) {

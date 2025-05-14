@@ -18,7 +18,7 @@ of sessions and AIV subscriptions at runtime.
 */
 type AivHandler struct {
 	sessionTsqs                  map[string][]core.TrustSourceQuantifier
-	latestSubscriptionEvidence   map[string]map[string]map[core.EvidenceType]int
+	latestSubscriptionEvidence   map[string]map[string]map[core.EvidenceType]interface{}
 	tam                          TAMAccess
 	tsm                          TSMAccess
 	logger                       *slog.Logger
@@ -29,7 +29,7 @@ type AivHandler struct {
 func CreateAivHandler(tam TAMAccess, tsm TSMAccess, logger *slog.Logger) *AivHandler {
 	return &AivHandler{
 		sessionTsqs:                  make(map[string][]core.TrustSourceQuantifier),
-		latestSubscriptionEvidence:   make(map[string]map[string]map[core.EvidenceType]int),
+		latestSubscriptionEvidence:   make(map[string]map[string]map[core.EvidenceType]interface{}),
 		logger:                       logger,
 		tsm:                          tsm,
 		tam:                          tam,
@@ -47,7 +47,7 @@ func (h *AivHandler) AddSession(sess session.Session, handler *completionhandler
 }
 
 func (h *AivHandler) RegisterSubscription(sess session.Session, subscriptionID string) {
-	h.latestSubscriptionEvidence[subscriptionID] = make(map[string]map[core.EvidenceType]int)
+	h.latestSubscriptionEvidence[subscriptionID] = make(map[string]map[core.EvidenceType]interface{})
 	h.aivSubscriptionIDtoSession[subscriptionID] = sess
 	h.sessionIDtoAivSubscriptionID[sess.ID()] = subscriptionID
 }
@@ -93,7 +93,7 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	for _, trusteeReport := range cmd.Notify.TrusteeReports {
 		trusteeID := *trusteeReport.TrusteeID
 		//Discard old evidence and always create a new map
-		h.latestSubscriptionEvidence[subID][trusteeID] = make(map[core.EvidenceType]int)
+		h.latestSubscriptionEvidence[subID][trusteeID] = make(map[core.EvidenceType]interface{})
 		for _, attestationReport := range trusteeReport.AttestationReport {
 			evidenceType := core.EvidenceTypeBySourceAndName(core.AIV, attestationReport.Claim)
 			value := int(attestationReport.Appraisal)
@@ -107,7 +107,7 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	for trustee := range updatedTrustees {
 		for _, tsq := range sess.TrustSourceQuantifiers() {
 			if tsq.TrustSource != core.AIV {
-				break
+				break //TODO: check
 			} else if tsq.Trustee == trustee { //TODO
 				ato := tsq.Quantifier(h.latestSubscriptionEvidence[subID][trustee])
 				h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[subID][trustee]))

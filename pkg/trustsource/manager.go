@@ -16,6 +16,7 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
+	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/go-taf/pkg/trustsource/trustsourcehandler"
@@ -37,6 +38,7 @@ type Manager struct {
 	aivHandler *trustsourcehandler.AivHandler
 	tchHandler *trustsourcehandler.TchHandler
 	mbdHandler *trustsourcehandler.MbdHandler
+	ntmHandler *trustsourcehandler.NtmHandler
 }
 
 func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
@@ -76,14 +78,12 @@ func (tsm *Manager) SetManagers(managers manager.TafManagers) {
 	for trustSourceType := range potentialTrustSources {
 		if trustSourceType == core.AIV {
 			tsm.aivHandler = trustsourcehandler.CreateAivHandler(tsm.tam, tsm, tsm.logger)
-		}
-
-		if trustSourceType == core.MBD {
+		} else if trustSourceType == core.MBD {
 			tsm.mbdHandler = trustsourcehandler.CreateMbdHandler(tsm.tam, tsm, tsm.logger)
-		}
-
-		if trustSourceType == core.TCH {
+		} else if trustSourceType == core.TCH {
 			tsm.tchHandler = trustsourcehandler.CreateTchHandler(tsm.tam, tsm.logger)
+		} else if trustSourceType == core.NTM {
+			tsm.ntmHandler = trustsourcehandler.CreateNtmHandler(tsm.tam, tsm.logger)
 		}
 
 		listOfTrustSources = append(listOfTrustSources, trustSourceType.String())
@@ -150,7 +150,9 @@ func (tsm *Manager) HandleAivNotify(cmd command.HandleNotify[aivmsg.AivNotify]) 
 			return
 		}
 	}
-	tsm.aivHandler.HandleNotify(cmd)
+	if tsm.aivHandler != nil {
+		tsm.aivHandler.HandleNotify(cmd)
+	}
 }
 
 /* ------------ ------------ MBD Message Handling ------------ ------------ */
@@ -176,7 +178,9 @@ func (tsm *Manager) HandleMbdUnsubscribeResponse(cmd command.HandleResponse[mbdm
 }
 
 func (tsm *Manager) HandleMbdNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
-	tsm.mbdHandler.HandleNotify(cmd)
+	if tsm.mbdHandler != nil {
+		tsm.mbdHandler.HandleNotify(cmd)
+	}
 }
 
 /* ------------ ------------ TCH Message Handling ------------ ------------ */
@@ -195,7 +199,17 @@ func (tsm *Manager) HandleTchNotify(cmd command.HandleNotify[tchmsg.TchNotify]) 
 			return
 		}
 	}
-	tsm.tchHandler.HandleNotify(cmd)
+	if tsm.tchHandler != nil {
+		tsm.tchHandler.HandleNotify(cmd)
+	}
+}
+
+/* ------------ ------------ V2X NTM Message Handling ------------ ------------ */
+
+func (tsm *Manager) HandleV2xNtm(cmd command.HandleNotify[v2xmsg.V2XNtm]) {
+	if tsm.ntmHandler != nil {
+		tsm.ntmHandler.HandleNotify(cmd)
+	}
 }
 
 /* ------------ ------------ TrustSourceQuantifier  Handling ------------ ------------ */
@@ -222,6 +236,8 @@ func (tsm *Manager) SubscribeTrustSourceQuantifiers(sess session.Session, handle
 			tsm.mbdHandler.AddSession(sess, handler)
 		case core.TCH:
 			tsm.tchHandler.AddSession(sess, handler)
+		case core.NTM:
+			tsm.ntmHandler.AddSession(sess, handler)
 		default:
 			//nothing to do
 		}
@@ -249,6 +265,8 @@ func (tsm *Manager) UnsubscribeTrustSourceQuantifiers(sess session.Session, hand
 			tsm.mbdHandler.RemoveSession(sess, handler)
 		case core.TCH:
 			tsm.tchHandler.RemoveSession(sess, handler)
+		case core.NTM:
+			tsm.ntmHandler.RemoveSession(sess, handler)
 
 		default:
 			//nothing to do
@@ -322,7 +340,7 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 				updates := make([]core.Update, 0)
 
 				for _, trusteeReport := range cmd.Response.TrusteeReports {
-					evidenceCollection := make(map[core.EvidenceType]int)
+					evidenceCollection := make(map[core.EvidenceType]interface{})
 					for _, report := range trusteeReport.AttestationReport {
 						evidence := report.Claim
 						tsm.logger.Debug("Received evidence response from AIV", "Evidence Type", core.EvidenceTypeBySourceAndName(core.AIV, evidence).String(), "Trustee ID", *trusteeReport.TrusteeID)

@@ -5,10 +5,11 @@ import (
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
+	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 )
 
 type NotifyMessage interface {
-	aivmsg.AivNotify | mbdmsg.MBDNotify | tchmsg.TchNotify
+	aivmsg.AivNotify | mbdmsg.MBDNotify | tchmsg.TchNotify | v2xmsg.V2XNtm
 }
 
 type HandleNotify[R NotifyMessage] struct {
@@ -42,5 +43,13 @@ func CreateTchNotify(msg tchmsg.TchNotify, sender string) HandleNotify[tchmsg.Tc
 		Notify:      msg,
 		Sender:      sender,
 		commandType: core.HANDLE_TCH_NOTIFY,
+	}
+}
+
+func CreateV2xNtm(msg v2xmsg.V2XNtm, sender string) HandleNotify[v2xmsg.V2XNtm] {
+	return HandleNotify[v2xmsg.V2XNtm]{
+		Notify:      msg,
+		Sender:      sender,
+		commandType: core.HANDLE_V2X_NTM,
 	}
 }
