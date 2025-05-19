@@ -58,7 +58,7 @@ func TestTchTsq(t *testing.T) {
 	tsqs, _ := createTrustSourceQuantifiers(map[string]string{})
 	tchTSQ := tsqs[0]
 
-	t.Log(tchTSQ.Quantifier(map[core.EvidenceType]int{
+	t.Log(tchTSQ.Quantifier(map[core.EvidenceType]interface{}{
 		core.TCH_SECURE_BOOT:                          1,
 		core.TCH_SECURE_OTA:                           1,
 		core.TCH_ACCESS_CONTROL:                       1,
@@ -70,7 +70,7 @@ func TestTchTsq(t *testing.T) {
 }
 
 func TestTrustSourceQuantifierFunctions(t *testing.T) {
-	param := map[core.EvidenceType]int{
+	param := map[core.EvidenceType]interface{}{
 		core.TCH_SECURE_BOOT:                          1,
 		core.TCH_ACCESS_CONTROL:                       0,
 		core.TCH_CONTROL_FLOW_INTEGRITY:               -1,
@@ -84,7 +84,7 @@ func TestTrustSourceQuantifierFunctions(t *testing.T) {
 
 	t.Logf(sl.String())
 
-	paramMBD := map[core.EvidenceType]int{
+	paramMBD := map[core.EvidenceType]interface{}{
 		core.MBD_MISBEHAVIOR_REPORT: 3,
 	}
 
