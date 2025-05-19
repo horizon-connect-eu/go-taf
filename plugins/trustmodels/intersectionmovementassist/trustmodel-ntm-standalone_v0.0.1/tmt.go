@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
+	"strconv"
 )
 
 var FullUncertainty, _ = subjectivelogic.NewOpinion(0, 0, 1, 0.5)
 
 // TODO: update / make configurable(?)
 var DefaultRTL, _ = subjectivelogic.NewOpinion(0.7, 0.2, 0.1, 0.5)
+
+var DEFAULT_MBD_EWMA_ALPHA = 1.00
 
 type TrustModelTemplate struct {
 	name          string
@@ -100,11 +103,20 @@ func (t TrustModelTemplate) OnNewTrustee(identifier string, params map[string]st
 		}
 	}
 
+	ewmaAlpha := DEFAULT_MBD_EWMA_ALPHA
+	alpha, exists := params["MBD_EWMA_ALPHA"]
+	if exists {
+		if parsedAlpha, err := strconv.ParseFloat(alpha, 64); err == nil && parsedAlpha <= 1 && parsedAlpha > 0 {
+			ewmaAlpha = parsedAlpha
+		}
+	}
+
 	return &TrustModelInstance{
-		id:       identifier,
-		version:  0,
-		template: t,
-		omegaTCH: FullUncertainty,
-		omegaMBD: FullUncertainty,
+		id:        identifier,
+		version:   0,
+		template:  t,
+		omegaTCH:  FullUncertainty,
+		omegaMBD:  FullUncertainty,
+		ewmaAlpha: ewmaAlpha,
 	}, nil
 }
