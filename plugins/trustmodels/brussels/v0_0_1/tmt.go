@@ -50,7 +50,7 @@ var vc2OutputWeights = map[core.EvidenceType]int{
 
 var vc2DTI, _ = subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)
 
-func quantifier(values map[core.EvidenceType]int, designTimeTrustOp subjectivelogic.QueryableOpinion, existenceWeights map[core.EvidenceType]float64, outputWeights map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
+func quantifier(values map[core.EvidenceType]interface{}, designTimeTrustOp subjectivelogic.QueryableOpinion, existenceWeights map[core.EvidenceType]float64, outputWeights map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
 	sl, _ := subjectivelogic.NewOpinion(.0, .0, 1.0, 0.5)
 
 	fmt.Printf("%+v ", existenceWeights)
@@ -60,6 +60,7 @@ func quantifier(values map[core.EvidenceType]int, designTimeTrustOp subjectivelo
 	uncertainty := designTimeTrustOp.Uncertainty()
 
 	for control, appraisal := range values {
+		appraisal := appraisal.(int)
 		delta := existenceWeights[control] * designTimeTrustOp.Uncertainty()
 
 		if appraisal == -1 { // control not implemented
@@ -101,7 +102,7 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		Scope:       "VC1",
 		TrustSource: core.AIV,
 		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY, core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
+		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
 			return quantifier(m, &vc1DTI, vc1ExistenceWeights, vc1OutputWeights)
 		},
 	},
@@ -111,7 +112,7 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 		Scope:       "VC2",
 		TrustSource: core.AIV,
 		Evidence:    []core.EvidenceType{core.AIV_SECURE_BOOT, core.AIV_SECURE_OTA, core.AIV_ACCESS_CONTROL, core.AIV_APPLICATION_ISOLATION, core.AIV_CONTROL_FLOW_INTEGRITY, core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
+		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
 			return quantifier(m, &vc2DTI, vc2ExistenceWeights, vc2OutputWeights)
 		},
 	},

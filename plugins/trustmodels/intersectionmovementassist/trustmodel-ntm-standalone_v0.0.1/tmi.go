@@ -21,6 +21,8 @@ type TrustModelInstance struct {
 
 	targetTrustee      string
 	currentFingerprint uint32
+
+	ewmaAlpha float64
 }
 
 func (tmi *TrustModelInstance) ID() string {
@@ -93,7 +95,11 @@ func trusteeIdentifier(id string) string {
 }
 
 func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
-	trusteeOpinion, _ := subjectivelogic.CumulativeFusion(&tmi.omegaMBD, &tmi.omegaTCH)
+	//trusteeOpinion, _ := subjectivelogic.CumulativeFusion(&tmi.omegaMBD, &tmi.omegaTCH)
+	trusteeOpinion, err := subjectivelogic.Multiplication(&tmi.omegaMBD, &tmi.omegaTCH)
+	if err != nil {
+		trusteeOpinion = FullUncertainty
+	}
 	return map[string][]trustmodelstructure.TrustRelationship{
 		trusteeIdentifier(tmi.targetTrustee): []trustmodelstructure.TrustRelationship{
 			internaltrustmodelstructure.NewTrustRelationshipDTO("MEC", trusteeIdentifier(tmi.targetTrustee), &trusteeOpinion),
@@ -113,7 +119,12 @@ func (tmi *TrustModelInstance) Update(update core.Update) bool {
 				tmi.omegaTCH.Modify(update.Opinion().Belief(), update.Opinion().Disbelief(), update.Opinion().Uncertainty(), update.Opinion().BaseRate())
 				tmi.version++
 			} else if update.TrustSource() == core.MBD {
-				tmi.omegaMBD.Modify(update.Opinion().Belief(), update.Opinion().Disbelief(), update.Opinion().Uncertainty(), update.Opinion().BaseRate())
+
+				belief := (1-tmi.ewmaAlpha)*tmi.omegaMBD.Belief() + tmi.ewmaAlpha*update.Opinion().Belief()
+				disbelief := (1-tmi.ewmaAlpha)*tmi.omegaMBD.Disbelief() + tmi.ewmaAlpha*update.Opinion().Disbelief()
+				newOpinion, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-(belief+disbelief), update.Opinion().BaseRate())
+
+				tmi.omegaMBD.Modify(newOpinion.Belief(), newOpinion.Disbelief(), newOpinion.Uncertainty(), newOpinion.BaseRate())
 				tmi.version++
 			}
 		}

@@ -150,7 +150,7 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 		Scope:       "vehicle_*",
 		TrustSource: core.TCH,
 		Evidence:    []core.EvidenceType{core.TCH_SECURE_BOOT, core.TCH_SECURE_OTA, core.TCH_ACCESS_CONTROL, core.TCH_APPLICATION_ISOLATION, core.TCH_CONTROL_FLOW_INTEGRITY, core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
+		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
 
 			var sum = 0.0
 			for _, val := range tchExistenceWeights {
@@ -165,7 +165,8 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 			disbelief := 0.0
 			//uncertainty := 1.0
 
-			for control, appraisal := range m {
+			for control, rawAppraisal := range m {
+				appraisal := rawAppraisal.(int)
 				delta, ok := tchExistenceWeights[control]
 
 				if ok { // Only if control is one of the foreseen controls, belief and disbelief will be adjusted
@@ -207,9 +208,9 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 		Trustee:     "vehicle_*",
 		Scope:       "vehicle_*",
 		TrustSource: core.MBD,
-		Evidence:    []core.EvidenceType{core.MBD_MISBEHAVIOR_REPORT},
-		Quantifier: func(m map[core.EvidenceType]int) subjectivelogic.QueryableOpinion {
-			binaryFormat := strconv.FormatInt(int64(m[core.MBD_MISBEHAVIOR_REPORT]), 2)
+		Evidence:    []core.EvidenceType{core.MBD_MISBEHAVIOR_REPORT, core.NTM_REMOTE_OPINION},
+		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
+			binaryFormat := strconv.FormatInt(int64(m[core.MBD_MISBEHAVIOR_REPORT].(int)), 2)
 
 			for i := len(binaryFormat); i < 8; i++ {
 				binaryFormat = "0" + binaryFormat

@@ -19,7 +19,7 @@ There is hence a 1:N mapping the MBD subscription and sessions at runtime.
 
 type MbdHandler struct {
 	sessionTsqs                map[string][]core.TrustSourceQuantifier
-	latestSubscriptionEvidence map[string]map[core.EvidenceType]int
+	latestSubscriptionEvidence map[string]map[core.EvidenceType]interface{}
 	tam                        TAMAccess
 	tsm                        TSMAccess
 	logger                     *slog.Logger
@@ -30,7 +30,7 @@ type MbdHandler struct {
 func CreateMbdHandler(tam TAMAccess, tsm TSMAccess, logger *slog.Logger) *MbdHandler {
 	return &MbdHandler{
 		sessionTsqs:                make(map[string][]core.TrustSourceQuantifier),
-		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]int),
+		latestSubscriptionEvidence: make(map[string]map[core.EvidenceType]interface{}),
 		logger:                     logger,
 		tsm:                        tsm,
 		tam:                        tam,
@@ -96,7 +96,7 @@ func (h *MbdHandler) HandleNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 		id := fmt.Sprintf("C_%d_%d", int(sourceID), int(observation.TargetID))
 		//Discard old evidence and always create a new map
 
-		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]int)
+		h.latestSubscriptionEvidence[id] = make(map[core.EvidenceType]interface{})
 		h.latestSubscriptionEvidence[id][core.MBD_MISBEHAVIOR_REPORT] = int(observation.Check)
 		updatedTrustees[id] = true
 	}

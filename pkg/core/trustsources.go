@@ -29,6 +29,10 @@ const (
 		TCH
 	*/
 	TCH
+	/*
+	   NTM
+	*/
+	NTM
 )
 
 const (
@@ -46,6 +50,7 @@ const (
 	TCH_APPLICATION_ISOLATION
 	TCH_CONTROL_FLOW_INTEGRITY
 	TCH_CONFIGURATION_INTEGRITY_VERIFICATION
+	NTM_REMOTE_OPINION
 )
 
 func (e EvidenceType) String() string {
@@ -78,6 +83,8 @@ func (e EvidenceType) String() string {
 		return "CONTROL_FLOW_INTEGRITY"
 	case TCH_CONFIGURATION_INTEGRITY_VERIFICATION:
 		return "CONFIGURATION_INTEGRITY_VERIFICATION"
+	case NTM_REMOTE_OPINION:
+		return "REMOTE_OPINION"
 	default:
 		return "UNKNOWN_EVIDENCE"
 	}
@@ -93,6 +100,8 @@ func (s TrustSource) String() string {
 		return "MBD"
 	case TCH:
 		return "TCH"
+	case NTM:
+		return "NTM"
 	default:
 		return "UNKNOWN_SOURCE"
 	}
@@ -128,6 +137,8 @@ func (e EvidenceType) Source() TrustSource {
 		return TCH
 	case TCH_CONFIGURATION_INTEGRITY_VERIFICATION:
 		return TCH
+	case NTM_REMOTE_OPINION:
+		return NTM
 	default:
 		return NONE
 	}
@@ -173,6 +184,13 @@ func EvidenceTypeBySourceAndName(ts TrustSource, name string) EvidenceType {
 			return TCH_CONTROL_FLOW_INTEGRITY
 		case strings.ToUpper(name) == TCH_CONFIGURATION_INTEGRITY_VERIFICATION.String():
 			return TCH_CONFIGURATION_INTEGRITY_VERIFICATION
+		default:
+			return UNKNOWN
+		}
+	case NTM:
+		switch {
+		case strings.ToUpper(name) == NTM_REMOTE_OPINION.String():
+			return NTM_REMOTE_OPINION
 		default:
 			return UNKNOWN
 		}

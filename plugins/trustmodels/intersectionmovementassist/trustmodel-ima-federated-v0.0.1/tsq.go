@@ -1,11 +1,10 @@
-package trustmodel_ima_standalone_v0_0_1
+package trustmodel_ima_federated_v0_0_1
 
 import (
 	"errors"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/trustsource"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -145,61 +144,19 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 	}
 
 	tchQuantifier := core.TrustSourceQuantifier{
-		Trustor:     "V_ego",
+		Trustor:     "MEC",
 		Trustee:     "V_*",
 		Scope:       "C_*_*",
-		TrustSource: core.TCH,
-		Evidence:    []core.EvidenceType{core.TCH_SECURE_BOOT, core.TCH_SECURE_OTA, core.TCH_ACCESS_CONTROL, core.TCH_APPLICATION_ISOLATION, core.TCH_CONTROL_FLOW_INTEGRITY, core.TCH_CONFIGURATION_INTEGRITY_VERIFICATION},
+		TrustSource: core.NTM,
+		Evidence:    []core.EvidenceType{core.NTM_REMOTE_OPINION},
 		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
 
-			var sum = 0.0
-			for _, val := range tchExistenceWeights {
-				sum += val
+			//Return first entry
+			for _, opinion := range m {
+				return opinion.(subjectivelogic.QueryableOpinion)
 			}
 
-			if sum > 1.0 { // sum of existence weights is not allowed to exceed 1.0
-				log.Fatalf("Sum existence weights of the TCH trust source exceeds 1.0")
-			}
-
-			belief := 0.0
-			disbelief := 0.0
-			//uncertainty := 1.0
-
-			for control, rawAppraisal := range m {
-				appraisal := rawAppraisal.(int)
-				delta, ok := tchExistenceWeights[control]
-
-				if ok { // Only if control is one of the foreseen controls, belief and disbelief will be adjusted
-					if appraisal == -1 { // control not implemented
-						disbelief = disbelief + delta
-						//uncertainty = uncertainty - delta
-					} else if appraisal == 0 {
-						if tchOutputWeights[control] == 0 { // still add belief
-							belief = belief + delta
-							//uncertainty = uncertainty - delta
-						} else if tchOutputWeights[control] == 1 { // add disbelief
-							disbelief = disbelief + delta
-							//uncertainty = uncertainty - delta
-						} else if tchOutputWeights[control] == 2 { // complete disbelief
-							belief = 0.0
-							disbelief = 1.0
-							//uncertainty = 0.0
-							break // complete disbelief because negative evidence of critical securityControl
-						} else {
-							// Invalid weight
-							// TODO: Error handling
-						}
-					} else if appraisal == 1 {
-						belief = belief + delta
-						//uncertainty = uncertainty - delta
-					} else {
-						// No evidence for the control, e.g. appraisal -2 or no evidence received -> Results in higher uncertainty
-					}
-				}
-			}
-			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-belief-disbelief, 0.5)
-
-			return &sl
+			return &FullUncertainty
 		},
 	}
 
