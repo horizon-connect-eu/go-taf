@@ -144,17 +144,19 @@ func createTrustSourceQuantifiers(params map[string]string) ([]core.TrustSourceQ
 	}
 
 	tchQuantifier := core.TrustSourceQuantifier{
-		Trustor:     "V_ego",
+		Trustor:     "MEC",
 		Trustee:     "V_*",
 		Scope:       "C_*_*",
 		TrustSource: core.NTM,
 		Evidence:    []core.EvidenceType{core.NTM_REMOTE_OPINION},
 		Quantifier: func(m map[core.EvidenceType]interface{}) subjectivelogic.QueryableOpinion {
 
-			//			sl, _ := subjectivelogic.NewOpinion(belief, disbelief, 1-belief-disbelief, 0.5)
-			//return &sl
+			//Return first entry
+			for _, opinion := range m {
+				return opinion.(subjectivelogic.QueryableOpinion)
+			}
 
-			return nil
+			return &FullUncertainty
 		},
 	}
 

@@ -92,7 +92,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		for trustee := range updatedTrustees {
 			for _, tsq := range tsqs {
 				if tsq.TrustSource != core.TCH {
-					break //TODO: check
+					continue
 				} else if tsq.Trustor == "MEC" && tsq.Trustee == "vehicle_*" && strings.HasPrefix(trustee, "vehicle_") {
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))

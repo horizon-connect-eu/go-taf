@@ -19,7 +19,7 @@ type TrustModelInstance struct {
 	template TrustModelTemplate
 
 	sourceID      string
-	sourceOpinion subjectivelogic.QueryableOpinion            // Opinion V_ego -> V_sourceID
+	sourceOpinion subjectivelogic.QueryableOpinion            // Opinion MEC -> V_sourceID
 	objects       map[string]subjectivelogic.QueryableOpinion // X : Opinion V_ego -> C_sourceID_{X}
 
 	currentStructure   trustmodelstructure.TrustGraphStructure
@@ -174,11 +174,13 @@ func (e *TrustModelInstance) updateStructure() {
 		objects = append(objects, objectIdentifier(object, e.sourceID))
 		egoTargets = append(egoTargets, objectIdentifier(object, e.sourceID))
 	}
-	egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
+	//egoTargets = append(egoTargets, vehicleIdentifier(e.sourceID))
+	egoTargets = append(egoTargets, "MEC")
 
 	e.currentStructure = internaltrustmodelstructure.NewTrustGraphDTO(trustmodelstructure.CumulativeFusion, trustmodelstructure.OppositeBeliefDiscount, []trustmodelstructure.AdjacencyListEntry{
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier("ego"), egoTargets),
 		internaltrustmodelstructure.NewAdjacencyEntryDTO(vehicleIdentifier(e.sourceID), objects),
+		internaltrustmodelstructure.NewAdjacencyEntryDTO("MEC", []string{vehicleIdentifier(e.sourceID)}),
 	})
 }
 
@@ -194,6 +196,7 @@ func (e *TrustModelInstance) updateValues() {
 		ego := vehicleIdentifier("ego")
 		source := vehicleIdentifier(e.sourceID)
 		observation := objectIdentifier(obj, e.sourceID)
+		mec := "MEC"
 		scope := observation
 
 		//set values
@@ -202,8 +205,10 @@ func (e *TrustModelInstance) updateValues() {
 			internaltrustmodelstructure.NewTrustRelationshipDTO(source, observation, &FullBelief),
 			//opinion from V_ego on C_*_*
 			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, observation, opinion),
-			//opinion from V_y on C_y_*
-			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, source, e.sourceOpinion),
+			//opinion from MEC to V_*
+			internaltrustmodelstructure.NewTrustRelationshipDTO(mec, source, e.sourceOpinion),
+			//opinion from V_ego to MEC
+			internaltrustmodelstructure.NewTrustRelationshipDTO(ego, mec, &FullBelief),
 		}
 
 		//set RTL

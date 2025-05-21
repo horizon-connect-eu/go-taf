@@ -3,12 +3,13 @@ package trustsourcehandler
 import (
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
-	"github.com/vs-uulm/go-taf/internal/util"
 	"github.com/vs-uulm/go-taf/pkg/command"
 	"github.com/vs-uulm/go-taf/pkg/core"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
+	"strconv"
 )
 
 type NtmHandler struct {
@@ -55,6 +56,8 @@ func (n *NtmHandler) RegisteredSessions() []string {
 
 func (n *NtmHandler) HandleNotify(cmd command.HandleNotify[v2xmsg.V2XNtm]) {
 
+	receivedNtmOpinions := make(map[int64]subjectivelogic.QueryableOpinion) //flag trustees with changes
+
 	if nil == cmd.Notify.V2XSourceSet {
 		n.logger.Info("Empty NTM Source Set, ignoring V2X_NTM message")
 		return
@@ -73,13 +76,33 @@ func (n *NtmHandler) HandleNotify(cmd command.HandleNotify[v2xmsg.V2XNtm]) {
 			continue
 		}
 
-		n.logger.Warn("Created opinion", "sl", opinion)
-
-		util.UNUSED(sourceID, opinion)
-
+		receivedNtmOpinions[sourceID] = &opinion
 	}
-	//
 
-	//TODO implement me
-	//	panic("implement me")
+	//Iterate over all sessions register for TCH, call quantifiers and relay updates
+	for sessionId, tsqs := range n.sessionTsqs {
+		sess := n.tam.Sessions()[sessionId]
+		//loop through all updated trustees and find fitting quantifiers; if successful, apply quantifier and add ATO update
+		updates := make([]core.Update, 0)
+		for opinionTarget := range receivedNtmOpinions {
+			for _, tsq := range tsqs {
+				if tsq.TrustSource != core.NTM {
+					continue
+				} else if tsq.Trustor == "MEC" && tsq.Trustee == "V_*" {
+					//This is a bit bogus as we already have the opinion. But the quantifier might modify it in the future.
+					ato := tsq.Quantifier(map[core.EvidenceType]interface{}{
+						core.NTM_REMOTE_OPINION: receivedNtmOpinions[opinionTarget],
+					})
+					n.logger.Debug("Opinion for "+strconv.FormatInt(opinionTarget, 10), "SL", ato.String())
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", "V_"+strconv.FormatInt(opinionTarget, 10), core.NTM))
+				}
+			}
+		}
+		if len(updates) > 0 {
+			for tmiID, fullTmiID := range sess.TrustModelInstances() {
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				n.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
+			}
+		}
+	}
 }
