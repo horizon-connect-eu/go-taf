@@ -1,5 +1,20 @@
 # Standalone TAF Prototype
 
+## Release v0.4.0 (2025-05-21)
+
+* initial release of federation-enabled TAF
+* added support for the following message types
+	 * `V2X_NTM`
+* added support for NTM as evidence provider
+* added trust models
+	 * `NTM_STANDALONE@0.0.1`: MEC-side trust model for IMA use case
+       * dynamically triggered based on TCH messages
+       * trust sources: TCH, MBD
+     * `IMA_FEDERATED@0.0.1`: Vehicle-side trust model for IMA use case
+       * dynamically triggered based on CPM messages
+       * trust sources: NTM, MBD
+
+
 ## Release v0.3.4 (2025-04-24)
  
 * included a new version of the TLEE (`8d587872e0d895c70deded6d498599cf7c7321cc`)
