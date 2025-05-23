@@ -1,5 +1,14 @@
 # Standalone TAF Prototype
 
+## Release v0.4.1 (2025-05-23)
+* 
+* fixed a bug in the IMA trust models in which MBD evidence was associated with the wrong trust model instance
+* updated trust models
+	* `IMA_STANDALONE@0.0.1`
+	* `IMA_STANDALONE@0.0.2`
+	* `IMA_FEDERATED@0.0.1`
+
+
 ## Release v0.4.0 (2025-05-21)
 
 * initial release of federation-enabled TAF
