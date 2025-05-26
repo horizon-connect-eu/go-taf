@@ -73,7 +73,9 @@ func RunTMI(t *testing.T, update1 map[core.EvidenceType]interface{}, update2 map
 		return
 	}
 	// Initialize TMI
-	tmi.Initialize(map[string]interface{}{})
+	tmi.Initialize(map[string]interface{}{
+		//		"VC1_EXISTENCE_SECURE_BOOT": .9,
+	})
 
 	aivVC1TSQ := tsqs[0]
 	aivVC2TSQ := tsqs[1]
