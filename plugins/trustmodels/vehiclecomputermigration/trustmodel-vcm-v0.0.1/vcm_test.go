@@ -20,7 +20,47 @@ var RTLmap = map[string]subjectivelogic.QueryableOpinion{
 	"VC2": &RTL_VC2,
 }
 
-func TestTMI(t *testing.T) {
+func TestTrustworthy(t *testing.T) {
+	update1 := map[core.EvidenceType]interface{}{
+		core.AIV_SECURE_BOOT:                          1,
+		core.AIV_SECURE_OTA:                           1,
+		core.AIV_ACCESS_CONTROL:                       1,
+		core.AIV_APPLICATION_ISOLATION:                0,
+		core.AIV_CONTROL_FLOW_INTEGRITY:               1,
+		core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
+	}
+	update2 := map[core.EvidenceType]interface{}{
+		core.AIV_SECURE_BOOT:                          1,
+		core.AIV_SECURE_OTA:                           1,
+		core.AIV_ACCESS_CONTROL:                       1,
+		core.AIV_APPLICATION_ISOLATION:                0,
+		core.AIV_CONTROL_FLOW_INTEGRITY:               1,
+		core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
+	}
+	RunTMI(t, update1, update2)
+}
+
+func TestUntrustworthy(t *testing.T) {
+	update1 := map[core.EvidenceType]interface{}{
+		core.AIV_SECURE_BOOT:                          1,
+		core.AIV_SECURE_OTA:                           0,
+		core.AIV_ACCESS_CONTROL:                       0,
+		core.AIV_APPLICATION_ISOLATION:                0,
+		core.AIV_CONTROL_FLOW_INTEGRITY:               0,
+		core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
+	}
+	update2 := map[core.EvidenceType]interface{}{
+		core.AIV_SECURE_BOOT:                          1,
+		core.AIV_SECURE_OTA:                           1,
+		core.AIV_ACCESS_CONTROL:                       1,
+		core.AIV_APPLICATION_ISOLATION:                0,
+		core.AIV_CONTROL_FLOW_INTEGRITY:               1,
+		core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
+	}
+	RunTMI(t, update1, update2)
+}
+
+func RunTMI(t *testing.T, update1 map[core.EvidenceType]interface{}, update2 map[core.EvidenceType]interface{}) {
 
 	tafContext := createTafContext()
 	tlee := internaltlee.SpawnNewTLEE(tafContext.Logger, "", false)
@@ -35,22 +75,15 @@ func TestTMI(t *testing.T) {
 	// Initialize TMI
 	tmi.Initialize(map[string]interface{}{})
 
-	t.Log("Trust model after init:")
-	t.Log(tmi.String())
-
 	aivVC1TSQ := tsqs[0]
 	aivVC2TSQ := tsqs[1]
 
+	t.Log("Trust model after init:")
+	t.Log(tmi.String())
+
 	// Quantify evidence and send ATO update to TMI
 	tmi.Update(
-		trustmodelupdate.CreateAtomicTrustOpinionUpdate(aivVC1TSQ.Quantifier(map[core.EvidenceType]interface{}{
-			core.AIV_SECURE_BOOT:                          1,
-			core.AIV_SECURE_OTA:                           1,
-			core.AIV_ACCESS_CONTROL:                       1,
-			core.AIV_APPLICATION_ISOLATION:                0,
-			core.AIV_CONTROL_FLOW_INTEGRITY:               1,
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
-		}), "TAF", "VC1", core.AIV),
+		trustmodelupdate.CreateAtomicTrustOpinionUpdate(aivVC1TSQ.Quantifier(update1), "TAF", "VC1", core.AIV),
 	)
 
 	t.Log("Trust model after AIV evidence update:")
@@ -58,14 +91,7 @@ func TestTMI(t *testing.T) {
 
 	// Quantify evidence and send ATO update to TMI
 	tmi.Update(
-		trustmodelupdate.CreateAtomicTrustOpinionUpdate(aivVC2TSQ.Quantifier(map[core.EvidenceType]interface{}{
-			core.AIV_SECURE_BOOT:                          1,
-			core.AIV_SECURE_OTA:                           0,
-			core.AIV_ACCESS_CONTROL:                       0,
-			core.AIV_APPLICATION_ISOLATION:                0,
-			core.AIV_CONTROL_FLOW_INTEGRITY:               1,
-			core.AIV_CONFIGURATION_INTEGRITY_VERIFICATION: 1,
-		}), "TAF", "VC2", core.AIV),
+		trustmodelupdate.CreateAtomicTrustOpinionUpdate(aivVC2TSQ.Quantifier(update2), "TAF", "VC2", core.AIV),
 	)
 
 	t.Log("Trust model after AIV evidence update:")
