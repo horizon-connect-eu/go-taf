@@ -2,14 +2,9 @@ package core
 
 import "github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
 
-type RawEvidence interface {
-	int | subjectivelogic.Opinion
-}
-
 /*
 A Quantifier function takes a list of EvidenceType(s) and their concrete evidence values and calculates a single trust opinion.
 */
-//type Quantifier[T RawEvidence] func(values map[EvidenceType]T) subjectivelogic.QueryableOpinion
 type Quantifier func(values map[EvidenceType]interface{}) subjectivelogic.QueryableOpinion
 
 /*
