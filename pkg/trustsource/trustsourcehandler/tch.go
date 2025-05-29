@@ -97,7 +97,11 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
 					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "MEC", trustee, core.TCH))
-				} else if _, err := strconv.Atoi(trustee); err == nil && tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" { //TODO: check whether this breaks IMA trust model
+				} else if tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" && strings.HasPrefix(trustee, "vehicle_") { //TODO: check whether this breaks IMA trust model
+					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
+					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
+					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", trustee, core.TCH))
+				} else if _, err := strconv.Atoi(trustee); err == nil && tsq.Trustor == "V_ego" && tsq.Trustee == "V_*" {
 					ato := tsq.Quantifier(h.latestSubscriptionEvidence[trustee])
 					h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[trustee]))
 					updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "V_ego", "V_"+trustee, core.TCH))

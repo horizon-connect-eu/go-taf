@@ -58,7 +58,7 @@ func (e *TrustModelInstance) Update(update core.Update) bool {
 		}
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 		trustee := update.Trustee()
-		if strings.HasPrefix(trustee, "V_") {
+		if strings.HasPrefix(trustee, "V_") || strings.HasPrefix(trustee, "vehicle_") {
 			id, err := parseVehicleIdentifier(trustee)
 			if err == nil && id == e.sourceID {
 
@@ -300,7 +300,7 @@ func parseObjectIdentifier(str string) (string, string, error) {
 parseVehicleIdentifier is a helper function to extract plain identifiers from a vehicle identifier string.
 */
 func parseVehicleIdentifier(str string) (string, error) {
-	pattern := regexp.MustCompile(`^V_(\d+|ego).*$`)
+	pattern := regexp.MustCompile(`^(?:V|vehicle)_(\d+|ego).*$`)
 	res := pattern.FindStringSubmatch(str)
 	if res != nil && len(res) == 2 {
 		return res[1], nil
