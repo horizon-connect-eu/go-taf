@@ -1,7 +1,12 @@
 # Standalone TAF Prototype
 
+## Release v0.4.2 (2025-06-05)
+ 
+* made the handling of TCH robust when using different formats of identifiers
+
+
 ## Release v0.4.1 (2025-05-23)
-* 
+ 
 * fixed a bug in the IMA trust models in which MBD evidence was associated with the wrong trust model instance
 * updated trust models
 	* `IMA_STANDALONE@0.0.1`
