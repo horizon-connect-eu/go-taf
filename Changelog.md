@@ -1,7 +1,15 @@
 # Standalone TAF Prototype
 
+## Release v0.4.3 (2025-06-09)
+
+* changed TLEE usage in TAM workers to a 1:1 mapping, meaning that each TAM worker spawns its own TLEE instance
+* fixed a concurrency bug in the node listener for spawning dynamic trust models based on TCH or V2X_CPM messages
+* improved liveness under heavy load by prioritizing updates from the workers over external messages
+* some cleanup of the internal code base
+
+
 ## Release v0.4.2 (2025-06-05)
- 
+
 * made the handling of TCH robust when using different formats of identifiers
 
 
