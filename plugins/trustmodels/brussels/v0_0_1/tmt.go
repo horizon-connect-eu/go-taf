@@ -96,7 +96,7 @@ func quantifier(values map[core.EvidenceType]interface{}, designTimeTrustOp subj
 }
 
 var trustSourceQuantifiers = []core.TrustSourceQuantifier{
-	core.TrustSourceQuantifier{
+	{
 		Trustor:     "TAF",
 		Trustee:     "VC1",
 		Scope:       "VC1",
@@ -106,7 +106,7 @@ var trustSourceQuantifiers = []core.TrustSourceQuantifier{
 			return quantifier(m, &vc1DTI, vc1ExistenceWeights, vc1OutputWeights)
 		},
 	},
-	core.TrustSourceQuantifier{
+	{
 		Trustor:     "TAF",
 		Trustee:     "VC2",
 		Scope:       "VC2",

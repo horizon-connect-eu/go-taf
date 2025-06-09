@@ -55,7 +55,7 @@ func (tmi *TrustModelInstance) Structure() trustmodelstructure.TrustGraphStructu
 func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
 	trusteeOpinion, _ := subjectivelogic.NewOpinion(tmi.omega.Belief(), tmi.omega.Disbelief(), tmi.omega.Uncertainty(), tmi.omega.BaseRate())
 	return map[string][]trustmodelstructure.TrustRelationship{
-		trusteeIdentifier(tmi.targetTrustee): []trustmodelstructure.TrustRelationship{
+		trusteeIdentifier(tmi.targetTrustee): {
 			internaltrustmodelstructure.NewTrustRelationshipDTO("MEC", trusteeIdentifier(tmi.targetTrustee), &trusteeOpinion),
 		},
 	}

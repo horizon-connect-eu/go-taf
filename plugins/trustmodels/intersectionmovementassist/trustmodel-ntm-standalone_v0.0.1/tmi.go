@@ -101,7 +101,7 @@ func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRe
 		trusteeOpinion = FullUncertainty
 	}
 	return map[string][]trustmodelstructure.TrustRelationship{
-		trusteeIdentifier(tmi.targetTrustee): []trustmodelstructure.TrustRelationship{
+		trusteeIdentifier(tmi.targetTrustee): {
 			internaltrustmodelstructure.NewTrustRelationshipDTO("MEC", trusteeIdentifier(tmi.targetTrustee), &trusteeOpinion),
 		},
 	}
