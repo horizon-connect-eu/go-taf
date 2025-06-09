@@ -120,48 +120,58 @@ func (tam *Manager) Run() {
 			default:
 				tam.logger.Warn("Command with no associated handling logic received by TAM from Worker", "Command Type", cmd.Type())
 			}
-		case incomingCmd := <-tam.channels.TAMChannel:
-			switch cmd := incomingCmd.(type) {
-			// TAM Message Handling
-			case command.HandleRequest[tasmsg.TasInitRequest]:
-				tam.HandleTasInitRequest(cmd)
-			case command.HandleRequest[tasmsg.TasTeardownRequest]:
-				tam.HandleTasTeardownRequest(cmd)
-			case command.HandleRequest[tasmsg.TasTaRequest]:
-				tam.HandleTasTaRequest(cmd)
-			case command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]:
-				tam.HandleTasSubscribeRequest(cmd)
-			case command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]:
-				tam.HandleTasUnsubscribeRequest(cmd)
-			case command.HandleRequest[taqimsg.TaqiQuery]:
-				tam.HandleTaqiQuery(cmd)
-			// TSM Message Handling
-			case command.HandleResponse[aivmsg.AivResponse]:
-				tsm.HandleAivResponse(cmd)
-			case command.HandleResponse[aivmsg.AivSubscribeResponse]:
-				tsm.HandleAivSubscribeResponse(cmd)
-			case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
-				tsm.HandleAivUnsubscribeResponse(cmd)
-			case command.HandleNotify[aivmsg.AivNotify]:
-				tsm.HandleAivNotify(cmd)
-			case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
-				tsm.HandleMbdSubscribeResponse(cmd)
-			case command.HandleResponse[mbdmsg.MBDUnsubscribeResponse]:
-				tsm.HandleMbdUnsubscribeResponse(cmd)
-			case command.HandleNotify[mbdmsg.MBDNotify]:
-				tsm.HandleMbdNotify(cmd)
-			case command.HandleNotify[tchmsg.TchNotify]:
-				tmm.HandleTchNotify(cmd) //handle potential trigger based on trustee
-				tsm.HandleTchNotify(cmd) //handle evidence from TCH
-			case command.HandleNotify[v2xmsg.V2XNtm]:
-				tsm.HandleV2xNtm(cmd)
-			// TMM Message Handling
-			case command.HandleOneWay[v2xmsg.V2XCpm]:
-				tmm.HandleV2xCpmMessage(cmd)
-			case command.HandleRequest[tasmsg.TasTmtDiscover]:
-				tmm.HandleTasTmtDiscover(cmd)
-			default:
-				tam.logger.Warn("Command with no associated handling logic received by TAM from Communication Handler", "Command Type", cmd.Type())
+		default:
+			select {
+			case incomingCmd := <-tam.workersToTam:
+				switch cmd := incomingCmd.(type) {
+				case command.HandleATLUpdate:
+					tam.HandleATLUpdate(cmd)
+				default:
+					tam.logger.Warn("Command with no associated handling logic received by TAM from Worker", "Command Type", cmd.Type())
+				}
+			case incomingCmd := <-tam.channels.TAMChannel:
+				switch cmd := incomingCmd.(type) {
+				// TAM Message Handling
+				case command.HandleRequest[tasmsg.TasInitRequest]:
+					tam.HandleTasInitRequest(cmd)
+				case command.HandleRequest[tasmsg.TasTeardownRequest]:
+					tam.HandleTasTeardownRequest(cmd)
+				case command.HandleRequest[tasmsg.TasTaRequest]:
+					tam.HandleTasTaRequest(cmd)
+				case command.HandleSubscriptionRequest[tasmsg.TasSubscribeRequest]:
+					tam.HandleTasSubscribeRequest(cmd)
+				case command.HandleSubscriptionRequest[tasmsg.TasUnsubscribeRequest]:
+					tam.HandleTasUnsubscribeRequest(cmd)
+				case command.HandleRequest[taqimsg.TaqiQuery]:
+					tam.HandleTaqiQuery(cmd)
+				// TSM Message Handling
+				case command.HandleResponse[aivmsg.AivResponse]:
+					tsm.HandleAivResponse(cmd)
+				case command.HandleResponse[aivmsg.AivSubscribeResponse]:
+					tsm.HandleAivSubscribeResponse(cmd)
+				case command.HandleResponse[aivmsg.AivUnsubscribeResponse]:
+					tsm.HandleAivUnsubscribeResponse(cmd)
+				case command.HandleNotify[aivmsg.AivNotify]:
+					tsm.HandleAivNotify(cmd)
+				case command.HandleResponse[mbdmsg.MBDSubscribeResponse]:
+					tsm.HandleMbdSubscribeResponse(cmd)
+				case command.HandleResponse[mbdmsg.MBDUnsubscribeResponse]:
+					tsm.HandleMbdUnsubscribeResponse(cmd)
+				case command.HandleNotify[mbdmsg.MBDNotify]:
+					tsm.HandleMbdNotify(cmd)
+				case command.HandleNotify[tchmsg.TchNotify]:
+					tmm.HandleTchNotify(cmd) //handle potential trigger based on trustee
+					tsm.HandleTchNotify(cmd) //handle evidence from TCH
+				case command.HandleNotify[v2xmsg.V2XNtm]:
+					tsm.HandleV2xNtm(cmd)
+				// TMM Message Handling
+				case command.HandleOneWay[v2xmsg.V2XCpm]:
+					tmm.HandleV2xCpmMessage(cmd)
+				case command.HandleRequest[tasmsg.TasTmtDiscover]:
+					tmm.HandleTasTmtDiscover(cmd)
+				default:
+					tam.logger.Warn("Command with no associated handling logic received by TAM from Communication Handler", "Command Type", cmd.Type())
+				}
 			}
 		}
 	}
