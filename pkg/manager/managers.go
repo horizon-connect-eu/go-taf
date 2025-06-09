@@ -62,6 +62,12 @@ type TrustAssessmentManager interface {
 	RemoveATLListener(listener listener.ActualTrustLevelListener)
 	AddTMIListener(listener listener.TrustModelInstanceListener)
 	RemoveTMIListener(listener listener.TrustModelInstanceListener)
+	/*
+		DispatchToSelf adds the given command to TAM's own inbox of commands to be processed.
+		This function is helpful if you want to dispatch a command from another go routine that should be
+		executed by the TAM itself in its own context.
+	*/
+	DispatchToSelf(cmd core.Command)
 	Run()
 }
 
@@ -98,4 +104,5 @@ type TrustModelManager interface {
 	GetAllTMTs() []core.TrustModelTemplate
 	ListRecentV2XNodes() []string
 	ListRecentTrustees() []string
+	HandleObserverEvent(cmd command.HandleObserverEvent)
 }

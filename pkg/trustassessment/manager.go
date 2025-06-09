@@ -166,6 +166,8 @@ func (tam *Manager) Run() {
 					tmm.HandleV2xCpmMessage(cmd)
 				case command.HandleRequest[tasmsg.TasTmtDiscover]:
 					tmm.HandleTasTmtDiscover(cmd)
+				case command.HandleObserverEvent:
+					tmm.HandleObserverEvent(cmd)
 				default:
 					tam.logger.Warn("Command with no associated handling logic received by TAM from Communication Handler", "Command Type", cmd.Type())
 				}
@@ -952,6 +954,10 @@ func (tam *Manager) notifyATLRemoved(fullTMI string) {
 			sessionListener.OnATLRemoved(event)
 		}
 	}
+}
+
+func (tam *Manager) DispatchToSelf(cmd core.Command) {
+	tam.channels.TAMChannel <- cmd
 }
 
 func (tam *Manager) AddTMIListener(listener listener.TrustModelInstanceListener) {

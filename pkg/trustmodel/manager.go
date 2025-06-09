@@ -108,7 +108,7 @@ func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 	sender := fmt.Sprintf("%g", cmd.OneWay.SourceID)
 	tmm.v2xObserver.AddNode(sender)
 
-	//check whether TMIs are interesteed in RefreshCPM messages
+	//check whether TMIs are interested in RefreshCPM messages
 	targetTMIIDs := make([]string, 0)
 	for _, tmt := range tmm.trustModelTemplateRepo {
 		if tmt.Type() == core.VEHICLE_TRIGGERED_TRUST_MODEL {
@@ -221,6 +221,24 @@ func (tmm *Manager) handleTCHNodeAdded(identifier string) {
 	}
 }
 
+func (tmm *Manager) HandleObserverEvent(cmd command.HandleObserverEvent) {
+	if cmd.Event == command.EVENT_NODE_ADDED {
+		switch cmd.Source {
+		case command.SOURCE_V2X:
+			tmm.handleV2XNodeAdded(cmd.Identifier)
+		case command.SOURCE_TCH:
+			tmm.handleTCHNodeAdded(cmd.Identifier)
+		}
+	} else if cmd.Event == command.EVENT_NODE_REMOVED {
+		switch cmd.Source {
+		case command.SOURCE_V2X:
+			tmm.handleV2XNodeRemoved(cmd.Identifier)
+		case command.SOURCE_TCH:
+			tmm.handleTCHNodeRemoved(cmd.Identifier)
+		}
+	}
+}
+
 func (tmm *Manager) handleTCHNodeRemoved(identifier string) {
 	tmm.logger.Debug("TCH trustee removed", "Identifier", identifier)
 
@@ -294,10 +312,10 @@ func newV2xObserver(tmm *Manager) *v2xObserver {
 }
 
 func (v2xObs *v2xObserver) handleNodeAdded(identifier string) {
-	v2xObs.tmm.handleV2XNodeAdded(identifier)
+	v2xObs.tmm.tam.DispatchToSelf(command.CreateHandleObserverEvent(identifier, command.EVENT_NODE_ADDED, command.SOURCE_V2X))
 }
 func (v2xObs *v2xObserver) handleNodeRemoved(identifier string) {
-	v2xObs.tmm.handleV2XNodeRemoved(identifier)
+	v2xObs.tmm.tam.DispatchToSelf(command.CreateHandleObserverEvent(identifier, command.EVENT_NODE_REMOVED, command.SOURCE_V2X))
 
 }
 
@@ -312,9 +330,8 @@ func newTchObserver(tmm *Manager) *tchObserver {
 }
 
 func (tchObs *tchObserver) handleNodeAdded(identifier string) {
-	tchObs.tmm.handleTCHNodeAdded(identifier)
+	tchObs.tmm.tam.DispatchToSelf(command.CreateHandleObserverEvent(identifier, command.EVENT_NODE_ADDED, command.SOURCE_TCH))
 }
 func (tchObs *tchObserver) handleNodeRemoved(identifier string) {
-	tchObs.tmm.handleTCHNodeRemoved(identifier)
-
+	tchObs.tmm.tam.DispatchToSelf(command.CreateHandleObserverEvent(identifier, command.EVENT_NODE_REMOVED, command.SOURCE_TCH))
 }

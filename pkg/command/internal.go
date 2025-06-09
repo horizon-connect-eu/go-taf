@@ -88,3 +88,36 @@ func CreateHandleATLUpdate(atl core.AtlResultSet, fullTMI string) HandleATLUpdat
 func (r HandleATLUpdate) Type() core.CommandType {
 	return r.commandType
 }
+
+type ObserverEvent uint16
+
+const (
+	EVENT_NODE_ADDED ObserverEvent = iota
+	EVENT_NODE_REMOVED
+)
+
+type ObserverSource uint16
+
+const (
+	SOURCE_V2X ObserverSource = iota
+	SOURCE_TCH
+)
+
+type HandleObserverEvent struct {
+	commandType core.CommandType
+	Identifier  string
+	Event       ObserverEvent
+	Source      ObserverSource
+}
+
+func CreateHandleObserverEvent(identifier string, event ObserverEvent, source ObserverSource) HandleObserverEvent {
+	return HandleObserverEvent{
+		commandType: core.HANDLE_OBSERVER_EVENT,
+		Identifier:  identifier,
+		Event:       event,
+		Source:      source,
+	}
+}
+func (r HandleObserverEvent) Type() core.CommandType {
+	return r.commandType
+}

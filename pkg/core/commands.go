@@ -29,6 +29,7 @@ const (
 	HANDLE_TMI_UPDATE
 	HANDLE_TMI_DESTROY
 	HANDLE_ATL_UPDATE
+	HANDLE_OBSERVER_EVENT
 )
 
 func (c CommandType) String() string {
@@ -55,6 +56,7 @@ func (c CommandType) String() string {
 		"HANDLE_TMI_UPDATE",
 		"HANDLE_TMI_DESTROY",
 		"HANDLE_ATL_UPDATE",
+		"HANDLE_OBSERVER_EVENT",
 	}[c]
 }
 
