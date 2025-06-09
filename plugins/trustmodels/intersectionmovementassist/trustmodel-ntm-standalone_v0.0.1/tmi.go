@@ -110,7 +110,6 @@ func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRe
 func (tmi *TrustModelInstance) Update(update core.Update) bool {
 
 	oldVersion := tmi.Version()
-	println(fmt.Sprintf("+%v", update))
 	switch update := update.(type) {
 	case trustmodelupdate.UpdateAtomicTrustOpinion:
 
