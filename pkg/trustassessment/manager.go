@@ -21,7 +21,6 @@ import (
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
-	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"hash/fnv"
 	"log/slog"
 	"slices"
@@ -42,7 +41,6 @@ type Manager struct {
 	tsm      manager.TrustSourceManager
 	tmm      manager.TrustModelManager
 	crypto   *crypto.Crypto
-	tlee     tleeinterface.TLEE
 	//tmiID->latest ATLs/PPs/TDs
 	atlResults map[string]core.AtlResultSet
 	//tas sub ID->sessionID
@@ -56,7 +54,7 @@ type Manager struct {
 	tmiListeners     map[listener.TrustModelInstanceListener]bool
 }
 
-func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tleeinterface.TLEE) (*Manager, error) {
+func NewManager(tafContext core.TafContext, channels core.TafChannels) (*Manager, error) {
 	tam := &Manager{
 		config:                      tafContext.Configuration,
 		tafContext:                  tafContext,
@@ -66,7 +64,6 @@ func NewManager(tafContext core.TafContext, channels core.TafChannels, tlee tlee
 		logger:                      logging.CreateChildLogger(tafContext.Logger, "TAM"),
 		crypto:                      tafContext.Crypto,
 		outbox:                      channels.OutgoingMessageChannel,
-		tlee:                        tlee,
 		atlResults:                  make(map[string]core.AtlResultSet),
 		tasSubscriptionsToSessionID: make(map[string]string),
 		tasSubscriptions:            make(map[string]Subscription),
@@ -98,7 +95,7 @@ func (tam *Manager) Run() {
 	for i := range tam.config.TAM.TrustModelInstanceShards {
 		channel := make(chan core.Command, tam.config.ChanBufSize)
 		tam.tamToWorkers = append(tam.tamToWorkers, channel)
-		worker := tam.SpawnNewWorker(i, channel, tam.workersToTam, tam.tafContext, tam.tlee, tam.tmiListeners)
+		worker := tam.SpawnNewWorker(i, channel, tam.workersToTam, tam.tafContext, tam.tmiListeners)
 		go worker.Run()
 	}
 

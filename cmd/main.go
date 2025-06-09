@@ -4,7 +4,6 @@
 package main
 
 import (
-	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"context"
 	"fmt"
 	"github.com/vs-uulm/go-taf/cmd/flags"
@@ -14,7 +13,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/go-taf/pkg/crypto"
 	"github.com/vs-uulm/go-taf/pkg/manager"
-	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/web"
@@ -90,14 +88,16 @@ func main() {
 		return
 	}
 
-	var tlee tleeinterface.TLEE
-	if tafConfig.TLEE.UseInternalTLEE {
-		tlee = internaltlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
-	} else {
-		tlee = actualtlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
-	}
+	/*
+		var tlee tleeinterface.TLEE
+		if tafConfig.TLEE.UseInternalTLEE {
+			tlee = internaltlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
+		} else {
+			tlee = actualtlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
+		}
+	*/
 
-	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels, tlee)
+	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
 	if err != nil {
 		logger.Error("Error creating TAM", "Error", err)
 		os.Exit(-1)
