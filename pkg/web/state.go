@@ -161,7 +161,7 @@ func (s *State) handleATLUpdatedEvent(event listener.ATLUpdatedEvent) {
 	if !exists {
 		return
 	} else {
-		s.logger.Warn(fmt.Sprintf("%+v", event.NewATLs))
+		s.logger.Info(fmt.Sprintf("%+v", event.NewATLs))
 	}
 	s.tmis[fullTMI].ATLs[event.NewATLs.Version()] = event.NewATLs
 }
