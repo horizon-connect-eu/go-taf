@@ -51,13 +51,13 @@ func (l *EntityObserver) removeObserver(observer observer) {
 }
 
 func (l *EntityObserver) notifyObserversOnNodeAdded(identifier string) {
-	for observer, _ := range l.observers {
+	for observer := range l.observers {
 		observer.handleNodeAdded(identifier)
 	}
 }
 
 func (l *EntityObserver) notifyObserversOnNodeRemoved(identifier string) {
-	for observer, _ := range l.observers {
+	for observer := range l.observers {
 		observer.handleNodeRemoved(identifier)
 	}
 }

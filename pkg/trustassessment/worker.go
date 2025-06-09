@@ -193,7 +193,7 @@ func (worker *Worker) notifyTMISpawned(FullTmiID string, tmi core.TrustModelInst
 			tmi.Values(),
 			tmi.RTLs(),
 		)
-		for listener, _ := range worker.tmiListeners {
+		for listener := range worker.tmiListeners {
 			listener.OnTrustModelInstanceSpawned(event)
 		}
 	}
@@ -210,7 +210,7 @@ func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInst
 			tmi.RTLs(),
 			update,
 		)
-		for listener, _ := range worker.tmiListeners {
+		for listener := range worker.tmiListeners {
 			listener.OnTrustModelInstanceUpdated(event)
 		}
 	}
@@ -219,7 +219,7 @@ func (worker *Worker) notifyTMIUpdated(FullTmiID string, tmi core.TrustModelInst
 func (worker *Worker) notifyTMIDeleted(FullTMI string) {
 	if len(worker.tmiListeners) > 0 {
 		event := listener.NewTrustModelInstanceDeletedEvent(FullTMI)
-		for listener, _ := range worker.tmiListeners {
+		for listener := range worker.tmiListeners {
 			listener.OnTrustModelInstanceDeleted(event)
 		}
 	}
