@@ -18,7 +18,7 @@ const (
 	JSON   = "JSON"
 )
 
-// Creates a new slog logger to be used as the main logger
+// CreateMainLogger creates a new slog logger to be used as the main logger
 func CreateMainLogger(configuration config.Log) *slog.Logger {
 	switch strings.ToUpper(configuration.LogStyle) {
 	case PRETTY:

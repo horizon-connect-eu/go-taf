@@ -49,7 +49,7 @@ func (r HandleTMIInit) Type() core.CommandType {
 }
 
 /*
-HandleTMIInit is a command that signals a TAM worker to destroy a Trust Model Instance from its shard.
+HandleTMIDestroy is a command that signals a TAM worker to destroy a Trust Model Instance from its shard.
 */
 type HandleTMIDestroy struct {
 	commandType core.CommandType

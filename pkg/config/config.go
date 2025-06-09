@@ -83,7 +83,7 @@ type Log struct {
 
 // TAM-Configuration for settings for the Trust Assessment Manager.
 type TAM struct {
-	TrustModelInstanceShards int //The TAM delegates tasks to workers by partitioning all trust model instances into shards. Each shard is then backed by a single worker. This configuration parameter sets the amount of partitions/workers.
+	TrustModelInstanceShards int //The TAM delegates tasks to workers by partitioning all trust model instances into shards. Each shard is then backed by a single worker. This configuration parameter sets the number of partitions/workers.
 }
 
 /*

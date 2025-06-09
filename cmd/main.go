@@ -40,7 +40,7 @@ The main TAF application that starts all the components of the application and w
 */
 func main() {
 	tafConfig := config.DefaultConfig
-	// check for config file in environment and load, otherwise use default config
+	// check for the config file in environment and load, otherwise use default config
 	if filepath, ok := os.LookupEnv("TAF_CONFIG"); ok {
 		var err error
 		tafConfig, err = config.LoadJSON(filepath)

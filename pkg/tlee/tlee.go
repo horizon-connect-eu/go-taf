@@ -47,12 +47,12 @@ func (t *TLEE) RunTLEE(trustmodelID string, version int, fingerprint uint32, str
 	case trustmodelstructure.NoFusion:
 		for scope, relationships := range values {
 			if len(relationships) != 1 {
-				return nil, errors.New("No Fusion Operator Provided, although required")
+				return nil, errors.New("No Fusion Operator Provided, although required.")
 			}
 			results[scope] = relationships[0].Opinion()
 		}
 	default:
-		return nil, errors.New("Unsupported Fusion Operator") // + structure.Operator())
+		return nil, errors.New("Unsupported Fusion Operator.") // + structure.Operator())
 	}
 
 	for scope, relationships := range values {

@@ -116,7 +116,7 @@ func (cr *Crypto) VerifyAivResponse(response *aivmsg.AivResponse) (bool, error) 
 }
 
 /*
-VerifyAivResponse verifies an incoming AIV_NOTIFY and returns true, false, or an error.
+VerifyAivNotify verifies an incoming AIV_NOTIFY and returns true, false, or an error.
 */
 func (cr *Crypto) VerifyAivNotify(notify *aivmsg.AivNotify) (bool, error) {
 	if cr.cryptoEnabled {

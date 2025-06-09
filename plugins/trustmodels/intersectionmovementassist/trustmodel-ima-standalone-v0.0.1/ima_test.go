@@ -142,7 +142,7 @@ func printATLs(t *testing.T, atls map[string]subjectivelogic.QueryableOpinion, r
 			switch trustdecision.Decide(opinion, rtl) {
 			case core.TRUSTWORTHY:
 				decision = "trustworthy"
-			case core.NOT_TRUSTWORTHY:
+			default:
 				decision = "not trustworthy"
 			}
 		}

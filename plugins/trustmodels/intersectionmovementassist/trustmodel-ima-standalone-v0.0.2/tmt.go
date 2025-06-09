@@ -22,7 +22,7 @@ type TrustModelTemplate struct {
 
 func CreateTrustModelTemplate(name string, version string) core.TrustModelTemplate {
 
-	//Extract list of used trust sources from TrustSourceQuantifiers
+	//Extract the list of used trust sources from TrustSourceQuantifiers
 	tsqs, _ := createTrustSourceQuantifiers(nil)
 	evidenceMap := make(map[core.EvidenceType]bool)
 	for _, quantifier := range tsqs {

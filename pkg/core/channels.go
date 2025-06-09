@@ -1,7 +1,7 @@
 package core
 
 /*
-TafChannels contains the structs needed by different components in order to dispatch commands.
+TafChannels contains the structs needed by different components to dispatch commands.
 */
 type TafChannels struct {
 	TAMChannel             chan Command //inbox channel for the TAM

@@ -23,7 +23,7 @@ type TafManagers struct {
 
 /*
 The CooperativeManager is a manager type that knows about other managers (via SetManagers) and can thus call their
-functions .
+functions.
 */
 type CooperativeManager interface {
 	SetManagers(managers TafManagers)

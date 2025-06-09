@@ -79,7 +79,7 @@ func (ch CommunicationInterface) Run() {
 	go ch.handleIncomingMessages()
 
 	for {
-		// Each iteration, check whether we've been cancelled.
+		// Each iteration, check whether we've been canceled.
 		if err := context.Cause(ch.tafContext.Context); err != nil {
 			return
 		}

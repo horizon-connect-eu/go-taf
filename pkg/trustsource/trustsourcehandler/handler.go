@@ -8,7 +8,7 @@ import (
 )
 
 /*
-Handler is a entity to handle a specified type of trust source. Depending on the concrete type, this might include
+Handler is an entity to handle a specified type of trust source. Depending on the concrete type, this might include
 no subscription, creating a single subscription for all sessions, or one subscription for each session.
 */
 type Handler[CMD command.NotifyMessage] interface {

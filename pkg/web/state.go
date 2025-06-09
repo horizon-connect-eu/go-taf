@@ -290,7 +290,7 @@ func (s *State) getEventLogPage(ctx *gin.Context) {
 func (s *State) getLatestEventLogPage(ctx *gin.Context) {
 
 	latestIdx := max(0, len(s.eventLog)-1)
-	lower := max(0, (latestIdx - PAGE_SIZE))
+	lower := max(0, latestIdx-PAGE_SIZE)
 
 	log := make([]map[int]interface{}, latestIdx-lower)
 
