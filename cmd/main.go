@@ -16,7 +16,6 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustassessment"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel"
 	"github.com/vs-uulm/go-taf/pkg/web"
-	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log"
 	"log/slog"
 	"os"
