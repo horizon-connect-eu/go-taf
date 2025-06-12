@@ -95,11 +95,18 @@ func trusteeIdentifier(id string) string {
 }
 
 func (tmi *TrustModelInstance) Values() map[string][]trustmodelstructure.TrustRelationship {
-	//trusteeOpinion, _ := subjectivelogic.CumulativeFusion(&tmi.omegaMBD, &tmi.omegaTCH)
-	trusteeOpinion, err := subjectivelogic.Multiplication(&tmi.omegaMBD, &tmi.omegaTCH)
-	if err != nil {
+
+	var trusteeOpinion subjectivelogic.Opinion
+	if tmi.omegaMBD != FullUncertainty && tmi.omegaTCH != FullUncertainty {
+		trusteeOpinion, _ = subjectivelogic.Multiplication(&tmi.omegaMBD, &tmi.omegaTCH)
+	} else if tmi.omegaMBD != FullUncertainty && tmi.omegaTCH == FullUncertainty {
+		trusteeOpinion = tmi.omegaMBD
+	} else if tmi.omegaMBD == FullUncertainty && tmi.omegaTCH != FullUncertainty {
+		trusteeOpinion = tmi.omegaTCH
+	} else if tmi.omegaMBD == FullUncertainty && tmi.omegaTCH == FullUncertainty {
 		trusteeOpinion = FullUncertainty
 	}
+
 	return map[string][]trustmodelstructure.TrustRelationship{
 		trusteeIdentifier(tmi.targetTrustee): {
 			internaltrustmodelstructure.NewTrustRelationshipDTO("MEC", trusteeIdentifier(tmi.targetTrustee), &trusteeOpinion),
