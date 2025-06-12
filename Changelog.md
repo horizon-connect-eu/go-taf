@@ -1,5 +1,10 @@
 # Standalone TAF Prototype
 
+## Release v0.4.4 (2025-06-12)
+
+* updated trust opinion handling in `NTM_STANDALONE@0.0.1` in case TCH/MBD opinions are missing
+
+
 ## Release v0.4.3 (2025-06-09)
 
 * changed TLEE usage in TAM workers to a 1:1 mapping, meaning that each TAM worker spawns its own TLEE instance
