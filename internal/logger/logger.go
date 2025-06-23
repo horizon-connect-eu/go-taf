@@ -45,7 +45,7 @@ func CreateMainLogger(configuration config.Log) *slog.Logger {
 	}
 }
 
-// Creates a child logger that appends the given contextName to the given mainLogger
+// CreateChildLogger creates a child logger that appends the given contextName to the given mainLogger
 func CreateChildLogger(mainLogger *slog.Logger, contextName string) *slog.Logger {
 	group := slog.Group("Component", slog.String("Name", contextName))
 	childLogger := mainLogger.With(group)

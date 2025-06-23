@@ -39,7 +39,7 @@ type RunnableManager interface {
 /*
 The TrustAssessmentManager is an internal component responsible for handling communication with client applications and
 dispatching operations to the TSM and TMM. It is running in a dedicated go-routine with an exclusive channel that
-contains incoming messages and updates operations either to be handled by the TAM directly, or by calling the TSM/TMM.
+contains incoming messages and updates operations either to be handled by the TAM directly or by calling the TSM/TMM.
 */
 type TrustAssessmentManager interface {
 	SetManagers(managers TafManagers)
