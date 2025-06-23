@@ -93,7 +93,7 @@ type TrustSourceManager interface {
 }
 
 /*
-The TrustMdodelManager is an internal component responsible for handling trust model templates and V2X communication monitoring.
+The TrustModelManager is an internal component responsible for handling trust model templates and V2X communication monitoring.
 */
 type TrustModelManager interface {
 	SetManagers(managers TafManagers)
