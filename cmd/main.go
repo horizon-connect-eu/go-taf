@@ -50,7 +50,7 @@ func main() {
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
-	logger.Info("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build, "WEB-UI Flag", flags.WEB_UI)
+	logger.Warn("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build, "WEB-UI Flag", flags.WEB_UI)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))
@@ -86,15 +86,6 @@ func main() {
 		os.Exit(-1)
 		return
 	}
-
-	/*
-		var tlee tleeinterface.TLEE
-		if tafConfig.TLEE.UseInternalTLEE {
-			tlee = internaltlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "Internal TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
-		} else {
-			tlee = actualtlee.SpawnNewTLEE(logging.CreateChildLogger(tafContext.Logger, "TLEE"), tafConfig.TLEE.FilePath, tafConfig.TLEE.DebuggingMode)
-		}
-	*/
 
 	trustAssessmentManager, err := trustassessment.NewManager(tafContext, tafChannels)
 	if err != nil {
