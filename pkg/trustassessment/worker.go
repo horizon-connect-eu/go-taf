@@ -123,24 +123,31 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 	}
 
 	//(Batch-)Execute TMI Updates
+	runTlee := false
 	for _, update := range cmd.Updates {
-		tmi.Update(update)
-		worker.notifyTMIUpdated(cmd.FullTmiID, tmi, update)
+		if tmi.Update(update) {
+			runTlee = true
+			worker.notifyTMIUpdated(cmd.FullTmiID, tmi, update)
+		}
 	}
 
-	//Run TLEE
-	atls, err := worker.executeTLEE(cmd.FullTmiID, tmi)
+	//Only run TLEE if the trust model has indicated change.
+	if runTlee {
+		//Run TLEE
+		atls, err := worker.executeTLEE(cmd.FullTmiID, tmi)
 
-	//Only run TDE and upaate ATL cache when no TLEE errors
-	if err != nil {
-		worker.logger.Info("TLEE returned error:" + err.Error())
-	} else {
-		//Run TDE
-		resultSet := worker.executeTDE(cmd.FullTmiID, tmi, atls)
+		//Only run TDE and update ATL cache when no TLEE errors
+		if err != nil {
+			worker.logger.Info("TLEE returned error:" + err.Error())
+		} else {
+			//Run TDE
+			resultSet := worker.executeTDE(cmd.FullTmiID, tmi, atls)
 
-		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
-		worker.workersToTam <- atlUpdateCmd
+			atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+			worker.workersToTam <- atlUpdateCmd
+		}
 	}
+
 }
 
 func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
