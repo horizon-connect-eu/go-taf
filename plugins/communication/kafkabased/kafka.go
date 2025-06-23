@@ -53,13 +53,17 @@ func NewKafkaBasedHandler(tafContext core.TafContext, inboxChannel chan<- core.M
 	}
 	defer consumer.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
 	go handleOutgoingMessages(tafContext, logger, producer, outboxChannel)
 	go handleIncomingMessages(tafContext, logger, consumer, inboxChannel)
 
-	wg.Wait() //TODO: fix for orderly shutdown
+	if err := context.Cause(tafContext.Context); err != nil {
+		return
+	}
+	select {
+	case <-tafContext.Context.Done():
+		logger.Info("Shutting down Kafka Communication Handler.")
+		return
+	}
 }
 
 func handleOutgoingMessages(tafContext core.TafContext, logger *slog.Logger, producer sarama.AsyncProducer, outboxChannel <-chan core.Message) {
