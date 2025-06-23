@@ -55,7 +55,7 @@ func (h *AivHandler) RegisterSubscription(sess session.Session, subscriptionID s
 func (h *AivHandler) RemoveSession(sess session.Session, handler *completionhandler.CompletionHandler) {
 	subId, exists := h.sessionIDtoAivSubscriptionID[sess.ID()]
 	if !exists {
-		//TODO: error handling
+		h.logger.Warn("Unknown session for AIV_NOTIFY, discarding message", "Session ID", sess.ID())
 		return
 	} else {
 		h.tsm.UnsubscribeAIV(subId, handler)
@@ -107,8 +107,8 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	for trustee := range updatedTrustees {
 		for _, tsq := range sess.TrustSourceQuantifiers() {
 			if tsq.TrustSource != core.AIV {
-				break //TODO: check
-			} else if tsq.Trustee == trustee { //TODO
+				break
+			} else if tsq.Trustee == trustee {
 				ato := tsq.Quantifier(h.latestSubscriptionEvidence[subID][trustee])
 				h.logger.Debug("Opinion for "+trustee, "SL", ato.String(), "Input", fmt.Sprintf("%v", h.latestSubscriptionEvidence[subID][trustee]))
 				updates = append(updates, trustmodelupdate.CreateAtomicTrustOpinionUpdate(ato, "", trustee, core.AIV))

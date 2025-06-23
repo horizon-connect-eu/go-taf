@@ -170,7 +170,6 @@ var (
 LoadJSON loads a configuration from a JSON file.
 */
 func LoadJSON(filepath string) (Configuration, error) {
-	// TODO figure out whether deep-copy is necessary here.
 	config := DefaultConfig
 	raw, err := os.ReadFile(filepath)
 	if err != nil {

@@ -161,7 +161,7 @@ func (worker *Worker) handleTMIDestroy(cmd command.HandleTMIDestroy) {
 	delete(worker.tmis, cmd.FullTmiID)
 	delete(worker.tmiSessions, cmd.FullTmiID)
 	worker.notifyTMIDeleted(cmd.FullTmiID)
-	//TODO: potential concurrency flag: send ATL update to wipe cache entry
+	//TODO: potential concurrency bug: send ATL update to wipe cache entry
 }
 
 func (worker *Worker) executeTLEE(fullTmiId string, tmi core.TrustModelInstance) (map[string]subjectivelogic.QueryableOpinion, error) {

@@ -145,7 +145,8 @@ precision defines the maximum deviance each value of an Opinion can have for the
 */
 const precision float64 = 0.000000000001
 
-// TODO copied from SL library, should later be replaced by library directly
+// areIdenticalSubjectiveLogicOpinions compares two subjective logic opinions to determine if they are numerically identical.
+// It evaluates beliefs, disbeliefs, uncertainties, and base rates using a precision threshold for floating-point comparisons.
 func areIdenticalSubjectiveLogicOpinions(opinion1 subjectivelogic.QueryableOpinion, opinion2 subjectivelogic.QueryableOpinion) bool {
 	return math.Abs(opinion1.Belief()-opinion2.Belief()) < precision &&
 		math.Abs(opinion1.Disbelief()-opinion2.Disbelief()) < precision &&
