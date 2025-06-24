@@ -25,7 +25,6 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
-	"time"
 )
 
 type Manager struct {
@@ -490,14 +489,8 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 				slices.Contains(tam.sessions[sessionID].TrustModelTemplate().EvidenceTypes(), core.AIV_SECURE_BOOT)) {
 			//We need to call AIV Req first and wait for a response
 			if len(tam.sessions[sessionID].TrustModelInstances()) > 0 {
-				tam.tsm.DispatchAivRequest(tmiSession)
-				//Hacky way to emulate allowCache: dispatch AIV Request, then replay TAS_TA_REQUEST after 80 msec - hoping that the AIV Response has been delivered in the meantime
-				go func() {
-					time.Sleep(80 * time.Millisecond)
-					allowCachedNow := true
-					cmd.Request.AllowCache = &allowCachedNow
-					tam.channels.TAMChannel <- cmd
-				}()
+				//dispatch AIV request and pass the original request to be replayed later
+				tam.tsm.DispatchAivRequest(tmiSession, cmd)
 			} else {
 				sendErrorResponse("No trust model instances found in this session")
 				return

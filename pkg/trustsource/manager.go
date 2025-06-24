@@ -15,6 +15,7 @@ import (
 	messages "github.com/vs-uulm/go-taf/pkg/message"
 	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
 	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
+	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
 	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
 	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
@@ -22,6 +23,7 @@ import (
 	"github.com/vs-uulm/go-taf/pkg/trustsource/trustsourcehandler"
 	"log/slog"
 	"strings"
+	"time"
 )
 
 type Manager struct {
@@ -281,7 +283,7 @@ func (tsm *Manager) RegisterCallback(messageType messages.MessageSchema, request
 	tsm.pendingMessageCallbacks[messageType][requestID] = fn
 }
 
-func (tsm *Manager) DispatchAivRequest(session session.Session) {
+func (tsm *Manager) DispatchAivRequest(session session.Session, originalCmd command.HandleRequest[tasmsg.TasTaRequest]) {
 
 	query := make(map[core.TrustSource]map[string][]core.EvidenceType)
 	quantifiers := make(map[core.TrustSource]core.Quantifier)
@@ -356,6 +358,13 @@ func (tsm *Manager) DispatchAivRequest(session session.Session) {
 					tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
 					tsm.tam.DispatchToWorker(session, tmiID, tmiUpdateCmd)
 				}
+
+				go func() {
+					time.Sleep(25 * time.Millisecond) // Wait until the update has propagated through the system.
+					allowCachedNow := true
+					originalCmd.Request.AllowCache = &allowCachedNow
+					tsm.tam.DispatchToSelf(originalCmd) // We replay the original request here, now with caching enabled.
+				}()
 			default:
 				//Nothing to do
 			}

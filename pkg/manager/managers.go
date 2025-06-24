@@ -89,7 +89,7 @@ type TrustSourceManager interface {
 	SubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
 	UnsubscribeTrustSourceQuantifiers(session session.Session, handler *completionhandler.CompletionHandler)
 	RegisterCallback(messageType messages.MessageSchema, requestID string, fn func(cmd core.Command))
-	DispatchAivRequest(session session.Session)
+	DispatchAivRequest(session session.Session, cmd command.HandleRequest[tasmsg.TasTaRequest])
 }
 
 /*
