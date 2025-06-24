@@ -1,5 +1,13 @@
 # Standalone TAF Prototype
 
+## Release v0.4.5 (2025-06-24)
+
+* modified behavior of non-cached `TAS_TA_REQUEST`s: TAF now waits an arbitrary amount of time until the response is available instead of using an internal timeout of 80 msec and to rely cached data otherwise
+* optimization of TLEE call: unmodified trust model will skip call
+* improved shutdown of Kafka consumer on TAF shutdown
+* internal code clean-ups
+
+
 ## Release v0.4.4 (2025-06-12)
 
 * updated trust opinion handling in `NTM_STANDALONE@0.0.1` in case TCH/MBD opinions are missing
