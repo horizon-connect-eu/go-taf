@@ -459,9 +459,12 @@ func (tam *Manager) HandleTasTaRequest(cmd command.HandleRequest[tasmsg.TasTaReq
 					propositions = append(propositions, NewPropositionEntry(atlResultSet, propositionID))
 				}
 				_, _, _, tmiID := core.SplitFullTMIIdentifier(fullTmiID)
+
 				result := ResultEntry{
 					TmiID:        tmiID,
 					Propositions: propositions,
+					version:      atlResultSet.Version(),
+					tag:          atlResultSet.Tag(),
 				}
 				taResponseResults = append(taResponseResults, result.toTarResultMsgStruct())
 			}
@@ -618,6 +621,8 @@ func (tam *Manager) HandleTasSubscribeRequest(cmd command.HandleSubscriptionRequ
 			result := ResultEntry{
 				TmiID:        tmiID,
 				Propositions: propositions,
+				version:      atlResultSet.Version(),
+				tag:          atlResultSet.Tag(),
 			}
 			taResponseResults = append(taResponseResults, result.toUpdateMsgStruct())
 		}

@@ -102,14 +102,14 @@ func (worker *Worker) handleTMIInit(cmd command.HandleTMIInit) {
 	//Run TLEE
 	atls, err := worker.executeTLEE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID])
 
-	//Only run TDE and upaate ATL cache when no TLEE errors
+	//Only run TDE and update ATL cache when no TLEE errors
 	if err != nil {
 		worker.logger.Info("TLEE returned error:" + err.Error())
 	} else {
 		//Run TDE
-		resultSet := worker.executeTDE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID], atls)
+		resultSet := worker.executeTDE(cmd.FullTmiID, worker.tmis[cmd.FullTmiID], nil, atls)
 
-		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+		atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, nil, cmd.FullTmiID)
 		worker.workersToTam <- atlUpdateCmd
 	}
 }
@@ -141,9 +141,9 @@ func (worker *Worker) handleTMIUpdate(cmd command.HandleTMIUpdate) {
 			worker.logger.Info("TLEE returned error:" + err.Error())
 		} else {
 			//Run TDE
-			resultSet := worker.executeTDE(cmd.FullTmiID, tmi, atls)
+			resultSet := worker.executeTDE(cmd.FullTmiID, tmi, cmd.Tag, atls)
 
-			atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.FullTmiID)
+			atlUpdateCmd := command.CreateHandleATLUpdate(resultSet, cmd.Tag, cmd.FullTmiID)
 			worker.workersToTam <- atlUpdateCmd
 		}
 	}
@@ -181,7 +181,7 @@ func (worker *Worker) executeTLEE(fullTmiId string, tmi core.TrustModelInstance)
 	return atls, nil
 }
 
-func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
+func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, tag *string, atls map[string]subjectivelogic.QueryableOpinion) core.AtlResultSet {
 	rtls := tmi.RTLs()
 	projectedProbabilities := make(map[string]float64, len(atls))
 	trustDecisions := make(map[string]core.TrustDecision, len(atls))
@@ -195,7 +195,7 @@ func (worker *Worker) executeTDE(fullTmiId string, tmi core.TrustModelInstance, 
 		}
 		projectedProbabilities[proposition] = trustdecision.ProjectProbability(atlOpinion)
 	}
-	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), atls, projectedProbabilities, trustDecisions)
+	resultSet := core.CreateAtlResultSet(tmi.ID(), tmi.Version(), tag, atls, projectedProbabilities, trustDecisions)
 	return resultSet
 }
 

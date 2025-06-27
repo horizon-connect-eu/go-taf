@@ -205,7 +205,7 @@ type Update struct {
 	// available.
 	Tag *string `json:"tag,omitempty"`
 	// Internal version of the trust model instance on which this update is based on.
-	Version *float64 `json:"version,omitempty"`
+	Version *int64 `json:"version,omitempty"`
 }
 
 type UpdateProposition struct {
@@ -286,7 +286,7 @@ type Result struct {
 	// available.
 	Tag *string `json:"tag,omitempty"`
 	// Internal version of the trust model instance on which this update is based on.
-	Version *float64 `json:"version,omitempty"`
+	Version *int64 `json:"version,omitempty"`
 }
 
 type ResultProposition struct {

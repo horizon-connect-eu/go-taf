@@ -80,7 +80,7 @@ func (h *AivHandler) RegisteredSessions() []string {
 }
 
 func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
-	//Check whether subscription is known, otherwise return
+	//Check whether the subscription is known, otherwise return
 	subID := cmd.Notify.SubscriptionID
 	sess, exists := h.aivSubscriptionIDtoSession[subID]
 	if !exists {
@@ -117,7 +117,7 @@ func (h *AivHandler) HandleNotify(cmd command.HandleNotify[aivmsg.AivNotify]) {
 	}
 	if len(updates) > 0 {
 		for tmiID, fullTmiID := range sess.TrustModelInstances() {
-			tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+			tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, cmd.Notify.Tag, updates...)
 			h.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
 		}
 	}

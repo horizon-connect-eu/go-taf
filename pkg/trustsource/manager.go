@@ -355,7 +355,7 @@ func (tsm *Manager) DispatchAivRequest(session session.Session, originalCmd comm
 				}
 				//create update operation for all TMIs of session
 				for tmiID, fullTmiID := range session.TrustModelInstances() {
-					tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+					tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, cmd.Response.Tag, updates...)
 					tsm.tam.DispatchToWorker(session, tmiID, tmiUpdateCmd)
 				}
 

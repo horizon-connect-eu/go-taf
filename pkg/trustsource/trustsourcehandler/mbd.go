@@ -123,7 +123,7 @@ func (h *MbdHandler) HandleNotify(cmd command.HandleNotify[mbdmsg.MBDNotify]) {
 		}
 		if len(updates) > 0 {
 			for tmiID, fullTmiID := range sess.TrustModelInstances() {
-				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, cmd.Notify.Tag, updates...)
 				h.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
 			}
 		}

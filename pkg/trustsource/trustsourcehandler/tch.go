@@ -110,7 +110,7 @@ func (h *TchHandler) HandleNotify(cmd command.HandleNotify[tchmsg.TchNotify]) {
 		}
 		if len(updates) > 0 {
 			for tmiID, fullTmiID := range sess.TrustModelInstances() {
-				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, updates...)
+				tmiUpdateCmd := command.CreateHandleTMIUpdate(fullTmiID, cmd.Notify.Tag, updates...)
 				h.tam.DispatchToWorker(sess, tmiID, tmiUpdateCmd)
 			}
 		}

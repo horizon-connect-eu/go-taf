@@ -135,6 +135,8 @@ func (s *SubscriptionInstance) HandleUpdate(oldATLs core.AtlResultSet, newATLs c
 		result = append(result, ResultEntry{
 			TmiID:        newATLs.TmiID(),
 			Propositions: propositions,
+			version:      newATLs.Version(),
+			tag:          newATLs.Tag(),
 		})
 	}
 	return result
