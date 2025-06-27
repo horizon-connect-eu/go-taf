@@ -103,8 +103,10 @@ type TchInitResponse struct {
 }
 
 type TchNotify struct {
-	Evidence  TCHNOTIFYEvidence `json:"evidence"`
-	TchReport TchReport         `json:"tchReport"`
+	Evidence TCHNOTIFYEvidence `json:"evidence"`
+	// Unique identifier for this message.
+	Tag       *string   `json:"tag,omitempty"`
+	TchReport TchReport `json:"tchReport"`
 }
 
 type TCHNOTIFYEvidence struct {

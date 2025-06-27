@@ -42,6 +42,8 @@ type V2XCpm struct {
 	SemiMajorOrientation       float64                  `json:"semiMajorOrientation"`
 	SemiMinorConfidence        float64                  `json:"semiMinorConfidence"`
 	SourceID                   float64                  `json:"sourceId"`
+	// Unique identifier for this message.
+	Tag *string `json:"tag,omitempty"`
 }
 
 type PerceivedObjectContainer struct {
@@ -71,6 +73,8 @@ type Object struct {
 }
 
 type V2XNtm struct {
+	// Unique identifier for this message.
+	Tag          *string        `json:"tag,omitempty"`
 	V2XSourceSet []V2XSourceSet `json:"v2xSourceSet"`
 }
 

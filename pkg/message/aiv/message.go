@@ -99,7 +99,9 @@ func (r *AivUnsubscribeResponse) Marshal() ([]byte, error) {
 type AivNotify struct {
 	AivEvidence AIVNOTIFYAivEvidence `json:"aivEvidence"`
 	// The unique identifier used for linking notifications with a specific subscription.
-	SubscriptionID string                   `json:"subscriptionId"`
+	SubscriptionID string `json:"subscriptionId"`
+	// Unique identifier for this message.
+	Tag            *string                  `json:"tag,omitempty"`
 	TrusteeReports []AIVNOTIFYTrusteeReport `json:"trusteeReports"`
 }
 
@@ -172,7 +174,9 @@ type Query struct {
 }
 
 type AivResponse struct {
-	AivEvidence    AIVRESPONSEAivEvidence     `json:"aivEvidence"`
+	AivEvidence AIVRESPONSEAivEvidence `json:"aivEvidence"`
+	// Unique identifier for this message.
+	Tag            *string                    `json:"tag,omitempty"`
 	TrusteeReports []AIVRESPONSETrusteeReport `json:"trusteeReports"`
 }
 

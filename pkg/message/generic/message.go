@@ -1,8 +1,8 @@
 // This file was generated from JSON Schema using quicktype, do not modify it directly.
 // To parse and unparse this JSON data, add this code to your project and do:
 //
-//    genericSubscriptionNotify, err := UnmarshalGenericSubscriptionNotify(bytes)
-//    bytes, err = genericSubscriptionNotify.Marshal()
+//    genericOneWay, err := UnmarshalGenericOneWay(bytes)
+//    bytes, err = genericOneWay.Marshal()
 //
 //    genericRequest, err := UnmarshalGenericRequest(bytes)
 //    bytes, err = genericRequest.Marshal()
@@ -10,8 +10,8 @@
 //    genericResponse, err := UnmarshalGenericResponse(bytes)
 //    bytes, err = genericResponse.Marshal()
 //
-//    genericOneWay, err := UnmarshalGenericOneWay(bytes)
-//    bytes, err = genericOneWay.Marshal()
+//    genericSubscriptionNotify, err := UnmarshalGenericSubscriptionNotify(bytes)
+//    bytes, err = genericSubscriptionNotify.Marshal()
 //
 //    genericSubscriptionRequest, err := UnmarshalGenericSubscriptionRequest(bytes)
 //    bytes, err = genericSubscriptionRequest.Marshal()
@@ -23,13 +23,13 @@ package genericmsg
 
 import "encoding/json"
 
-func UnmarshalGenericSubscriptionNotify(data []byte) (GenericSubscriptionNotify, error) {
-	var r GenericSubscriptionNotify
+func UnmarshalGenericOneWay(data []byte) (GenericOneWay, error) {
+	var r GenericOneWay
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *GenericSubscriptionNotify) Marshal() ([]byte, error) {
+func (r *GenericOneWay) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -53,13 +53,13 @@ func (r *GenericResponse) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func UnmarshalGenericOneWay(data []byte) (GenericOneWay, error) {
-	var r GenericOneWay
+func UnmarshalGenericSubscriptionNotify(data []byte) (GenericSubscriptionNotify, error) {
+	var r GenericSubscriptionNotify
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *GenericOneWay) Marshal() ([]byte, error) {
+func (r *GenericSubscriptionNotify) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -83,7 +83,7 @@ func (r *GenericSubscriptionResponse) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type GenericSubscriptionNotify struct {
+type GenericOneWay struct {
 	// The actual application message of type messageType.
 	Message map[string]interface{} `json:"message"`
 	// The message type to be used by the receiver to process this message.
@@ -122,7 +122,7 @@ type GenericResponse struct {
 	ServiceType string `json:"serviceType"`
 }
 
-type GenericOneWay struct {
+type GenericSubscriptionNotify struct {
 	// The actual application message of type messageType.
 	Message map[string]interface{} `json:"message"`
 	// The message type to be used by the receiver to process this message.
@@ -156,9 +156,10 @@ type GenericSubscriptionResponse struct {
 	// The message type to be used by the receiver to process this message.
 	MessageType string `json:"messageType"`
 	// The unique identifier to be repeated in the response for linking request and response.
-	RequestID string `json:"requestId"`
+	ResponseID *string `json:"responseId,omitempty"`
 	// The identifier of the sender of this message.
 	Sender string `json:"sender"`
 	// The service type to be used by the receiver to process this message.
-	ServiceType string `json:"serviceType"`
+	ServiceType string      `json:"serviceType"`
+	RequestID   interface{} `json:"requestId"`
 }

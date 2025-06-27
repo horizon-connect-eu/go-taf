@@ -73,6 +73,8 @@ func (r *MBDUnsubscribeResponse) Marshal() ([]byte, error) {
 type MBDNotify struct {
 	CpmReport      CpmReport `json:"CPM_REPORT"`
 	SubscriptionID string    `json:"subscriptionId"`
+	// Unique identifier for this message.
+	Tag *string `json:"tag,omitempty"`
 }
 
 type CpmReport struct {
