@@ -22,6 +22,14 @@
                 "description" : "The identifier of the trust model instance.",
                 "type": "string"
               },
+              "tag" : {
+                "description": "Unique identifier of the latest message included in this trust model instance state, if available.",
+                "type": "string"
+              },
+              "version" : {
+                "description": "Internal version of the trust model instance on which this update is based on.",
+                "type": "number"
+              },
               "propositions" : {
                 "type" : "array",
                 "items" : {

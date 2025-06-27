@@ -75,6 +75,10 @@
           }
         },
         "required": ["timestamp", "signatureAlgorithmType", "signature", "keyRef"]
+      },
+      "tag" : {
+        "description": "Unique identifier for this message.",
+        "type": "string"
       }
     },
     "required": ["tchReport", "evidence"]
