@@ -13,6 +13,10 @@
                     "items": {
                         "$ref": "#/definitions/V2XSourceSet"
                     }
+                },
+                "tag" : {
+                    "description": "Unique identifier for this message.",
+                    "type": "string"
                 }
             },
             "required": [

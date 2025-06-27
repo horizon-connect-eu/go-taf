@@ -125,6 +125,10 @@
           "numberOfPerceivedObjects",
           "objects"
         ]
+      },
+      "tag" : {
+        "description": "Unique identifier for this message.",
+        "type": "string"
       }
     },
     "required": [

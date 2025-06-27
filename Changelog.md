@@ -1,5 +1,23 @@
 # Standalone TAF Prototype
 
+## Release v0.5.0 (2025-06-27)
+
+* modified behavior of the TAF to provide more details on the input messages included in the trust assessment process of a trust model instance
+   * Evidence messages can provide an optional `tag` that represents an arbitrary message identifier (e.g., UUID, prefixed or unique timestamp/sequence number)
+   * In case the evidence message triggering an ATL change has been labeled with a `tag`, this `tag`is included in the ATL information; otherwise there is no tag.
+   * A `tag` in a trust assessment of the TAF indicates that the tagged message and all prior messages relevant for this trust model instance have been processed.
+* changes to the JSON Schemas of evidence-related messages to contain an optional `tag` as a message identifier; affecting:
+	* `AIV_RESPONSE`
+	* `AIV_NOTIFY`
+	* `MBD_NOTIFY`
+	* `TCH_NOTIFY`
+	* `V2X_CPM`
+	* `V2X_NTM`
+* changes to the trust assessment responses of the TAF to include the internal `version` of the trust model instance and (optionally) a `tag` identifying the latest incoming evidence message included in the actual trust levels; affecting the following JSON Schemas:
+	* `TAS_TA_RESPONSE`
+	* `TAS_NOTIFY`
+
+
 ## Release v0.4.5 (2025-06-24)
 
 * modified behavior of non-cached `TAS_TA_REQUEST`s: TAF now waits an arbitrary amount of time until the response is available instead of using an internal timeout of 80 msec and to rely cached data otherwise

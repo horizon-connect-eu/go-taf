@@ -12,13 +12,15 @@ type HandleTMIUpdate struct {
 	commandType core.CommandType
 	FullTmiID   string
 	Updates     []core.Update
+	Tag         *string
 }
 
-func CreateHandleTMIUpdate(FullTmiID string, updates ...core.Update) HandleTMIUpdate {
+func CreateHandleTMIUpdate(FullTmiID string, tag *string, updates ...core.Update) HandleTMIUpdate {
 	return HandleTMIUpdate{
 		FullTmiID:   FullTmiID,
 		Updates:     updates,
 		commandType: core.HANDLE_TMI_UPDATE,
+		Tag:         tag,
 	}
 }
 
@@ -75,13 +77,15 @@ type HandleATLUpdate struct {
 	commandType core.CommandType
 	FullTmiID   string
 	ResultSet   core.AtlResultSet
+	Tag         *string
 }
 
-func CreateHandleATLUpdate(atl core.AtlResultSet, fullTMI string) HandleATLUpdate {
+func CreateHandleATLUpdate(atl core.AtlResultSet, tag *string, fullTMI string) HandleATLUpdate {
 	return HandleATLUpdate{
 		ResultSet:   atl,
 		FullTmiID:   fullTMI,
 		commandType: core.HANDLE_ATL_UPDATE,
+		Tag:         tag,
 	}
 }
 

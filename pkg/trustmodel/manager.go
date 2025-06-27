@@ -127,7 +127,7 @@ func (tmm *Manager) HandleV2xCpmMessage(cmd command.HandleOneWay[v2xmsg.V2XCpm])
 
 		if len(objects) > 0 {
 			for _, fullTMIID := range targetTMIIDs {
-				updateCmd := command.CreateHandleTMIUpdate(fullTMIID, trustmodelupdate.CreateRefreshCPM(sender, objects))
+				updateCmd := command.CreateHandleTMIUpdate(fullTMIID, cmd.OneWay.Tag, trustmodelupdate.CreateRefreshCPM(sender, objects))
 				tmm.tam.DispatchToWorkerByFullTMIID(fullTMIID, updateCmd)
 			}
 		}

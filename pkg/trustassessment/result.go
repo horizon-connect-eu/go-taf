@@ -14,6 +14,8 @@ It is agnostic from the auto-generated structs used for compiling actual results
 type ResultEntry struct {
 	TmiID        string
 	Propositions []Proposition
+	tag          *string
+	version      int
 }
 
 type Proposition struct {
@@ -85,9 +87,13 @@ func (r ResultEntry) toTarResultMsgStruct() tasmsg.Result {
 		})
 	}
 
+	atlVersion := int64(r.version)
+
 	return tasmsg.Result{
 		ID:           r.TmiID,
 		Propositions: propositions,
+		Tag:          r.tag,
+		Version:      &atlVersion,
 	}
 
 }
@@ -142,9 +148,13 @@ func (r ResultEntry) toUpdateMsgStruct() tasmsg.Update {
 		})
 	}
 
+	atlVersion := int64(r.version)
+
 	return tasmsg.Update{
 		ID:           r.TmiID,
 		Propositions: propositions,
+		Tag:          r.tag,
+		Version:      &atlVersion,
 	}
 
 }

@@ -201,6 +201,11 @@ type Update struct {
 	// The identifier of the trust model instance.
 	ID           string              `json:"id"`
 	Propositions []UpdateProposition `json:"propositions"`
+	// Unique identifier of the latest message included in this trust model instance state, if
+	// available.
+	Tag *string `json:"tag,omitempty"`
+	// Internal version of the trust model instance on which this update is based on.
+	Version *int64 `json:"version,omitempty"`
 }
 
 type UpdateProposition struct {
@@ -277,6 +282,11 @@ type Result struct {
 	// The identifier of the trust model instance.
 	ID           string              `json:"id"`
 	Propositions []ResultProposition `json:"propositions"`
+	// Unique identifier of the latest message included in this trust model instance state, if
+	// available.
+	Tag *string `json:"tag,omitempty"`
+	// Internal version of the trust model instance on which this update is based on.
+	Version *int64 `json:"version,omitempty"`
 }
 
 type ResultProposition struct {
