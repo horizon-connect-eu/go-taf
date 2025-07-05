@@ -655,7 +655,7 @@ func (tam *Manager) HandleTasUnsubscribeRequest(cmd command.HandleSubscriptionRe
 			SessionID:              sessionID,
 			Success:                nil,
 		}
-		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_SUBSCRIBE_RESPONSE, cmd.RequestID, response)
+		bytes, err := communication.BuildResponse(tam.config.Communication.TafEndpoint, messages.TAS_UNSUBSCRIBE_RESPONSE, cmd.RequestID, response)
 		if err != nil {
 			tam.logger.Error("Error marshalling response", "error", err)
 			return
