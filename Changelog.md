@@ -1,4 +1,11 @@
-# Standalone TAF Prototype
+# Trust Assessment Framework Prototype
+
+## Release v1.0.0-rc1 (2025-07-05)
+
+* first release candidate after feature freeze
+* updates to schemas of `TAS_NOTIFY` and `TAS_TA_RESPONSE` for encoding internal state version numbers
+* minor internal fixes
+
 
 ## Release v0.5.0 (2025-06-27)
 
