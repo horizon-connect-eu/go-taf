@@ -28,7 +28,7 @@
           },
           "version" : {
             "description": "Internal version of the trust model instance on which this update is based on.",
-            "type": "number"
+            "type": "integer"
           },
           "propositions" : {
             "type" : "array",
