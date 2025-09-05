@@ -1,9 +1,5 @@
 # Trust Assessment Framework
 
-[![Latest Release](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/badges/release.svg)](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/releases)
-[![pipeline status](https://connect.informatik.uni-ulm.de/coordination/go-taf/badges/main/pipeline.svg)](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/commits/main)
-
-
 
 This repository provides the latest prototype of the standalone Trust Assessment Framework.
 
@@ -18,13 +14,13 @@ You can get a pre-compiled version of the standalone TAF in the [Releases](https
 
 First, clone this repository:
 ```shell
-git clone git@connect.informatik.uni-ulm.de:coordination/go-taf.git
+git clone git@github.com:horizon-connect-eu/go-taf.git
 ```
 
 Also clone the following internal dependencies into a shared common folder:
 ```shell
-git clone git@connect.informatik.uni-ulm.de:coordination/tlee-implementation.git
-git clone git@connect.informatik.uni-ulm.de:coordination/crypto-library-interface.git
+git clone git@github.com:horizon-connect-eu/tlee-implementation.git
+git clone git@github.com:horizon-connect-eu/crypto-library-interface.git
 ```
 
 The resulting folder structure should look like this:
@@ -135,10 +131,3 @@ make clean-structs
 ```
 
 Again, please note that adding new schemas/structs will require manual code changes in addition to the auto-generation of the structs.
-
-
-## See Also
-
- * [Tools for Standalone TAF](https://connect.informatik.uni-ulm.de/coordination/go-taf-tools): `playback` and `watch` tools for TAF development and testing
- * [Trust Assessment Framework Documentation](https://connect.p.lxd-vs.uni-ulm.de/standalone-taf-documentation): User Documentation (WIP; currently UUlm-internal)
-
