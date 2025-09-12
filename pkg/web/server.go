@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+        "strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -71,6 +72,13 @@ func (s *Webserver) Run() {
 	s.router.Use(func(c *gin.Context) {
 		s.logger.Info("gin request", "uri", c.Request.RequestURI)
 		c.Next()
+	})
+        s.router.NoRoute(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.RequestURI, "/ui") {
+			c.Redirect(http.StatusFound, "/ui")
+		} else {
+			c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
+		}
 	})
 
 	s.router.Use(gin.Recovery())
