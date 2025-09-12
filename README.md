@@ -1,5 +1,9 @@
 # CONNECT Trust Assessment Framework
 
+[Horizon CONNECT Website](https://horizon-connect.eu/) |
+[Download](https://github.com/horizon-connect-eu/go-taf/releases) |
+[Changelog](Changelog.md) 
+
 | Artifact Overview           |                                                           |
 |-----------------------------|-----------------------------------------------------------|
 | Released Artifact           | Trust Assessment Framework                                |
@@ -8,10 +12,17 @@
 | Work Package                | 3                                                         |
 | Responsible Project Partner | Institute of Distributed Systems, Ulm University, GERMANY |
 
+## Summary
 
 This repository provides the final prototype of the Go-based Trust Assessment Framework released as part of the Horizon CONNECT project.
 
-## Build from Source
+## Installation
+
+### Gettting a Pre-Compiled Binary
+
+You can get a pre-compiled version of the CONNECT TAF in the [Releases](https://github.com/horizon-connect-eu/go-taf/releases) section.
+
+### Build from Source
 
 First, clone this repository:
 ```shell
