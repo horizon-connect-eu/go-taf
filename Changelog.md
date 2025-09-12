@@ -1,5 +1,12 @@
 # Trust Assessment Framework Prototype
 
+## Release v1.0.0 (2025-09-12)
+
+* final release of CONNECT Trust Assessment Framework prototype
+* changed module namespace to final repository
+* modified dependencies to final repository locations
+
+
 ## Release v1.0.0-rc1 (2025-07-05)
 
 * first release candidate after feature freeze
