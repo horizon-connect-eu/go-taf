@@ -1,9 +1,9 @@
 package command
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
-	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
-	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	taqimsg "github.com/horizon-connect-eu/go-taf/pkg/message/taqi"
+	tasmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tas"
 )
 
 type request interface {

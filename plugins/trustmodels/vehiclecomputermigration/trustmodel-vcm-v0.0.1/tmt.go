@@ -3,8 +3,8 @@ package trustmodel_vcm_v0_0_1
 import (
 	"errors"
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 	"math/rand/v2"
 	"strconv"
 	"strings"

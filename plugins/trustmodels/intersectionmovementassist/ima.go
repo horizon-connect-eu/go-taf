@@ -1,11 +1,11 @@
 package intersectionmovementassist
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/trustmodel"
-	trustmodel_ima_federated_v0_0_1 "github.com/vs-uulm/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-federated-v0.0.1"
-	"github.com/vs-uulm/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-standalone-v0.0.1"
-	trustmodel_ima_standalone_v0_0_2 "github.com/vs-uulm/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-standalone-v0.0.2"
-	trustmodel_ntm_standalone_v0_0_1 "github.com/vs-uulm/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ntm-standalone_v0.0.1"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel"
+	trustmodel_ima_federated_v0_0_1 "github.com/horizon-connect-eu/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-federated-v0.0.1"
+	"github.com/horizon-connect-eu/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-standalone-v0.0.1"
+	trustmodel_ima_standalone_v0_0_2 "github.com/horizon-connect-eu/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ima-standalone-v0.0.2"
+	trustmodel_ntm_standalone_v0_0_1 "github.com/horizon-connect-eu/go-taf/plugins/trustmodels/intersectionmovementassist/trustmodel-ntm-standalone_v0.0.1"
 )
 
 func init() {

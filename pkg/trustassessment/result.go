@@ -1,10 +1,10 @@
 package trustassessment
 
 import (
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	taqimsg "github.com/horizon-connect-eu/go-taf/pkg/message/taqi"
+	tasmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tas"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
-	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
 )
 
 /*

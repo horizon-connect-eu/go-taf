@@ -2,9 +2,9 @@ package trustmodel_ntm_standalone_v0_0_1
 
 import (
 	"errors"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustsource"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/trustsource"
 	"log"
 	"math"
 	"strconv"

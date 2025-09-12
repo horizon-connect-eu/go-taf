@@ -1,6 +1,6 @@
 package session
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import "github.com/horizon-connect-eu/go-taf/pkg/core"
 
 /*
 State specifies the state a Session is in.

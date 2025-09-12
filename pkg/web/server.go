@@ -10,11 +10,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/version"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/listener"
-	"github.com/vs-uulm/go-taf/pkg/manager"
+	logging "github.com/horizon-connect-eu/go-taf/internal/logger"
+	"github.com/horizon-connect-eu/go-taf/internal/version"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/listener"
+	"github.com/horizon-connect-eu/go-taf/pkg/manager"
 )
 
 //go:embed frontend/dist

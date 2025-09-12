@@ -1,8 +1,8 @@
 package listener
 
 import (
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"time"
 )

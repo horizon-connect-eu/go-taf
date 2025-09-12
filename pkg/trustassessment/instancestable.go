@@ -1,6 +1,6 @@
 package trustassessment
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import "github.com/horizon-connect-eu/go-taf/pkg/core"
 
 /*
 The TrustModelInstanceTable is an internal data structure of the TAM to organize currently existing TMIs and query them.

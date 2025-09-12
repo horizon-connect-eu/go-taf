@@ -1,18 +1,18 @@
 package manager
 
 import (
-	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
-	"github.com/vs-uulm/go-taf/pkg/command"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/listener"
-	messages "github.com/vs-uulm/go-taf/pkg/message"
-	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
-	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
-	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
-	tasmsg "github.com/vs-uulm/go-taf/pkg/message/tas"
-	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
-	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
+	"github.com/horizon-connect-eu/go-taf/internal/flow/completionhandler"
+	"github.com/horizon-connect-eu/go-taf/pkg/command"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/listener"
+	messages "github.com/horizon-connect-eu/go-taf/pkg/message"
+	aivmsg "github.com/horizon-connect-eu/go-taf/pkg/message/aiv"
+	mbdmsg "github.com/horizon-connect-eu/go-taf/pkg/message/mbd"
+	taqimsg "github.com/horizon-connect-eu/go-taf/pkg/message/taqi"
+	tasmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tas"
+	tchmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tch"
+	v2xmsg "github.com/horizon-connect-eu/go-taf/pkg/message/v2x"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel/session"
 )
 
 type TafManagers struct {

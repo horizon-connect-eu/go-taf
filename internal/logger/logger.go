@@ -1,8 +1,8 @@
 package logger
 
 import (
+	"github.com/horizon-connect-eu/go-taf/pkg/config"
 	"github.com/pterm/pterm"
-	"github.com/vs-uulm/go-taf/pkg/config"
 	"log/slog"
 	"os"
 	"strings"

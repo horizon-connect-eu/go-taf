@@ -1,35 +1,22 @@
-# Trust Assessment Framework
+# CONNECT Trust Assessment Framework
+
+| Artifact Overview           |                                                           |
+|-----------------------------|-----------------------------------------------------------|
+| Released Artifact           | Trust Assessment Framework                                |
+| Identifier                  | `github.com/horizon-connect-eu/go-taf`                    |
+| License                     | Apache-2.0 license                                        |
+| Work Package                | 3                                                         |
+| Responsible Project Partner | Institute of Distributed Systems, Ulm University, GERMANY |
 
 
-This repository provides the latest prototype of the standalone Trust Assessment Framework.
+This repository provides the final prototype of the Go-based Trust Assessment Framework released as part of the Horizon CONNECT project.
 
-## Gettting Started
-
-### Gettting a Pre-Compiled Binary
-
-You can get a pre-compiled version of the standalone TAF in the [Releases](https://connect.informatik.uni-ulm.de/coordination/go-taf/-/releases) section.
-
-
-### Build from Source
+## Build from Source
 
 First, clone this repository:
 ```shell
 git clone git@github.com:horizon-connect-eu/go-taf.git
 ```
-
-Also clone the following internal dependencies into a shared common folder:
-```shell
-git clone git@github.com:horizon-connect-eu/tlee-implementation.git
-git clone git@github.com:horizon-connect-eu/crypto-library-interface.git
-```
-
-The resulting folder structure should look like this:
-```
-├── crypto-library-interface
-├── go-taf
-└── tlee-implementation
-```
-
 Next, go to the `go-taf` directory and run make:
 
 ```shell
@@ -48,6 +35,7 @@ To build and run the TAF with an enabled debugging webinterface, you can use the
 ```shell
 GOFLAGS=-tags=webui make run
 ```
+
 
 ## Configuration
 

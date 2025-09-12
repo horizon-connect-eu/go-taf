@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
+	trustmodelstructure2 "github.com/horizon-connect-eu/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	trustmodelstructure2 "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"strings"
 )

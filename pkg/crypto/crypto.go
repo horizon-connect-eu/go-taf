@@ -1,11 +1,11 @@
 package crypto
 
 import (
-	"crypto-library-interface/pkg/crypto"
 	"encoding/json"
 	"errors"
-	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
-	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
+	"github.com/horizon-connect-eu/crypto-library-interface/pkg/crypto"
+	aivmsg "github.com/horizon-connect-eu/go-taf/pkg/message/aiv"
+	tchmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tch"
 	"log/slog"
 )
 

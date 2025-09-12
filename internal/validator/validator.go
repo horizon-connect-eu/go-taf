@@ -2,8 +2,8 @@ package validator
 
 import (
 	"fmt"
-	embedded "github.com/vs-uulm/go-taf"
-	"github.com/vs-uulm/go-taf/pkg/message"
+	embedded "github.com/horizon-connect-eu/go-taf"
+	"github.com/horizon-connect-eu/go-taf/pkg/message"
 	"github.com/xeipuuv/gojsonschema"
 )
 

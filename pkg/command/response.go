@@ -1,10 +1,10 @@
 package command
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
-	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
-	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
-	taqimsg "github.com/vs-uulm/go-taf/pkg/message/taqi"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	aivmsg "github.com/horizon-connect-eu/go-taf/pkg/message/aiv"
+	mbdmsg "github.com/horizon-connect-eu/go-taf/pkg/message/mbd"
+	taqimsg "github.com/horizon-connect-eu/go-taf/pkg/message/taqi"
 )
 
 type response interface {

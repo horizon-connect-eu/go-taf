@@ -6,16 +6,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/vs-uulm/go-taf/cmd/flags"
-	logging "github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/internal/version"
-	"github.com/vs-uulm/go-taf/pkg/communication"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/crypto"
-	"github.com/vs-uulm/go-taf/pkg/manager"
-	"github.com/vs-uulm/go-taf/pkg/trustassessment"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel"
-	"github.com/vs-uulm/go-taf/pkg/web"
+	"github.com/horizon-connect-eu/go-taf/cmd/flags"
+	logging "github.com/horizon-connect-eu/go-taf/internal/logger"
+	"github.com/horizon-connect-eu/go-taf/internal/version"
+	"github.com/horizon-connect-eu/go-taf/pkg/communication"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/crypto"
+	"github.com/horizon-connect-eu/go-taf/pkg/manager"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustassessment"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel"
+	"github.com/horizon-connect-eu/go-taf/pkg/web"
 	"log"
 	"log/slog"
 	"os"
@@ -23,8 +23,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/trustsource"
+	"github.com/horizon-connect-eu/go-taf/pkg/config"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustsource"
 )
 
 //go:generate go run ../plugins/trustmodels/updatetrustmodelhashes.go
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	logger := logging.CreateMainLogger(tafConfig.Logging)
-	logger.Warn("Starting Standalone Trust Assessment Framework", "Version", Version, "Build", Build, "WEB-UI Flag", flags.WEB_UI)
+	logger.Warn("Starting CONNECT Trust Assessment Framework", "Version", Version, "Build", Build, "WEB-UI Flag", flags.WEB_UI)
 	logger.Info("Configuration loaded")
 	logger.Debug("Running with following configuration",
 		slog.String("CONFIG", fmt.Sprintf("%+v", tafConfig)))

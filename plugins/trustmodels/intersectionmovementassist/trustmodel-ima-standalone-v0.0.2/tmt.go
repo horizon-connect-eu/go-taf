@@ -2,8 +2,8 @@ package trustmodel_ima_standalone_v0_0_2
 
 import (
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 	"strconv"
 )
 

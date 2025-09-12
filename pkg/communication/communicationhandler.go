@@ -1,6 +1,6 @@
 package communication
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import "github.com/horizon-connect-eu/go-taf/pkg/core"
 
 /*
 CommunicationHandler is the function to be implemented by communication handlers.

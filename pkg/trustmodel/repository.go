@@ -1,6 +1,6 @@
 package trustmodel
 
-import "github.com/vs-uulm/go-taf/pkg/core"
+import "github.com/horizon-connect-eu/go-taf/pkg/core"
 
 var TemplateRepository = map[string]core.TrustModelTemplate{}
 

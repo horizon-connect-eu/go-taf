@@ -2,7 +2,7 @@ package communication
 
 import (
 	"encoding/json"
-	messages "github.com/vs-uulm/go-taf/pkg/message"
+	messages "github.com/horizon-connect-eu/go-taf/pkg/message"
 )
 
 type GenericRequestWrapper struct {

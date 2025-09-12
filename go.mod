@@ -1,13 +1,13 @@
-module github.com/vs-uulm/go-taf
+module github.com/horizon-connect-eu/go-taf
 
 go 1.22.1
 
 require (
-	connect.informatik.uni-ulm.de/coordination/tlee-implementation v0.0.0-00010101000000-000000000000
-	crypto-library-interface v0.0.0-00010101000000-000000000000
 	github.com/IBM/sarama v1.43.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
+	github.com/horizon-connect-eu/crypto-library-interface v1.0.0
+	github.com/horizon-connect-eu/tlee-implementation v1.0.0
 	github.com/pterm/pterm v0.12.79
 	github.com/vs-uulm/go-subjectivelogic v0.2.3
 	github.com/vs-uulm/taf-tlee-interface v0.2.3
@@ -78,9 +78,4 @@ require (
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-)
-
-replace (
-	connect.informatik.uni-ulm.de/coordination/tlee-implementation => ../tlee-implementation
-	crypto-library-interface => ../crypto-library-interface
 )

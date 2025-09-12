@@ -2,12 +2,12 @@ package trustmodel_ima_standalone_v0_0_1
 
 import (
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/config"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	internaltlee "github.com/horizon-connect-eu/go-taf/pkg/tlee"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustdecision"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
-	"github.com/vs-uulm/go-taf/pkg/trustdecision"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 	"testing"
 )

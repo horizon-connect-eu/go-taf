@@ -1,8 +1,8 @@
 package examplemodel
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/trustmodel"
-	"github.com/vs-uulm/go-taf/plugins/trustmodels/examplemodel/trustmodel-example-v0.0.1"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel"
+	"github.com/horizon-connect-eu/go-taf/plugins/trustmodels/examplemodel/trustmodel-example-v0.0.1"
 )
 
 func init() {

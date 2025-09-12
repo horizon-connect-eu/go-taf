@@ -1,16 +1,16 @@
 package trustassessment
 
 import (
-	actualtlee "connect.informatik.uni-ulm.de/coordination/tlee-implementation/pkg/core"
 	"context"
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/internal/logger"
+	"github.com/horizon-connect-eu/go-taf/pkg/command"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/listener"
+	internaltlee "github.com/horizon-connect-eu/go-taf/pkg/tlee"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustdecision"
+	actualtlee "github.com/horizon-connect-eu/tlee-implementation/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/internal/logger"
-	"github.com/vs-uulm/go-taf/pkg/command"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	"github.com/vs-uulm/go-taf/pkg/listener"
-	internaltlee "github.com/vs-uulm/go-taf/pkg/tlee"
-	"github.com/vs-uulm/go-taf/pkg/trustdecision"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/tleeinterface"
 	"log/slog"
 )

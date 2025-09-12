@@ -1,8 +1,8 @@
 package command
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
-	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	v2xmsg "github.com/horizon-connect-eu/go-taf/pkg/message/v2x"
 )
 
 type oneway interface {

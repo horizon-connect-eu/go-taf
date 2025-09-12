@@ -2,10 +2,10 @@ package trustmodel_to_v0_0_1
 
 import (
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	internaltrustmodelstructure "github.com/horizon-connect-eu/go-taf/pkg/trustmodel/trustmodelstructure"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	internaltrustmodelstructure "github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelstructure"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/taf-tlee-interface/pkg/trustmodelstructure"
 	"hash/fnv"
 )

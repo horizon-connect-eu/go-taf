@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/listener"
+	"github.com/horizon-connect-eu/go-taf/pkg/listener"
 )
 
 /*

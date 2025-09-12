@@ -1,7 +1,7 @@
 package listener
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"time"
 )
 

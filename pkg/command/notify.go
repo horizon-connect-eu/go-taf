@@ -1,11 +1,11 @@
 package command
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/core"
-	aivmsg "github.com/vs-uulm/go-taf/pkg/message/aiv"
-	mbdmsg "github.com/vs-uulm/go-taf/pkg/message/mbd"
-	tchmsg "github.com/vs-uulm/go-taf/pkg/message/tch"
-	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	aivmsg "github.com/horizon-connect-eu/go-taf/pkg/message/aiv"
+	mbdmsg "github.com/horizon-connect-eu/go-taf/pkg/message/mbd"
+	tchmsg "github.com/horizon-connect-eu/go-taf/pkg/message/tch"
+	v2xmsg "github.com/horizon-connect-eu/go-taf/pkg/message/v2x"
 )
 
 type NotifyMessage interface {

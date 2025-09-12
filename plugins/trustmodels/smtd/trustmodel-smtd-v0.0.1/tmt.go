@@ -2,8 +2,8 @@ package trustmodel_smtd_v0_0_1
 
 import (
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
 var FullBelief, _ = subjectivelogic.NewOpinion(1, 0, 0, 0.5)

@@ -2,8 +2,8 @@ package trustmodelupdate
 
 import (
 	"encoding/json"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
 /*

@@ -2,8 +2,8 @@ package trustmodel_vcm_v0_0_1
 
 import (
 	"fmt"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/pkg/core"
 )
 
 var vc1DTI, _ = subjectivelogic.NewOpinion(0.2, 0.1, 0.7, 0.5)

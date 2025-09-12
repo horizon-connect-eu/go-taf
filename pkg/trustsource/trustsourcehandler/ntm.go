@@ -1,13 +1,13 @@
 package trustsourcehandler
 
 import (
+	"github.com/horizon-connect-eu/go-taf/internal/flow/completionhandler"
+	"github.com/horizon-connect-eu/go-taf/pkg/command"
+	"github.com/horizon-connect-eu/go-taf/pkg/core"
+	v2xmsg "github.com/horizon-connect-eu/go-taf/pkg/message/v2x"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel/session"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel/trustmodelupdate"
 	"github.com/vs-uulm/go-subjectivelogic/pkg/subjectivelogic"
-	"github.com/vs-uulm/go-taf/internal/flow/completionhandler"
-	"github.com/vs-uulm/go-taf/pkg/command"
-	"github.com/vs-uulm/go-taf/pkg/core"
-	v2xmsg "github.com/vs-uulm/go-taf/pkg/message/v2x"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/session"
-	"github.com/vs-uulm/go-taf/pkg/trustmodel/trustmodelupdate"
 	"log/slog"
 	"strconv"
 )

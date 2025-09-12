@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
-	"github.com/vs-uulm/go-taf/pkg/config"
-	"github.com/vs-uulm/go-taf/pkg/crypto"
+	"github.com/horizon-connect-eu/go-taf/pkg/config"
+	"github.com/horizon-connect-eu/go-taf/pkg/crypto"
 	"log/slog"
 )
 

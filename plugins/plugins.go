@@ -11,7 +11,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/vs-uulm/go-taf/internal/projectpath"
+	"github.com/horizon-connect-eu/go-taf/internal/projectpath"
 	"go/parser"
 	"go/token"
 	"io/fs"

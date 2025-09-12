@@ -1,8 +1,8 @@
 package brussels
 
 import (
-	"github.com/vs-uulm/go-taf/pkg/trustmodel"
-	brussels001 "github.com/vs-uulm/go-taf/plugins/trustmodels/brussels/v0_0_1"
+	"github.com/horizon-connect-eu/go-taf/pkg/trustmodel"
+	brussels001 "github.com/horizon-connect-eu/go-taf/plugins/trustmodels/brussels/v0_0_1"
 )
 
 func init() {
