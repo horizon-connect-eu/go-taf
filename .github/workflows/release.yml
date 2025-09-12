@@ -21,9 +21,9 @@ jobs:
     - name: Build binaries
       run: |
         mkdir -p dist
-        GOOS=linux GOARCH=amd64 go build -o dist/myapp-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -o dist/myapp-darwin-amd64
-        GOOS=windows GOARCH=amd64 go build -o dist/myapp-windows-amd64.exe
+        GOOS=linux GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-linux-amd64
+        GOOS=darwin GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-darwin-amd64
+        GOOS=windows GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-windows-amd64.exe
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
