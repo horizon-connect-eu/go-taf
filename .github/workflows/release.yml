@@ -21,9 +21,12 @@ jobs:
     - name: Build binaries
       run: |
         mkdir -p dist
-        GOOS=linux GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-darwin-amd64
-        GOOS=windows GOARCH=amd64 go build -tags webui ./cmd/main.go ./cmd/plugin_loader.go -o dist/go-taf-windows-amd64.exe
+        GOOS=linux GOARCH=amd64 go build -tags webui -o dist/go-taf-webui-linux-amd64 ./cmd/main.go ./cmd/plugin_loader.go
+        GOOS=darwin GOARCH=amd64 go build -tags webui -o dist/go-taf-webui-darwin-amd64 ./cmd/main.go ./cmd/plugin_loader.go
+        GOOS=windows GOARCH=amd64 go build -tags webui  -o dist/go-taf-webui-windows-amd64.exe ./cmd/main.go ./cmd/plugin_loader.go
+        GOOS=linux GOARCH=amd64 go build -o dist/go-taf-linux-amd64 ./cmd/main.go ./cmd/plugin_loader.go
+        GOOS=darwin GOARCH=amd64 go build -o dist/go-taf-darwin-amd64 ./cmd/main.go ./cmd/plugin_loader.go
+        GOOS=windows GOARCH=amd64 go build -o dist/go-taf-windows-amd64.exe ./cmd/main.go ./cmd/plugin_loader.go
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
